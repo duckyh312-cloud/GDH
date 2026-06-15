@@ -105,7 +105,7 @@ void HacksTab::addPadding(float height) {
 
 void HacksTab::addSeparator(float height) {
     m_currentRow = nullptr; 
-    auto node = cocos2d::CCLayerColor::create({104, 104, 191, 255});
+    auto node = cocos2d::CCLayerColor::create({104, 104, 191, 80});
     node->setContentSize({335.f, height});
     m_scrollLayer->m_contentLayer->addChild(node);
 }
