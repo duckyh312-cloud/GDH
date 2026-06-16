@@ -7,6 +7,8 @@
 #include <Geode/Geode.hpp>
 #include <Geode/binding/FLAlertLayer.hpp>
 
+#include "gui.hpp"
+
 std::string GDH::Utils::String::toLowerCase(const std::string& input) {
     std::string result = input;
     std::transform(result.begin(), result.end(), result.begin(),
@@ -53,7 +55,7 @@ void GDH::Utils::UncompleteLevel() {
     auto pl = PlayLayer::get();
 	
 	if (!pl) {
-		FLAlertLayer::create("Uncomplete Level", "Enter playlayer to uncomplete the level", "OK")->show();
+		GDH::MaterialLayer(FLAlertLayer::create("Uncomplete Level", "Enter playlayer to uncomplete the level", "OK"))->show();
 		return;
 	}
 	

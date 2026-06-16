@@ -244,6 +244,54 @@ void HacksTab::addText(const std::string& text, float scale) {
     }
 }
 
+void HacksTab::addConfigButton(const std::string& labelText, std::function<void()> callback, const std::string& secondLabelText, std::function<void()> secondCallback) {
+    float columnWidth = 170.f;
+    bool dualMode = !secondLabelText.empty() && secondCallback != nullptr;
+
+    prepareNewRow();
+
+    if (dualMode) {
+        auto createHalfNode = [columnWidth](const std::string& text, std::function<void()> cb) -> CCMenu* {
+            auto node = CCMenu::create();
+            node->setContentSize({columnWidth, 30.f});
+            node->setAnchorPoint({0, 0.5f});
+
+            auto btnSprite = ButtonSprite::create(text.c_str(), 140, true, "GoogleSans.fnt"_spr, "GDH_button_01.png"_spr, 25.f, 0.6f);
+            auto btnClick = CCMenuItemExt::createSpriteExtra(btnSprite, [cb](CCMenuItemSpriteExtra* sender) {
+                if (cb) cb();
+            });
+            btnClick->setPosition({columnWidth / 2.f - 5.f, 15.f});
+            node->addChild(btnClick);
+            return node;
+        };
+
+        m_currentRow->addChild(createHalfNode(labelText, callback));
+        m_currentRow->addChild(createHalfNode(secondLabelText, secondCallback));
+    } 
+    else {
+        auto node = CCMenu::create();
+        node->setContentSize({columnWidth * 2, 30.f});
+        node->setAnchorPoint({0, 0.5f});
+
+        auto btnSprite = ButtonSprite::create(labelText.c_str(), 315, true, "GoogleSans.fnt"_spr, "GDH_button_01.png"_spr, 25.f, 0.6f);
+        auto btnClick = CCMenuItemExt::createSpriteExtra(btnSprite, [callback](CCMenuItemSpriteExtra* sender) {
+            if (callback) callback();
+        });
+        
+        btnClick->setPosition({columnWidth - 5.f, 15.f});
+        node->addChild(btnClick);
+
+        m_currentRow->addChild(node);
+    }
+
+    if (auto layout = static_cast<geode::RowLayout*>(m_currentRow->getLayout())) {
+        layout->setAxisAlignment(geode::AxisAlignment::Center);
+        m_currentRow->updateLayout();
+    }
+
+    m_currentRow = nullptr;
+}
+
 CCLabelBMFont* HacksTab::AddTextToToggle(const char *str, CCMenuItemToggler* toggler, float x_space) {
     auto label = CCLabelBMFont::create(str, "GoogleSans.fnt"_spr);
     label->setAnchorPoint({0.f, 0.5f});

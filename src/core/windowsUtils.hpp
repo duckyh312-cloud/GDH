@@ -1,4 +1,4 @@
-
+#pragma once
 #ifdef GEODE_IS_WINDOWS
 #include <Windows.h>
 

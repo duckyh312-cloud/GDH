@@ -11,6 +11,7 @@ public:
     void addConfigToggle(const std::string& label, const std::string& key, bool defaultValue = false);
     void addConfigIntInput(const std::string& label, const std::string& key, int defaultValue = 0, int min = 0, int max = 100, std::function<void(int)> callback = nullptr);
     void addConfigFloatInput(const std::string& label, const std::string& key, float defaultValue = 0.f, float min = 0.f, float max = 100.f, std::function<void(float)> callback = nullptr);
+    void addConfigButton(const std::string& labelText, std::function<void()> callback, const std::string& secondLabelText = "", std::function<void()> secondCallback = nullptr);
     CCLabelBMFont* AddTextToToggle(const char *str, CCMenuItemToggler* toggler, float x_space = 22.f);
 
     void addText(const std::string& text, float scale = 0.5f);

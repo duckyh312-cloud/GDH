@@ -252,7 +252,7 @@ protected:
             }
         });
         upBtn->getChildByType<CCSprite>(0)->setRotation(90.f);
-        upBtn->getChildByType<CCSprite>(0)->setScale(0.55f);
+        upBtn->getChildByType<CCSprite>(0)->setScale(0.6f);
         upBtn->setPosition({35.f, y});
         upBtn->setEnabled(m_index > 0);
         if (m_index == 0) upBtn->setOpacity(100);
@@ -267,7 +267,7 @@ protected:
             }
         });
         downBtn->getChildByType<CCSprite>(0)->setRotation(-90.f);
-        downBtn->getChildByType<CCSprite>(0)->setScale(0.55f);
+        downBtn->getChildByType<CCSprite>(0)->setScale(0.6f);
         downBtn->setPosition({75.f, y});
         auto& targetLabels = manager.labels[corner];
         downBtn->setEnabled(m_index < targetLabels.size() - 1);
@@ -372,7 +372,7 @@ void refreshLabelsTab(HacksTab* tab) {
     selectorRow->addChild(leftSpacer);
 
     auto leftArrowSprite = CCSprite::create("GDH_arrow.png"_spr);
-    leftArrowSprite->setScale(0.55f);
+    leftArrowSprite->setScale(0.6f);
     auto leftBtn = CCMenuItemExt::createSpriteExtra(leftArrowSprite, [tab](auto) {
         if (s_currentCornerIndex > 0) s_currentCornerIndex--;
         else s_currentCornerIndex = 8;
@@ -384,7 +384,7 @@ void refreshLabelsTab(HacksTab* tab) {
     labelWidthContainer->setContentSize({110.f, 20.f});
 
     auto currentCornerLabel = CCLabelBMFont::create(cornerNames[s_currentCornerIndex].c_str(), "GoogleSans.fnt"_spr);
-    currentCornerLabel->setScale(0.55f);
+    currentCornerLabel->setScale(0.6f);
     currentCornerLabel->setAlignment(CCTextAlignment::kCCTextAlignmentCenter);
 
     currentCornerLabel->setPosition({55.f, 10.f}); 
@@ -393,7 +393,7 @@ void refreshLabelsTab(HacksTab* tab) {
     selectorRow->addChild(labelWidthContainer);
 
     auto rightArrowSprite = CCSprite::create("GDH_arrow.png"_spr);
-    rightArrowSprite->setScale(0.55f);
+    rightArrowSprite->setScale(0.6f);
     rightArrowSprite->setFlipX(true);
     auto rightBtn = CCMenuItemExt::createSpriteExtra(rightArrowSprite, [tab](auto) {
         if (s_currentCornerIndex < 8) s_currentCornerIndex++;
@@ -406,7 +406,7 @@ void refreshLabelsTab(HacksTab* tab) {
     spring->setContentSize({75.f, 0.f});
     selectorRow->addChild(spring);
 
-    auto addBtnSprite = ButtonSprite::create("Add Label", 70, true, "GoogleSans.fnt"_spr, "GDH_button_01.png"_spr, 24.f, 0.4f);
+    auto addBtnSprite = ButtonSprite::create("Add Label", 70, true, "GoogleSans.fnt"_spr, "GDH_button_01.png"_spr, 24.f, 0.6f);
     auto addBtn = CCMenuItemExt::createSpriteExtra(addBtnSprite, [corner, tab](auto) {
         AddLabelPopup::create(corner, tab)->show();
     });
@@ -428,14 +428,14 @@ void refreshLabelsTab(HacksTab* tab) {
             auto& label = labelsList[idx];
 
             auto itemRow = CCMenu::create();
-            itemRow->setContentSize({340.f, 26.f});
+            itemRow->setContentSize({340.f, 20.f}); 
             itemRow->setLayout(RowLayout::create()->setAxisAlignment(AxisAlignment::Start)->setCrossAxisAlignment(AxisAlignment::Center)->setGap(6.f));
 
             auto itemSpacer = CCNode::create();
             itemSpacer->setContentSize({5.f, 0.f});
             itemRow->addChild(itemSpacer);
 
-            auto editBtnSprite = ButtonSprite::create("Edit", 26.f, true, "GoogleSans.fnt"_spr, "GDH_button_01.png"_spr, 26.f, 0.4f);
+            auto editBtnSprite = ButtonSprite::create("Edit", 26.f, true, "GoogleSans.fnt"_spr, "GDH_button_01.png"_spr, 24.f, 0.6f);
             auto editBtn = CCMenuItemExt::createSpriteExtra(editBtnSprite, [corner, idx, tab](auto) {
                 EditLabelPopup::create(corner, idx, tab)->show();
             });
@@ -446,7 +446,7 @@ void refreshLabelsTab(HacksTab* tab) {
                 : fmt::format("Spacing: {:.1f}px", label.size);
 
             auto textLabel = CCLabelBMFont::create(displayText.c_str(), "GoogleSans.fnt"_spr);
-            textLabel->setScale(0.5f);
+            textLabel->setScale(0.4f); 
             if (!label.enabled) textLabel->setOpacity(90);
             
             if (textLabel->getScaledContentWidth() > 240.f) {
