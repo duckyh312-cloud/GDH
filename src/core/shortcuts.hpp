@@ -1,5 +1,4 @@
 #pragma once
-#ifdef GEODE_IS_WINDOWS
 #include <Geode/Geode.hpp>
 #include "utils.hpp"
 
@@ -59,5 +58,3 @@ namespace GDH { namespace Shortcuts {
         *ptr = 0;
     }
 } }
-
-#endif
