@@ -28,6 +28,11 @@ set(HAS_IMGUI ON)
 add_subdirectory(libs/imgui)
 CPMAddPackage("gh:matcool/gd-imgui-cocos#b93f08c")
 
+if (WIN32)
+    add_subdirectory(libs/discord-rpc)
+    target_link_libraries(${PROJECT_NAME} discord-rpc)
+endif()
+
 target_link_libraries(${PROJECT_NAME} imgui-cocos imgui)
 
 setup_geode_mod(${PROJECT_NAME})
