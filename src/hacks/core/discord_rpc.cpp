@@ -171,9 +171,7 @@ public:
 
             m_smallKey = getDifficultyKey(level);
             m_smallText = getDifficultyName(m_smallKey);
-
-            geode::log::debug("{} {}", m_smallKey, m_smallText);
-
+            
             int levelId = level->m_levelID.value();
             if (levelId == 0) {
                 m_details = fmt::format("{} - Playtesting", level->m_levelName);
