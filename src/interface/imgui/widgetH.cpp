@@ -123,6 +123,7 @@ namespace ImGuiH {
         else if (!table1.empty()) {
             colorTable = table1;
             nativeColorTable = table2;
+            ApplyNativeGuiColors();
         }
     }
 
