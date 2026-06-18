@@ -68,6 +68,14 @@ namespace ImGuiH {
     bool Checkbox(const char* label, bool* v);
     bool RadioButton(const char* label, bool active);
 
+    void ApplyNativeGuiColors();
+    void ApplyStyle(float scale);
+    void DrawColorEditor();
+    void ProccessOriginalTheme(bool save);
+
+    void SaveTheme();
+    void LoadTheme();
+
     void Tooltip(const char* text, bool hovered = true);
     
     bool DragFloat(const char* label, float* v, float speed = 1.f, float v_min = 0.f,

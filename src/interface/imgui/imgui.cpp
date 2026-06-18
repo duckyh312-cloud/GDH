@@ -8,7 +8,6 @@
 
 #include "widgetH.hpp"
 #include "widget_helper.hpp"
-#include "theme.hpp"
 #include "font.hpp"
 
 #include <Geode/modify/MenuLayer.hpp>
@@ -24,6 +23,9 @@ using namespace geode::prelude;
 #include "../../core/keybinds.hpp"
 
 static bool g_show = false;
+
+static bool g_showThemeEditor = false;
+static bool g_reopenAfterTheme = false;
 
 static bool g_resetLayoutCalled = false;
 static bool g_hardRecalculation = false;
@@ -63,6 +65,7 @@ void onClose() {
     Config::get().save(fileDataPath);
     GDH::Labels::Manager::get().save();
     GDH::Keybinds::get().save();
+    ImGuiH::SaveTheme();
     g_search_text = "";
 }
 
@@ -103,9 +106,15 @@ void animateAlpha()
             g_show = false;
             onClose();
 
-            if (g_reopenAfterRecalc) {
-                g_reopenAfterRecalc = false;
-                g_hardRecalculation = true;
+            if (g_reopenAfterRecalc || g_reopenAfterTheme) {
+                if (g_reopenAfterRecalc) {
+                    g_reopenAfterRecalc = false;
+                    g_hardRecalculation = true;
+                }
+                if (g_reopenAfterTheme) {
+                    g_reopenAfterTheme = false;
+                    g_showThemeEditor = !g_showThemeEditor;
+                }
                 ToggleUI();
             }
         }
@@ -149,6 +158,10 @@ void SettingsRender() {
     std::string windowName = "GDH Settings";
     layoutManager.applyWindowTransform(windowName);
 
+    if (g_showThemeEditor) {
+        ImGui::SetNextWindowPos({layoutManager.multipleScale(10.f), layoutManager.multipleScale(10.f)});
+    }
+
     ImGui::Begin(windowName.c_str());
 
     ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
@@ -169,6 +182,12 @@ void SettingsRender() {
 
     if (ImGuiH::Button("Refresh Layout", {ImGui::GetContentRegionAvail().x, 0})) {
         g_resetLayoutCalled = true;
+    }
+
+    if (ImGuiH::Button(g_showThemeEditor ? "Disable Theme Editor" : "Theme Editor", {ImGui::GetContentRegionAvail().x, 0})) {
+        g_reopenAfterTheme = true;
+        if (g_showThemeEditor) g_reopenAfterRecalc = true;
+        ToggleUI();
     }
 
     if (layoutManager.isCollecting()) {
@@ -247,8 +266,22 @@ void RenderMain() {
     
     if (!g_show) return;
 
+    static bool lastRightPressed = false;
+    bool isRightPressed = GDH::Keybinds::get().isMouseButtonDown(geode::MouseInputData::Button::Right);
+
+    if (isRightPressed != lastRightPressed) {
+        ImGui::GetIO().AddMouseButtonEvent(1, isRightPressed);
+        lastRightPressed = isRightPressed;
+    }
+
     RenderVersionBadge();
     SettingsRender();
+
+    if (g_showThemeEditor) {
+        ImGuiH::DrawColorEditor();
+        ImGui::PushStyleVar(ImGuiStyleVar_Alpha, 0.f);
+    }
+
     KeybindsRender();
 
     for (auto& window : windows) {
@@ -301,6 +334,8 @@ void RenderMain() {
         ImGuiH::EndSmoothScroll();
     }
 
+    if (g_showThemeEditor) ImGui::PopStyleVar();
+
     if (layoutManager.isCollecting()) layoutManager.finishCollecting();
     else if (layoutManager.isApplying()) layoutManager.finishApplying();
     
@@ -346,8 +381,14 @@ class $modify(ImGuiInitMenuLayer, MenuLayer) {
                 auto& config = Config::get();
                 ImGuiIO &io = ImGui::GetIO();
                 io.IniFilename = NULL;
-                ApplyGuiColors(false);
-                ApplyStyle(1.f);
+
+                // backuping and applying original theme
+                ImGuiH::ProccessOriginalTheme(true);
+                ImGuiH::ApplyNativeGuiColors();
+                ImGuiH::ApplyStyle(1.f);
+                
+                // applying custom theme (if it exists)
+                ImGuiH::LoadTheme();
 
                 io.Fonts->AddFontFromMemoryCompressedTTF(roboto_font_data, roboto_font_size, 18.f, nullptr, io.Fonts->GetGlyphRangesCyrillic());
             }).draw([] {

@@ -1,5 +1,5 @@
 #include "layout.hpp"
-#include "theme.hpp"
+#include "widgetH.hpp"
 #include <imgui.h>
 #include "../../core/config.hpp"
 
@@ -157,7 +157,7 @@ void Layout::Manager::calculateWindowPositions() {
     float scale_y = (display.y > 0) ? (display.y / max_layout_height) : 1.0f;
     
     m_scale = std::min({scale_x, scale_y, 1.0f});
-    ApplyStyle(m_scale);
+    ImGuiH::ApplyStyle(m_scale);
 
     // horizontal center
     auto& config = Config::get();

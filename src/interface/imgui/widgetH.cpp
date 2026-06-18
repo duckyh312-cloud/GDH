@@ -4,8 +4,10 @@
 #include <imgui_internal.h>
 #include <imgui_stdlib.h>
 #include "layout.hpp"
+#include <json.hpp>
 
 #define COLOR_F32(x) ImVec4 { (((x) >> 24) & 0xFF) / 255.0f, (((x) >> 16) & 0xFF) / 255.0f, (((x) >> 8) & 0xFF) / 255.0f, ((x) & 0xFF) / 255.0f }
+static const auto themeFilePath = geode::Mod::get()->getSaveDir() / "theme.json";
 
 namespace ImGuiH {
     std::map<Color, ImVec4> colorTable = {
@@ -59,6 +61,313 @@ namespace ImGuiH {
         {Color::Drag_Foreground_Hover,          COLOR_F32(0xE0EBFFFF)},
         {Color::Drag_Foreground_Active,         COLOR_F32(0x1A1A49FF)},
     };
+
+    std::map<ImGuiCol_, ImVec4> nativeColorTable = {
+        {ImGuiCol_Text,                  COLOR_F32(0xE1E1E1E1)},
+        {ImGuiCol_TextDisabled,          COLOR_F32(0x949ED2FF)},
+
+        {ImGuiCol_WindowBg,              COLOR_F32(0x1A1A49FA)},
+        {ImGuiCol_Border,                COLOR_F32(0x404040FF)},
+
+        {ImGuiCol_TitleBg,               COLOR_F32(0x2E2E63FF)},
+        {ImGuiCol_TitleBgActive,         COLOR_F32(0x2E2E63FF)},
+        {ImGuiCol_TitleBgCollapsed,      COLOR_F32(0x2E2E63FF)},
+
+        {ImGuiCol_ScrollbarBg,           COLOR_F32(0x1A1A4900)},
+
+        {ImGuiCol_FrameBg,               COLOR_F32(0x474783FF)},
+        {ImGuiCol_FrameBgHovered,        COLOR_F32(0x6868BFFF)},
+        {ImGuiCol_FrameBgActive,         COLOR_F32(0x37376EFF)},
+
+        {ImGuiCol_ScrollbarGrab,         COLOR_F32(0xFFFFFF98)},
+        {ImGuiCol_ScrollbarGrabHovered,  COLOR_F32(0xFFFFFF98)},
+        {ImGuiCol_ScrollbarGrabActive,   COLOR_F32(0xFFFFFF98)},
+
+        {ImGuiCol_ResizeGrip,            COLOR_F32(0x474783FF)},
+        {ImGuiCol_ResizeGripHovered,     COLOR_F32(0x6868BFFF)},
+        {ImGuiCol_ResizeGripActive,      COLOR_F32(0xD5C4FFFF)},
+
+        {ImGuiCol_PopupBg,               COLOR_F32(0x1A1A49FA)},
+        {ImGuiCol_ModalWindowDimBg,      COLOR_F32(0x0000007F)},
+
+        {ImGuiCol_Button,                COLOR_F32(0x474783FF)},
+        {ImGuiCol_ButtonHovered,         COLOR_F32(0x6868BFFF)},
+        {ImGuiCol_ButtonActive,          COLOR_F32(0x37376EFF)},
+
+        {ImGuiCol_Header,                COLOR_F32(0x474783FF)},
+        {ImGuiCol_HeaderHovered,         COLOR_F32(0x6868BFFF)},
+        {ImGuiCol_HeaderActive,          COLOR_F32(0x37376EFF)},
+
+        {ImGuiCol_Tab,                   COLOR_F32(0x323234FF)},
+        {ImGuiCol_TabHovered,            COLOR_F32(0x464648FF)},
+        {ImGuiCol_TabActive,             COLOR_F32(0x58585AFF)},
+
+        {ImGuiCol_TableHeaderBg,         COLOR_F32(0x3C3C3CFF)},
+        {ImGuiCol_TableBorderStrong,     COLOR_F32(0x505050FF)},
+        {ImGuiCol_TableBorderLight,      COLOR_F32(0x3C3C3CFF)},
+
+        {ImGuiCol_TableRowBg,            COLOR_F32(0x1E1E1EFF)},
+        {ImGuiCol_TableRowBgAlt,         COLOR_F32(0x232323FF)},
+
+        {ImGuiCol_Separator,             COLOR_F32(0x6868BFFF)}
+    };
+
+    void ProccessOriginalTheme(bool save) {
+        static std::map<Color, ImVec4> table1;
+        static std::map<ImGuiCol_, ImVec4> table2;
+
+        if (save) {
+            table1 = colorTable;
+            table2 = nativeColorTable;
+        }
+        else if (!table1.empty()) {
+            colorTable = table1;
+            nativeColorTable = table2;
+        }
+    }
+
+    static const char* GetCustomColorName(Color color) {
+        switch (color) {
+            case Color::Button_Background:             return "Button Background";
+            case Color::Button_Background_Hover:       return "Button Background Hover";
+            case Color::Button_Background_Active:      return "Button Background Active";
+            case Color::Button_Foreground:             return "Button Foreground";
+            case Color::Button_Foreground_Hover:       return "Button Foreground Hover";
+            case Color::Button_Foreground_Active:      return "Button Foreground Active";
+            case Color::Button_Border:                 return "Button Border";
+            case Color::Checkbox_Background_Off:       return "Checkbox Background Off";
+            case Color::Checkbox_Background_Off_Hover: return "Checkbox Background Off Hover";
+            case Color::Checkbox_Background_Off_Active:return "Checkbox Background Off Active";
+            case Color::Checkbox_Background_On:        return "Checkbox Background On";
+            case Color::Checkbox_Background_On_Hover:  return "Checkbox Background On Hover";
+            case Color::Checkbox_Background_On_Active: return "Checkbox Background On Active";
+            case Color::Checkbox_Knob_Off:             return "Checkbox Knob Off";
+            case Color::Checkbox_Knob_Off_Hover:       return "Checkbox Knob Off Hover";
+            case Color::Checkbox_Knob_Off_Active:      return "Checkbox Knob Off Active";
+            case Color::Checkbox_Knob_On:              return "Checkbox Knob On";
+            case Color::Checkbox_Knob_On_Hover:        return "Checkbox Knob On Hover";
+            case Color::Checkbox_Knob_On_Active:       return "Checkbox Knob On Active";
+            case Color::Checkbox_Border:               return "Checkbox Border";
+            case Color::RadioButton_Ring_Off:          return "Radio Ring Off";
+            case Color::RadioButton_Ring_Off_Hover:    return "Radio Ring Off Hover";
+            case Color::RadioButton_Ring_Off_Active:   return "Radio Ring Off Active";
+            case Color::RadioButton_Ring_On:           return "Radio Ring On";
+            case Color::RadioButton_Ring_On_Hover:     return "Radio Ring On Hover";
+            case Color::RadioButton_Ring_On_Active:    return "Radio Ring On Active";
+            case Color::RadioButton_Dot_Off:           return "Radio Dot Off";
+            case Color::RadioButton_Dot_On:            return "Radio Dot On";
+            case Color::RadioButton_Dot_On_Hover:      return "Radio Dot On Hover";
+            case Color::RadioButton_Dot_On_Active:     return "Radio Dot On Active";
+            case Color::RadioButton_Layer_Off_Hover:   return "Radio Layer Off Hover";
+            case Color::RadioButton_Layer_Off_Active:  return "Radio Layer Off Active";
+            case Color::RadioButton_Layer_On_Hover:    return "Radio Layer On Hover";
+            case Color::RadioButton_Layer_On_Active:   return "Radio Layer On Active";
+            case Color::Tooltip_Background:            return "Tooltip Background";
+            case Color::Tooltip_Foreground:            return "Tooltip Foreground";
+            case Color::Tooltip_Border:                return "Tooltip Border";
+            case Color::Drag_Background:               return "Drag Background";
+            case Color::Drag_Background_Hover:         return "Drag Background Hover";
+            case Color::Drag_Background_Active:        return "Drag Background Active";
+            case Color::Drag_Middleground:             return "Drag Middleground";
+            case Color::Drag_Middleground_Hover:       return "Drag Middleground Hover";
+            case Color::Drag_Middleground_Active:      return "Drag Middleground Active";
+            case Color::Drag_Foreground:               return "Drag Foreground";
+            case Color::Drag_Foreground_Hover:         return "Drag Foreground Hover";
+            case Color::Drag_Foreground_Active:        return "Drag Foreground Active";
+            default:                                   return "Unknown Custom Color";
+        }
+    }
+
+    void ApplyNativeGuiColors() {
+        auto* colors = ImGui::GetStyle().Colors;
+        
+        for (const auto& [id, color] : nativeColorTable) {
+            colors[id] = color;
+        }
+    }
+
+    void SaveTheme() {
+        nlohmann::json json;
+
+        for (const auto& [id, color] : colorTable) {
+            std::string name = GetCustomColorName(id);
+            json["custom"][name] = { color.x, color.y, color.z, color.w };
+        }
+
+        for (const auto& [id, color] : nativeColorTable) {
+            std::string name = ImGui::GetStyleColorName(id);
+            json["native"][name] = { color.x, color.y, color.z, color.w };
+        }
+
+        std::ofstream outFile(themeFilePath);
+        if (outFile.is_open()) {
+            outFile << json.dump(4);
+            outFile.close();
+        }
+    }
+
+    void LoadTheme() {
+        std::ifstream inFile(themeFilePath);
+        if (!inFile.is_open()) return;
+        
+        std::string file_contents((std::istreambuf_iterator<char>(inFile)), std::istreambuf_iterator<char>());
+        inFile.close();
+        
+        nlohmann::json json = nlohmann::json::parse(file_contents, nullptr, false);
+        if (json.is_discarded()) {
+            return; 
+        }
+
+        if (json.contains("custom") && json["custom"].is_object()) {
+            for (auto& [id, color] : colorTable) {
+                std::string name = GetCustomColorName(id);
+                if (json["custom"].contains(name)) {
+                    auto& val = json["custom"][name];
+                    if (val.is_array() && val.size() == 4) {
+                        color = ImVec4(val[0], val[1], val[2], val[3]);
+                    }
+                }
+            }
+        }
+
+        if (json.contains("native") && json["native"].is_object()) {
+            for (auto& [id, color] : nativeColorTable) {
+                std::string name = ImGui::GetStyleColorName(id);
+                if (json["native"].contains(name)) {
+                    auto& val = json["native"][name];
+                    if (val.is_array() && val.size() == 4) {
+                        color = ImVec4(val[0], val[1], val[2], val[3]);
+                    }
+                }
+            }
+            ApplyNativeGuiColors();
+        }
+    }
+
+    void DrawColorEditor() {
+        auto& layout = GDH::Layout::Manager::get();
+        float fontSize = layout.multipleScale(32.0f);
+        float baseWidth = layout.multipleScale(400.0f);
+        float paddingBetween = layout.multipleScale(20.0f);
+        
+        ImVec2 screenSize = ImGui::GetIO().DisplaySize;
+        float windowHeight = screenSize.y * 0.75f; 
+        float totalBlockWidth = (baseWidth * 2.0f) + paddingBetween;
+        float startX = (screenSize.x - totalBlockWidth) * 0.5f;
+        float startY = (screenSize.y - windowHeight) * 0.5f;
+
+        ImGuiWindowFlags windowFlags = ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse;
+
+        ImGui::SetNextWindowPos(ImVec2(startX, startY));
+        ImGui::SetNextWindowSize(ImVec2(baseWidth, windowHeight));
+        
+        if (ImGui::Begin("Widget Preview", nullptr, windowFlags)) {
+            float oldScale = ImGui::GetFont()->Scale;
+            ImGui::GetFont()->Scale = fontSize / ImGui::GetFontSize();
+            ImGui::PushFont(ImGui::GetFont());
+            ImGui::TextColored(ImVec4(0.7f, 0.6f, 1.0f, 1.0f), "GDH UI Preview");
+            ImGui::GetFont()->Scale = oldScale;
+            ImGui::PopFont();
+            
+            ImGui::Separator();
+            ImGui::Spacing();
+
+            ImGuiH::Button("Custom Button", ImVec2(layout.multipleScale(150.0f), 0));
+            ImGui::SameLine();
+            ImGuiH::ArrowButton("##prev_arrow_l", ImGuiDir_Left);
+            ImGui::SameLine();
+            ImGuiH::ArrowButton("##prev_arrow_r", ImGuiDir_Right);
+            ImGui::Spacing();
+            ImGui::Button("Native ImGui Button", ImVec2(layout.multipleScale(180.0f), 0));
+
+            static bool chk1 = true, chk2 = false;
+            ImGuiH::Checkbox("Toggle Switch Active", &chk1);
+            ImGuiH::Checkbox("Toggle Switch Inactive", &chk2);
+            ImGui::Separator();
+
+            static int radioVal = 0;
+            if (ImGuiH::RadioButton("Radio Option 1", radioVal == 0)) radioVal = 0;
+            if (ImGuiH::RadioButton("Radio Option 2", radioVal == 1)) radioVal = 1;
+
+            static float fVal1 = 0.5f;
+            static int iVal1 = 50;
+            ImGuiH::DragFloat("Custom Drag Float", &fVal1, 0.01f, 0.0f, 1.0f);
+            ImGuiH::DragInt("Custom Drag Int", &iVal1, 1, 0, 100);
+
+            // static float nativeF = 25.0f;
+            // ImGui::SliderFloat("Native Slider", &nativeF, 0.0f, 100.0f);
+
+            static int comboIdx = 0;
+            const char* items[] = { "Apple", "Banana", "Cherry", "Kiwi" };
+            ImGui::Combo("Native Combo", &comboIdx, items, IM_ARRAYSIZE(items));
+            ImGui::Spacing();
+
+            ImGui::Text("Hover here for Tooltip");
+            ImGuiH::Tooltip("This is your tooltip window!", ImGui::IsItemHovered());
+        }
+        ImGui::End();
+
+        ImGui::SetNextWindowPos(ImVec2(startX + baseWidth + paddingBetween, startY));
+        ImGui::SetNextWindowSize(ImVec2(baseWidth, windowHeight));
+        
+        if (ImGui::Begin("Color Palette Editor", nullptr, windowFlags)) {
+            if (ImGuiH::Button("Reset")) {
+                ImGuiH::ProccessOriginalTheme(false);
+            }
+            ImGui::BeginChild("PaletteScrollArea", ImVec2(0, 0), false, ImGuiWindowFlags_AlwaysVerticalScrollbar);
+
+            ImGui::Text("Custom Widget Colors");
+            ImGui::Separator(); ImGui::Spacing();
+
+            for (auto& [id, color] : colorTable) {
+                ImGui::PushID((int)id);
+                ImGui::ColorEdit4(GetCustomColorName(id), &color.x, ImGuiColorEditFlags_NoInputs);
+                ImGui::PopID();
+            }
+
+            ImGui::Spacing(); ImGui::Spacing();
+            ImGui::Text("Native ImGui Colors");
+            ImGui::Separator(); ImGui::Spacing();
+
+            bool nativeChanged = false;
+            for (auto& [id, color] : nativeColorTable) {
+                ImGui::PushID(id);
+                if (ImGui::ColorEdit4(ImGui::GetStyleColorName(id), &color.x, ImGuiColorEditFlags_NoInputs)) nativeChanged = true;
+                ImGui::PopID();
+            }
+
+            if (nativeChanged) ApplyNativeGuiColors();
+
+            ImGui::EndChild();
+        }
+        ImGui::End();
+    }
+
+    void ApplyStyle(float scale) {
+        ImGuiStyle& style = ImGui::GetStyle();  
+        ImGuiIO& io = ImGui::GetIO();
+        io.FontGlobalScale = scale;
+
+        style.WindowPadding = ImVec2(10.f * scale, 10.f * scale);
+        style.FramePadding = ImVec2(4.f * scale, 3.f * scale);
+        style.ItemSpacing = ImVec2(8.f * scale, 4.f * scale);
+        style.ItemInnerSpacing = ImVec2(4.f * scale, 4.f * scale);
+        style.IndentSpacing = 21.f * scale;
+        style.ScrollbarSize = 6.f * scale;
+        style.GrabMinSize = 12.f * scale;
+
+        style.WindowRounding = 12.0f * scale;
+        style.ChildRounding = 6.0f * scale;
+        style.FrameRounding = 20.0f * scale;
+        style.PopupRounding = 12.f * scale;
+        style.ScrollbarRounding = 12.f * scale;
+        style.GrabRounding = 12.f * scale;
+        style.TabRounding = 6.f * scale;
+        
+        style.WindowBorderSize = 0;
+        style.WindowTitleAlign = ImVec2(0.50, 0.50);
+        style.WindowMenuButtonPosition = ImGuiDir_Right;
+    }
 
     static inline void SetColorHSV(Color cid, ImVec4 hsv) {
         float r, g, b; ImGui::ColorConvertHSVtoRGB(hsv.x, hsv.y, hsv.z, r, g, b);
