@@ -33,7 +33,7 @@ template <typename T, typename U = std::remove_cvref_t<std::decay_t<T>>>
 constexpr bool is_valid_type = std::is_same_v<U, bool>
                             || std::is_same_v<U, float>
                             || std::is_same_v<U, int>
-                            || std::is_same_v<U, std::filesystem::path>;
+                            || std::is_same_v<U, std::string>;
 
 class Config {
 public:
@@ -54,8 +54,8 @@ public:
                 json[key] = std::get<float>(value);
             } else if (std::holds_alternative<int>(value)) {
                 json[key] = std::get<int>(value);
-            } else if (std::holds_alternative<std::filesystem::path>(value)) {
-                json[key] = std::get<std::filesystem::path>(value).string();
+            } else if (std::holds_alternative<std::string>(value)) {
+                json[key] = std::get<std::string>(value);
             }
         }
         return json;
@@ -73,7 +73,7 @@ public:
             } else if (value.is_number_integer()) {
                 m_values[key] = value.get<int>();
             } else if (value.is_string()) {
-                m_values[key] = std::filesystem::path(value.get<std::string>());
+                m_values[key] = value.get<std::string>();
             }
         }
     }
@@ -131,7 +131,7 @@ public:
     }
 
 private:
-    using Value = std::variant<bool, int, float, std::filesystem::path>;
+    using Value = std::variant<bool, int, float, std::string>;
 
     Config() = default;
     std::unordered_map<std::string, Value> m_values {};

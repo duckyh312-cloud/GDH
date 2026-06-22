@@ -274,3 +274,21 @@ void GDH::Utils::setReverb(float decayTime) {
 
     reverb_dsp->setParameterFloat(FMOD_DSP_SFXREVERB_DECAYTIME, std::clamp(decayTime, 100.0f, 20000.0f));
 }
+
+cocos2d::ccColor3B GDH::Utils::hexToColor(const std::string& hexStr) {
+    std::string cleanHex = hexStr;
+    if (!cleanHex.empty() && cleanHex[0] == '#') {
+        cleanHex = cleanHex.substr(1);
+    }
+    
+    unsigned int hexValue = 0xFFFFFF;
+    std::stringstream ss;
+    ss << std::hex << cleanHex;
+    ss >> hexValue;
+
+    unsigned char r = (hexValue >> 16) & 0xFF;
+    unsigned char g = (hexValue >> 8) & 0xFF;
+    unsigned char b = hexValue & 0xFF;
+
+    return { r, g, b };
+}

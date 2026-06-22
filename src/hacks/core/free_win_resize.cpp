@@ -32,7 +32,7 @@ $execute {
 
     auto maximizeKey = hack.formatAdditionalSetting("maximaze_window");
 
-    hack.setCustomWindowImGui([&config, maximizeKey]{
+    hack.setCustomWindowImGui([maximizeKey]{
         ImGuiWidgetConfig::Checkbox("Maximize on Startup", maximizeKey, true);
     });
 

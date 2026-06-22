@@ -3,6 +3,7 @@
 #include <Geode/modify/LevelEditorLayer.hpp>
 #include "../../core/gui.hpp"
 #include "../../core/config.hpp"
+#include "../../interface/imgui/widget_helper.hpp"
 
 using namespace geode::prelude;
 
@@ -56,6 +57,7 @@ void updateHitboxes(GJBaseGameLayer* layer, cocos2d::CCDrawNode* drawNode) {
 
     auto& config = Config::get();
     if (!config.get<bool>("level.show_hitboxes", false)) return;
+    if (config.get<bool>("level.show_hitboxes::show_on_death", false) && !layer->m_isEditor && !layer->m_playerDied) return;
 
     if (!layer->m_sections.empty()) {
         const int rightBound = std::min(layer->m_rightSectionIndex, static_cast<int>(layer->m_sections.size()) - 1);
@@ -176,3 +178,15 @@ class $modify(ShowHitboxesLevelEditorLayer, LevelEditorLayer) {
         updateHitboxes(this, m_fields->m_drawNode);
     }
 };
+
+$execute {
+    auto& config = Config::get();
+    auto& gui = GDH::Gui::get();
+    auto& hack = gui.getWindow("Level").findHackByName("Show Hitboxes");   
+
+    auto onDeathKey = hack.formatAdditionalSetting("show_on_death");
+
+    hack.setCustomWindowImGui([onDeathKey]{
+        ImGuiWidgetConfig::Checkbox("Show on Death", onDeathKey, false);
+    });
+}

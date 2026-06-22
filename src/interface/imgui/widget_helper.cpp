@@ -124,3 +124,29 @@ void ImGuiWidgetConfig::DrawKeybindButton(const std::string& windowName, GDH::Ha
         kb.startRecording(windowName, hack.getName());
     }
 }
+
+void ImGuiWidgetConfig::ColorEdit3Hex(const char* label, const std::string& key, const std::string& defaultHex) {
+    auto& config = Config::get(); 
+    std::string currentHex = config.get<std::string>(key, defaultHex);
+    
+    unsigned int hexValue = 0xFFFFFF;
+    std::stringstream ss;
+    ss << std::hex << (currentHex[0] == '#' ? currentHex.substr(1) : currentHex);
+    ss >> hexValue;
+    
+    float color[3] = {
+        ((hexValue >> 16) & 0xFF) / 255.f,
+        ((hexValue >> 8) & 0xFF) / 255.f,
+        (hexValue & 0xFF) / 255.f
+    };
+
+    if (ImGui::ColorEdit3(label, color, ImGuiColorEditFlags_NoInputs)) {
+        char newHex[8];
+        snprintf(newHex, sizeof(newHex), "%02X%02X%02X", 
+                 (int)(color[0] * 255.f), 
+                 (int)(color[1] * 255.f), 
+                 (int)(color[2] * 255.f));
+        
+        config.set<std::string>(key, std::string(newHex));
+    }
+}
