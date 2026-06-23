@@ -4,6 +4,8 @@
 #include "../../core/gui.hpp"
 #include "../../core/config.hpp"
 #include "../../interface/imgui/widget_helper.hpp"
+#include "../../core/utils.hpp"
+#include "imgui.h"
 
 using namespace geode::prelude;
 
@@ -59,6 +61,16 @@ void updateHitboxes(GJBaseGameLayer* layer, cocos2d::CCDrawNode* drawNode) {
     if (!config.get<bool>("level.show_hitboxes", false)) return;
     if (config.get<bool>("level.show_hitboxes::show_on_death", false) && !layer->m_isEditor && !layer->m_playerDied) return;
 
+    auto triggersColor = GDH::Utils::hexToColor4F(config.get<std::string>("level.show_hitboxes::triggersColor", "#FF00E6FF"));
+    auto otherColor = GDH::Utils::hexToColor4F(config.get<std::string>("level.show_hitboxes::otherColor", "#00FF00FF"));
+    auto passableColor = GDH::Utils::hexToColor4F(config.get<std::string>("level.show_hitboxes::passableColor", "#00FFFFFF"));
+    auto solidColor = GDH::Utils::hexToColor4F(config.get<std::string>("level.show_hitboxes::solidColor", "#003FFFFF"));
+    auto dangerColor = GDH::Utils::hexToColor4F(config.get<std::string>("level.show_hitboxes::dangerColor", "#FF0000FF"));
+
+    auto playerRotateColor = GDH::Utils::hexToColor4F(config.get<std::string>("level.show_hitboxes::playerRotateColor", "#800000FF"));
+    auto playerInnerColor = GDH::Utils::hexToColor4F(config.get<std::string>("level.show_hitboxes::playerInnerColor", "#003FFFFF"));
+    auto playerColor = GDH::Utils::hexToColor4F(config.get<std::string>("level.show_hitboxes::playerColor", "#FF0000FF"));
+
     if (!layer->m_sections.empty()) {
         const int rightBound = std::min(layer->m_rightSectionIndex, static_cast<int>(layer->m_sections.size()) - 1);
         for (int i = layer->m_leftSectionIndex; i <= rightBound; ++i) {
@@ -84,16 +96,15 @@ void updateHitboxes(GJBaseGameLayer* layer, cocos2d::CCDrawNode* drawNode) {
                             bool const isSpeedPortal = obj->m_objectID == 200 || obj->m_objectID == 201 || obj->m_objectID == 202 || obj->m_objectID == 203 || obj->m_objectID == 1334;
                             if (obj->m_objectType == GameObjectType::Modifier && !isSpeedPortal) {
                                 if (static_cast<EffectGameObject*>(obj)->m_isTouchTriggered)
-                                    drawOrientedOrRect(layer, drawNode, obj, {0,0,0,0}, 0.5f, {1.f,0.f,0.9f,1.f});
+                                    drawOrientedOrRect(layer, drawNode, obj, {0,0,0,0}, 0.5f, triggersColor);
                                 break;
                             }
-                            drawOrientedOrRect(layer, drawNode, obj, {0,0,0,0}, 0.5f, {0.f,1.f,0.f,1.f});
+                            drawOrientedOrRect(layer, drawNode, obj, {0,0,0,0}, 0.5f, otherColor);
                             break;
                         }
                         case GameObjectType::Solid: {
                             bool const p = obj->m_isPassable;
-                            drawRect(drawNode, obj->getObjectRect(), {0,0,0,0}, 0.5f,
-                                p ? cocos2d::ccColor4F{0.f, 1.f, 1.f, 1.f} : cocos2d::ccColor4F{0.f, 0.247f, 1.f, 1.f});
+                            drawRect(drawNode, obj->getObjectRect(), {0,0,0,0}, 0.5f, p ? passableColor : solidColor);
                             break;
                         }
                         case GameObjectType::Slope: {
@@ -111,7 +122,7 @@ void updateHitboxes(GJBaseGameLayer* layer, cocos2d::CCDrawNode* drawNode) {
                                 default: break;
                             }
                             bool const p = obj->m_isPassable;
-                            drawNode->drawPolygon(verts, 3, {0, 0, 0, 0}, 0.5f, p ? cocos2d::ccColor4F{0.f, 1.f, 1.f, 1.f} : cocos2d::ccColor4F{0.f, 0.247f, 1.f, 1.f});
+                            drawNode->drawPolygon(verts, 3, {0, 0, 0, 0}, 0.5f, p ? passableColor : solidColor);
                             break;
                         }
                         case GameObjectType::AnimatedHazard:
@@ -120,9 +131,9 @@ void updateHitboxes(GJBaseGameLayer* layer, cocos2d::CCDrawNode* drawNode) {
                             float const radius = std::max(obj->m_scaleX, obj->m_scaleY) * obj->m_objectRadius;
 
                             if (radius > 0)
-                                drawNode->drawCircle(obj->getPosition(), radius, {0, 0, 0, 0}, 0.5f, {1.f, 0.f, 0.f, 1.f}, 16);
+                                drawNode->drawCircle(obj->getPosition(), radius, {0, 0, 0, 0}, 0.5f, dangerColor, 16);
                             else
-                                drawOrientedOrRect(layer, drawNode, obj, {0, 0, 0, 0}, 0.5f, {1.f, 0.f, 0.f, 1.f});
+                                drawOrientedOrRect(layer, drawNode, obj, {0, 0, 0, 0}, 0.5f, dangerColor);
 
                             break;
                         }
@@ -136,10 +147,10 @@ void updateHitboxes(GJBaseGameLayer* layer, cocos2d::CCDrawNode* drawNode) {
     auto drawPlayer = [&](PlayerObject* player) {
         if (!player) return;
         if (auto* ob = player->m_orientedBox)
-            drawNode->drawPolygon(ob->m_corners.data(), 4, {0, 0, 0, 0}, 0.5f, {0.5f, 0.f, 0.f, 1.f});
+            drawNode->drawPolygon(ob->m_corners.data(), 4, {0, 0, 0, 0}, 0.5f, playerRotateColor);
 
-        drawRect(drawNode, player->getObjectRect(), {0, 0, 0, 0}, 0.5f, {1.f, 0.f, 0.f, 1.f});
-        drawRect(drawNode, player->getObjectRect(0.3f, 0.3f), {0, 0, 0, 0}, 0.5f, {0.f, 0.f, 1.f, 1.f});
+        drawRect(drawNode, player->getObjectRect(), {0, 0, 0, 0}, 0.5f, playerColor);
+        drawRect(drawNode, player->getObjectRect(0.3f, 0.3f), {0, 0, 0, 0}, 0.5f, playerInnerColor);
     };
 
     drawPlayer(layer->m_player1);
@@ -186,7 +197,31 @@ $execute {
 
     auto onDeathKey = hack.formatAdditionalSetting("show_on_death");
 
-    hack.setCustomWindowImGui([onDeathKey]{
+    auto cTriggersKey = hack.formatAdditionalSetting("triggersColor");
+    auto cOtherKey = hack.formatAdditionalSetting("otherColor");
+    auto cPassableKey = hack.formatAdditionalSetting("passableColor");
+    auto cSolidKey = hack.formatAdditionalSetting("solidColor");
+    auto cDangerKey = hack.formatAdditionalSetting("dangerColor");
+    auto cPlayerRotateKey = hack.formatAdditionalSetting("playerRotateColor");
+    auto cPlayerInnerKey = hack.formatAdditionalSetting("playerInnerColor");
+    auto cPlayerKey = hack.formatAdditionalSetting("playerColor");
+
+    hack.setCustomWindowImGui([=]{
         ImGuiWidgetConfig::Checkbox("Show on Death", onDeathKey, false);
+        
+        ImGui::Separator();
+        ImGui::Text("Hitbox Colors:");
+
+        ImGuiWidgetConfig::ColorEdit4Hex("Triggers", cTriggersKey, "#FF00E6FF");
+        ImGuiWidgetConfig::ColorEdit4Hex("Other Objects", cOtherKey, "#00FF00FF");
+        ImGuiWidgetConfig::ColorEdit4Hex("Passable Blocks", cPassableKey, "#00FFFFFF");
+        ImGuiWidgetConfig::ColorEdit4Hex("Solid (Blocks)", cSolidKey, "#003FFFFF");
+        ImGuiWidgetConfig::ColorEdit4Hex("Danger (Spikes)", cDangerKey, "#FF0000FF");
+        
+        ImGui::Separator();
+        ImGui::Text("Player:");
+        ImGuiWidgetConfig::ColorEdit4Hex("Player Rotated Box", cPlayerRotateKey, "#800000FF");
+        ImGuiWidgetConfig::ColorEdit4Hex("Player Inner Box", cPlayerInnerKey, "#003FFFFF");
+        ImGuiWidgetConfig::ColorEdit4Hex("Player Box", cPlayerKey, "#FF0000FF");
     });
 }

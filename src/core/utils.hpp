@@ -21,4 +21,5 @@ namespace GDH { namespace Utils {
     void setReverb(float decayTime);
 
     cocos2d::ccColor3B hexToColor(const std::string& hexStr);
+    cocos2d::ccColor4F hexToColor4F(const std::string& hexStr);
 } }

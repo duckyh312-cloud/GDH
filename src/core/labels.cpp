@@ -159,9 +159,10 @@ bool renderVariable(geode::utils::StringBuffer<> &stream, std::string_view var_n
     }
     else if (var_name == "session_time") {
         auto dur = std::chrono::steady_clock::now() - g_sessionStart;
-        auto secs = std::chrono::duration_cast<std::chrono::seconds>(dur); secs %= 60;
-        auto mins = std::chrono::duration_cast<std::chrono::minutes>(secs); mins %= 60;
-        auto hours = std::chrono::duration_cast<std::chrono::hours>(mins);
+        auto hours = std::chrono::duration_cast<std::chrono::hours>(dur);
+        auto mins = std::chrono::duration_cast<std::chrono::minutes>(dur) % 60;
+        auto secs = std::chrono::duration_cast<std::chrono::seconds>(dur) % 60;
+        
         stream.append(fmt::format("{:02}:{:02}:{:02}", hours.count(), mins.count(), secs.count()));
     } else if (var_name == "progress" || var_name.starts_with("progress:")) {
         var_name.remove_prefix(8);

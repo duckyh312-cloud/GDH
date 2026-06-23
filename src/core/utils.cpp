@@ -292,3 +292,25 @@ cocos2d::ccColor3B GDH::Utils::hexToColor(const std::string& hexStr) {
 
     return { r, g, b };
 }
+
+cocos2d::ccColor4F GDH::Utils::hexToColor4F(const std::string& hexStr) {
+    std::string cleanHex = hexStr;
+    if (!cleanHex.empty() && cleanHex[0] == '#') {
+        cleanHex = cleanHex.substr(1);
+    }
+    if (cleanHex.length() == 6) {
+        cleanHex += "FF";
+    }
+
+    unsigned int hexValue = 0xFFFFFFFF;
+    std::stringstream ss;
+    ss << std::hex << cleanHex;
+    ss >> hexValue;
+
+    float r = ((hexValue >> 24) & 0xFF) / 255.0f;
+    float g = ((hexValue >> 16) & 0xFF) / 255.0f;
+    float b = ((hexValue >> 8) & 0xFF) / 255.0f;
+    float a = (hexValue & 0xFF) / 255.0f;
+
+    return { r, g, b, a };
+}
