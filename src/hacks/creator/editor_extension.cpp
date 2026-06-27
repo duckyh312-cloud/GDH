@@ -1,6 +1,5 @@
 #include <Geode/Geode.hpp>
 #include "../../core/gui.hpp"
-#include "Geode/platform/windows.hpp"
 
 GUI_HACK_CREATE("Creator", "Editor Extension", "Increases the editor length by a factor of 128", false);
 
