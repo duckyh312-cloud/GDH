@@ -9,19 +9,24 @@ class $modify(ZoomBypassEditorUI, EditorUI) {
         auto& gui = GDH::Gui::get();
         auto& hack = gui.getWindow("Creator").findHackByName("Zoom Bypass");        
         
+        #if defined(GEODE_IS_WINDOWS)
         hack.addHookPtr(self.getHook("EditorUI::zoomIn").unwrap());
         hack.addHookPtr(self.getHook("EditorUI::zoomOut").unwrap());
         hack.addHookPtr(self.getHook("EditorUI::scrollWheel").unwrap());
+        #elif defined(GEODE_IS_ANDROID) 
+        hack.addHookPtr(self.getHook("EditorUI::zoomGameLayer").unwrap());
+        #endif
     }
 
     void zoomBypass(bool in) {
         float scale = m_editorLayer->m_groundLayer->getScale();
         float step = (!in && scale <= 0.105f) || (in && scale < 0.095f) ? 0.01f : 0.1f;
-        geode::log::debug("{} {}", scale, step);
 
         scale += in ? step : -step;
         this->updateZoom(std::max(scale, 0.01f));
     }
+
+    #if defined(GEODE_IS_WINDOWS)
 
     void zoomIn(cocos2d::CCObject* sender) {
         zoomBypass(true);
@@ -45,4 +50,12 @@ class $modify(ZoomBypassEditorUI, EditorUI) {
                 zoomBypass(false);
         }
     }
+
+    #elif defined(GEODE_IS_ANDROID) 
+
+    void zoomGameLayer(bool zoomingIn) {
+        zoomBypass(zoomingIn);
+    }
+    
+    #endif
 };
