@@ -14,9 +14,8 @@ class $modify(SpeedhackCCScheduler, cocos2d::CCScheduler) {
         hack.addHookPtr(self.getHook("cocos2d::CCScheduler::update").unwrap());
         
         auto &config = Config::get();
-        if (config.get<float>("invisible.speedhack::value", 1.f) < 0.25) {      
-            config.set<float>("invisible.speedhack::value", 0.25f);
-        }
+        float value = config.get<float>("invisible.speedhack::value", 1.f); 
+        config.set<float>("invisible.speedhack::value", std::clamp(value, 0.25f, 1.f));
     }
 
     void update(float dt) {

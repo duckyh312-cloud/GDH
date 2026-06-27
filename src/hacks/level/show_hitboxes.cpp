@@ -71,17 +71,24 @@ void updateHitboxes(GJBaseGameLayer* layer, cocos2d::CCDrawNode* drawNode) {
     auto playerInnerColor = GDH::Utils::hexToColor4F(config.get<std::string>("level.show_hitboxes::playerInnerColor", "#003FFFFF"));
     auto playerColor = GDH::Utils::hexToColor4F(config.get<std::string>("level.show_hitboxes::playerColor", "#FF0000FF"));
 
+    auto size = config.get<float>("level.show_hitboxes::size", 0.5f);
+    auto fillAlpha = config.get<float>("level.show_hitboxes::fill_alpha", 0.2f);
+
+    auto getFillColor = [fillAlpha](cocos2d::ccColor4F color) -> cocos2d::ccColor4F {
+        return { color.r, color.g, color.b, fillAlpha };
+    };
+
     if (!layer->m_sections.empty()) {
-        const int rightBound = std::min(layer->m_rightSectionIndex, static_cast<int>(layer->m_sections.size()) - 1);
+        int rightBound = std::min(layer->m_rightSectionIndex, static_cast<int>(layer->m_sections.size()) - 1);
         for (int i = layer->m_leftSectionIndex; i <= rightBound; ++i) {
             auto* leftSection = layer->m_sections[i];
             if (!leftSection) continue;
-            const int topBound = std::min(layer->m_topSectionIndex, static_cast<int>(leftSection->size()) - 1);
+            int topBound = std::min(layer->m_topSectionIndex, static_cast<int>(leftSection->size()) - 1);
             auto* sizeRow = layer->m_sectionSizes[i];
             for (int j = layer->m_bottomSectionIndex; j <= topBound; ++j) {
                 auto* section = leftSection->at(j);
                 if (!section) continue;
-                const int sectionSize = sizeRow->at(j);
+                int sectionSize = sizeRow->at(j);
                 auto* data = section->data();
                 for (int k = 0; k < sectionSize; ++k) {
                     auto* obj = data[k];
@@ -93,27 +100,28 @@ void updateHitboxes(GJBaseGameLayer* layer, cocos2d::CCDrawNode* drawNode) {
                     switch (obj->m_objectType) {
                         default: {
                             if (obj == layer->m_player1 || obj == layer->m_player2) break;
-                            bool const isSpeedPortal = obj->m_objectID == 200 || obj->m_objectID == 201 || obj->m_objectID == 202 || obj->m_objectID == 203 || obj->m_objectID == 1334;
+                            bool isSpeedPortal = obj->m_objectID == 200 || obj->m_objectID == 201 || obj->m_objectID == 202 || obj->m_objectID == 203 || obj->m_objectID == 1334;
                             if (obj->m_objectType == GameObjectType::Modifier && !isSpeedPortal) {
                                 if (static_cast<EffectGameObject*>(obj)->m_isTouchTriggered)
-                                    drawOrientedOrRect(layer, drawNode, obj, {0,0,0,0}, 0.5f, triggersColor);
+                                    drawOrientedOrRect(layer, drawNode, obj, getFillColor(triggersColor), size, triggersColor);
                                 break;
                             }
-                            drawOrientedOrRect(layer, drawNode, obj, {0,0,0,0}, 0.5f, otherColor);
+                            drawOrientedOrRect(layer, drawNode, obj, getFillColor(otherColor), size, otherColor);
                             break;
                         }
                         case GameObjectType::Solid: {
-                            bool const p = obj->m_isPassable;
-                            drawRect(drawNode, obj->getObjectRect(), {0,0,0,0}, 0.5f, p ? passableColor : solidColor);
+                            bool p = obj->m_isPassable;
+                            drawRect(drawNode, obj->getObjectRect(), getFillColor(p ? passableColor : solidColor), size, p ? passableColor : solidColor);
                             break;
                         }
                         case GameObjectType::Slope: {
-                            auto const rect = obj->getObjectRect();
+                            auto rect = obj->getObjectRect();
                             cocos2d::CCPoint verts[3] = {
                                 {rect.getMinX(), rect.getMinY()},
                                 {rect.getMinX(), rect.getMaxY()},
                                 {rect.getMaxX(), rect.getMinY()},
                             };
+
                             cocos2d::CCPoint const tr{rect.getMaxX(), rect.getMaxY()};
                             switch (obj->m_slopeDirection) {
                                 case 0: case 7: verts[1] = tr; break;
@@ -121,8 +129,10 @@ void updateHitboxes(GJBaseGameLayer* layer, cocos2d::CCDrawNode* drawNode) {
                                 case 3: case 6: verts[2] = tr; break;
                                 default: break;
                             }
+                            
                             bool const p = obj->m_isPassable;
-                            drawNode->drawPolygon(verts, 3, {0, 0, 0, 0}, 0.5f, p ? passableColor : solidColor);
+                            drawNode->drawPolygon(verts, 3, getFillColor(p ? passableColor : solidColor), size, p ? passableColor : solidColor);
+                            
                             break;
                         }
                         case GameObjectType::AnimatedHazard:
@@ -131,9 +141,9 @@ void updateHitboxes(GJBaseGameLayer* layer, cocos2d::CCDrawNode* drawNode) {
                             float const radius = std::max(obj->m_scaleX, obj->m_scaleY) * obj->m_objectRadius;
 
                             if (radius > 0)
-                                drawNode->drawCircle(obj->getPosition(), radius, {0, 0, 0, 0}, 0.5f, dangerColor, 16);
+                                drawNode->drawCircle(obj->getPosition(), radius, getFillColor(dangerColor), size, dangerColor, 16);
                             else
-                                drawOrientedOrRect(layer, drawNode, obj, {0, 0, 0, 0}, 0.5f, dangerColor);
+                                drawOrientedOrRect(layer, drawNode, obj, getFillColor(dangerColor), size, dangerColor);
 
                             break;
                         }
@@ -147,10 +157,10 @@ void updateHitboxes(GJBaseGameLayer* layer, cocos2d::CCDrawNode* drawNode) {
     auto drawPlayer = [&](PlayerObject* player) {
         if (!player) return;
         if (auto* ob = player->m_orientedBox)
-            drawNode->drawPolygon(ob->m_corners.data(), 4, {0, 0, 0, 0}, 0.5f, playerRotateColor);
+            drawNode->drawPolygon(ob->m_corners.data(), 4, getFillColor(playerRotateColor), size, playerRotateColor);
 
-        drawRect(drawNode, player->getObjectRect(), {0, 0, 0, 0}, 0.5f, playerColor);
-        drawRect(drawNode, player->getObjectRect(0.3f, 0.3f), {0, 0, 0, 0}, 0.5f, playerInnerColor);
+        drawRect(drawNode, player->getObjectRect(), getFillColor(playerColor), size, playerColor);
+        drawRect(drawNode, player->getObjectRect(0.3f, 0.3f), getFillColor(playerInnerColor), size, playerInnerColor);
     };
 
     drawPlayer(layer->m_player1);
@@ -196,6 +206,8 @@ $execute {
     auto& hack = gui.getWindow("Level").findHackByName("Show Hitboxes");   
 
     auto onDeathKey = hack.formatAdditionalSetting("show_on_death");
+    auto sizeKey = hack.formatAdditionalSetting("size");
+    auto fillAlphaKey = hack.formatAdditionalSetting("fill_alpha");
 
     auto cTriggersKey = hack.formatAdditionalSetting("triggersColor");
     auto cOtherKey = hack.formatAdditionalSetting("otherColor");
@@ -208,7 +220,9 @@ $execute {
 
     hack.setCustomWindowImGui([=]{
         ImGuiWidgetConfig::Checkbox("Show on Death", onDeathKey, false);
-        
+        ImGuiWidgetConfig::DragFloat("##Hitbox_Size", sizeKey, 0.05f, 0, 20.f, 0.5f, "Size: %.2f");
+        ImGuiWidgetConfig::DragFloat("##Hitbox_FillAlpha", fillAlphaKey, 0.01f, 0, 1.f, 0.2f, "Fill Alpha: %.2f");
+
         ImGui::Separator();
         ImGui::Text("Hitbox Colors:");
 

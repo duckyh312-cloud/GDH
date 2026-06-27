@@ -48,7 +48,7 @@ static std::vector<std::vector<std::string>> g_layout = {
 };
 
 static std::vector<GDH::Layout::WindowInfo> g_fixedWindowSizes = {
-    {"Cosmetic", 0.f, 775.f},
+    {"Cosmetic", 0.f, 910.f},
     {"Labels", 240.f, 350.f},
     {"Replay Engine", 300.f, 200.f},
     {"Keybinds", 0.f, 180.f},
