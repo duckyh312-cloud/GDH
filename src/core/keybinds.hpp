@@ -37,6 +37,8 @@ namespace GDH {
         void changeBind(const std::string& id, geode::Keybind newBind);
         geode::Keybind getBind(const std::string& id) const;
         void removeCallback(const std::string& id);
+
+        int convertToWinAPI(cocos2d::enumKeyCodes cocosKey);
         
         bool m_isKeybindsMode = false;
     private:

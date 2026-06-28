@@ -141,10 +141,16 @@ class $modify(LateHacksInitMenuLayer, MenuLayer) {
             auto& gui = Gui::get();
             auto& windows = gui.getWindows();
 
-            for (auto& window : windows)
-                for (auto& hack : window.getHacks())
+            size_t totalHacks = 0;
+            for (auto& window : windows) {
+                for (auto& hack : window.getHacks()) {
                     if (hack.getEnabled() && !hack.getEarlyInit())
                         hack.callHandler(true);
+                    totalHacks++;
+                }
+            }
+
+            geode::log::debug("total loaded: {} hacks", totalHacks);
 
             #ifdef GEODE_IS_WINDOWS
             auto& kb = GDH::Keybinds::get();
