@@ -2,7 +2,6 @@
 #include "imgui.h"
 #include <Geode/Geode.hpp>
 #include "../../../core/gui.hpp"
-#include "../../../core/utils.hpp"
 #include "../../../core/shortcuts.hpp"
 #include "../widgetH.hpp"
 #include <imgui-cocos.hpp>
@@ -19,6 +18,9 @@ $execute {
 
         if (ImGuiH::Button("Graphics Settings", {width, 0.f}))
             GDH::Shortcuts::openGraphicsSettings();
+
+        if (ImGuiH::Button("Quests Page", {width, 0.f}))
+            GDH::Shortcuts::openQuests();
 
         if (ImGuiH::Button("Reset Level", {width, 0.f})) 
             GDH::Shortcuts::resetLevel();

@@ -12,8 +12,8 @@ class $modify(HidePauseButtonUILayer, UILayer) {
         hack.addHookPtr(self.getHook("UILayer::init").unwrap());
     }
 
-    bool init(GJBaseGameLayer* p0) {
-        if (!UILayer::init(p0)) return false;        
+    bool init(GJBaseGameLayer *layer) {
+        if (!UILayer::init(layer)) return false;        
         
         auto menu = getChildByType<cocos2d::CCMenu>(0);
         auto btn = menu->getChildByType<CCMenuItemSpriteExtra>(0);

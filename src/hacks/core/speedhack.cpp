@@ -3,7 +3,7 @@
 #include "../../core/gui.hpp"
 #include "../../core/config.hpp"
 
-GUI_HACK_CREATE("Invisible", "Speedhack", "", false);
+GUI_HACK_CREATE("Invisible", "Speedhack", "", true);
 
 class $modify(SpeedhackCCScheduler, cocos2d::CCScheduler) {
     static void onModify(auto& self) {

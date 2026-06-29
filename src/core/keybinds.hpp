@@ -1,7 +1,6 @@
 #pragma once
 #include <Geode/Geode.hpp>
 #include <unordered_set>
-#include <functional>
 #include <vector>
 #include <string>
 #include <unordered_map>
@@ -33,7 +32,7 @@ namespace GDH {
         bool isKeyDown(cocos2d::enumKeyCodes key) const;
         bool isMouseButtonDown(geode::MouseInputData::Button button) const;
 
-        void addCallback(const std::string& id, geode::Keybind defaultBind, std::function<void()> callback);
+        void addCallback(const std::string& id, geode::Keybind defaultBind, geode::Function<void()> callback);
         void changeBind(const std::string& id, geode::Keybind newBind);
         geode::Keybind getBind(const std::string& id) const;
         void removeCallback(const std::string& id);
@@ -45,7 +44,7 @@ namespace GDH {
         Keybinds() = default;
 
         std::unordered_map<geode::Keybind, std::vector<std::pair<std::string, std::string>>> m_bindsMap;
-        std::unordered_map<std::string, std::pair<geode::Keybind, std::function<void()>>> m_customBinds;
+        std::unordered_map<std::string, std::pair<geode::Keybind, geode::Function<void()>>> m_customBinds;
 
         std::string m_recordingWindow = "";
         std::string m_recordingHack = "";

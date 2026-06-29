@@ -42,7 +42,8 @@ void HacksTab::addToggle(GDH::Hack& hck) {
     toggle->toggle(hck.getEnabled());
     hackNode->addChild(toggle);
 
-    auto label = CCLabelBMFont::create(hck.getName().c_str(), "GoogleSans.fnt"_spr);
+    std::string name = hck.getName();
+    auto label = CCLabelBMFont::create(name.c_str(), "GoogleSans.fnt"_spr);
     label->setAnchorPoint({0.f, 0.5f});
     label->setScale(0.65f); 
     label->setPosition({toggle->getPositionX() + 22.f, 15.f});
@@ -54,11 +55,12 @@ void HacksTab::addToggle(GDH::Hack& hck) {
     hackNode->addChild(label);
 
     std::string desc = hck.getDesc();
+
     if (!desc.empty()) {
         auto descSprite = CCSprite::create("GDH_infoIcon.png"_spr);
         descSprite->setScale(0.45f);
-        auto descClick = CCMenuItemExt::createSpriteExtra(descSprite, [hck, desc](CCMenuItemSpriteExtra* sender) {
-            GDH::MaterialLayer(FLAlertLayer::create(hck.getName().c_str(), desc.c_str(), "OK"))->show();
+        auto descClick = CCMenuItemExt::createSpriteExtra(descSprite, [name, desc](CCMenuItemSpriteExtra* sender) {
+            GDH::MaterialLayer(FLAlertLayer::create(name.c_str(), desc.c_str(), "OK"))->show();
         });
         
         descClick->setPosition({label->getPositionX() + label->getScaledContentWidth() + 10.f, 17.f});
@@ -153,7 +155,7 @@ void HacksTab::addConfigToggle(const std::string& labelText, const std::string& 
     updateRowAlignment(m_currentRow);
 }
 
-void HacksTab::addConfigIntInput(const std::string& labelText, const std::string& key, int defaultValue, int min, int max, std::function<void(int)> callback) {
+void HacksTab::addConfigIntInput(const std::string& labelText, const std::string& key, int defaultValue, int min, int max, geode::Function<void(int)> callback) {
     auto& config = Config::get();
     float columnWidth = 175.f;
     
@@ -171,7 +173,7 @@ void HacksTab::addConfigIntInput(const std::string& labelText, const std::string
     input->setFilter("0123456789-");
     input->setMaxCharCount(8);
     
-    input->setCallback([key, callback, min, max](const std::string& str) {
+    input->setCallback([key, callback = std::move(callback), min, max](const std::string& str) mutable {
         auto value = geode::utils::numFromString<int>(str);
         if (!value.isErr()) {
             int val = std::clamp(value.unwrap(), min, max);
@@ -192,7 +194,7 @@ void HacksTab::addConfigIntInput(const std::string& labelText, const std::string
     updateRowAlignment(m_currentRow);
 }
 
-void HacksTab::addConfigFloatInput(const std::string& labelText, const std::string& key, float defaultValue, float min, float max, std::function<void(float)> callback) {
+void HacksTab::addConfigFloatInput(const std::string& labelText, const std::string& key, float defaultValue, float min, float max, geode::Function<void(float)> callback) {
     auto& config = Config::get();
     float columnWidth = 175.f;
     
@@ -210,7 +212,7 @@ void HacksTab::addConfigFloatInput(const std::string& labelText, const std::stri
     input->setFilter("0123456789-.");
     input->setMaxCharCount(8);
     
-    input->setCallback([key, callback, min, max](const std::string& str) {
+    input->setCallback([key, callback = std::move(callback), min, max](const std::string& str) mutable {
         auto value = geode::utils::numFromString<float>(str);
         if (!value.isErr()) {
             float val = std::clamp(value.unwrap(), min, max);
@@ -244,20 +246,20 @@ void HacksTab::addText(const std::string& text, float scale) {
     }
 }
 
-void HacksTab::addConfigButton(const std::string& labelText, std::function<void()> callback, const std::string& secondLabelText, std::function<void()> secondCallback) {
+void HacksTab::addConfigButton(const std::string& labelText, geode::Function<void()> callback, const std::string& secondLabelText, geode::Function<void()> secondCallback) {
     float columnWidth = 170.f;
     bool dualMode = !secondLabelText.empty() && secondCallback != nullptr;
 
     prepareNewRow();
 
     if (dualMode) {
-        auto createHalfNode = [columnWidth](const std::string& text, std::function<void()> cb) -> CCMenu* {
+        auto createHalfNode = [columnWidth](const std::string& text, geode::Function<void()> cb) -> CCMenu* {
             auto node = CCMenu::create();
             node->setContentSize({columnWidth, 30.f});
             node->setAnchorPoint({0, 0.5f});
 
             auto btnSprite = ButtonSprite::create(text.c_str(), 140, true, "GoogleSans.fnt"_spr, "GDH_button_01.png"_spr, 25.f, 0.6f);
-            auto btnClick = CCMenuItemExt::createSpriteExtra(btnSprite, [cb](CCMenuItemSpriteExtra* sender) {
+            auto btnClick = CCMenuItemExt::createSpriteExtra(btnSprite, [cb = std::move(cb)](CCMenuItemSpriteExtra* sender) mutable {
                 if (cb) cb();
             });
             btnClick->setPosition({columnWidth / 2.f - 5.f, 15.f});
@@ -265,8 +267,8 @@ void HacksTab::addConfigButton(const std::string& labelText, std::function<void(
             return node;
         };
 
-        m_currentRow->addChild(createHalfNode(labelText, callback));
-        m_currentRow->addChild(createHalfNode(secondLabelText, secondCallback));
+        m_currentRow->addChild(createHalfNode(labelText, std::move(callback)));
+        m_currentRow->addChild(createHalfNode(secondLabelText, std::move(secondCallback)));
     } 
     else {
         auto node = CCMenu::create();
@@ -274,7 +276,7 @@ void HacksTab::addConfigButton(const std::string& labelText, std::function<void(
         node->setAnchorPoint({0, 0.5f});
 
         auto btnSprite = ButtonSprite::create(labelText.c_str(), 315, true, "GoogleSans.fnt"_spr, "GDH_button_01.png"_spr, 25.f, 0.6f);
-        auto btnClick = CCMenuItemExt::createSpriteExtra(btnSprite, [callback](CCMenuItemSpriteExtra* sender) {
+        auto btnClick = CCMenuItemExt::createSpriteExtra(btnSprite, [callback = std::move(callback)](CCMenuItemSpriteExtra* sender) mutable {
             if (callback) callback();
         });
         

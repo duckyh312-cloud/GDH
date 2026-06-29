@@ -35,7 +35,7 @@ void Keybinds::init() {
             
             geode::Keybind pressedBind(event.key, event.modifiers);
             
-            for (const auto& [id, customPair] : m_customBinds) {
+            for (auto& [id, customPair] : m_customBinds) {
                 if (customPair.first == pressedBind && customPair.second) {
                     customPair.second();
                     return ListenerResult::Stop;
@@ -182,11 +182,11 @@ bool Keybinds::isMouseButtonDown(geode::MouseInputData::Button button) const {
     return m_pressedMouseButtons.contains(button);
 }
 
-void Keybinds::addCallback(const std::string& id, geode::Keybind defaultBind, std::function<void()> callback) {
+void Keybinds::addCallback(const std::string& id, geode::Keybind defaultBind, geode::Function<void()> callback) {
     if (m_customBinds.contains(id)) {
-        m_customBinds[id].second = callback;
+        m_customBinds[id].second = std::move(callback);
     } else {
-        m_customBinds[id] = {defaultBind, callback};
+        m_customBinds[id] = {defaultBind, std::move(callback)};
     }
 }
 

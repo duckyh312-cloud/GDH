@@ -2,7 +2,7 @@
 #include <Geode/Geode.hpp>
 
 class OverlayButton : public cocos2d::CCMenu {
-    std::function<void()> m_callback;
+    geode::Function<void()> m_callback;
     cocos2d::CCSprite* m_sprite = nullptr;
     cocos2d::CCPoint m_target;
     float m_scale = 0.60f;
@@ -25,5 +25,5 @@ public:
     static OverlayButton* instance;
     static OverlayButton* create(const char* file);
     static OverlayButton* get(const char* file = "GDH_buttonUI.png"_spr);
-    void setCallback(std::function<void()>&& cb) { m_callback = std::move(cb); }
+    void setCallback(geode::Function<void()>&& cb) { m_callback = std::move(cb); }
 };

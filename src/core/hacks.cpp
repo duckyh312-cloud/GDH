@@ -45,7 +45,7 @@ void Hack::toggle() {
     callHandler(state);
 }
 
-void Hack::setHandler(std::function<void(bool)> func) {
+void Hack::setHandler(geode::Function<void(bool)> func) {
     auto& config = Config::get();
     m_handlerFunc = std::move(func);
 
@@ -68,4 +68,15 @@ void Hack::enableHooks(bool state) {
 void GDH::Hack::setKeybind(geode::Keybind const& keybind) {
     m_keybind = keybind;
     GDH::Keybinds::get().rebuildCache();
+}
+
+void Hack::setCustomCheatingCheck(geode::Function<bool()> func) {
+    m_customCheatingCheck = std::move(func);
+}
+
+bool Hack::isCheating() {
+    if (m_customCheatingCheck) {
+        return m_customCheatingCheck();
+    }
+    return m_cheating;
 }

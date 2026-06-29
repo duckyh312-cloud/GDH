@@ -19,6 +19,12 @@ namespace GDH { namespace Shortcuts {
         }
     }
 
+    inline void openQuests() {
+        if (auto challenges_page = ChallengesPage::create()) {
+            challenges_page->show();
+        }
+    }
+
     inline void resetLevel() {
         if (auto pl = PlayLayer::get()) pl->resetLevel();
     }

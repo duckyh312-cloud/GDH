@@ -13,7 +13,8 @@ class $modify(ReplayCCScheduler, cocos2d::CCScheduler) {
         (void) self.setHookPriority("cocos2d::CCScheduler::update", geode::Priority::Normal); 
 
         auto& gui = GDH::Gui::get();
-        auto& hack = gui.getWindow("Invisible").findHackByName("TPS");        
+        auto& hack = gui.getWindow("Invisible").findHackByName("TPS");   
+        hack.setCheating(false);     
         hack.addHookPtr(self.getHook("cocos2d::CCScheduler::update").unwrap());
     }
 

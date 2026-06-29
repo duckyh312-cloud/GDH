@@ -19,7 +19,7 @@ bool HacksLayer::init() {
     m_index = config.get<int>("gui_mobile.index", 0);
     m_lastIndexScroll = config.get<int>("gui_mobile.lastIndexScroll", 20.f);
 
-    auto windows = gui.getWindows();
+    auto& windows = gui.getWindows();
 
     m_closeBtn->setVisible(false);
     

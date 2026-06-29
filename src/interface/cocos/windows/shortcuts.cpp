@@ -16,6 +16,9 @@ $execute {
 
         tab->addConfigButton("Graphics Settings", []() {
             GDH::Shortcuts::openGraphicsSettings();
+        },
+        "Quests Page", []() {
+            GDH::Shortcuts::openQuests();
         });
         
         tab->addConfigButton("Reset Level", []() {
