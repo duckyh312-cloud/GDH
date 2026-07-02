@@ -10,7 +10,9 @@ GUI_HACK_CREATE("Core", "Practice Music", "Unlocks RobTop's \"Practice Music Syn
 class $modify(PracticeMusicGameStatsManager, GameStatsManager) {
     static void onModify(auto& self) {
         auto& gui = GDH::Gui::get();
-        auto& hack = gui.getWindow("Core").findHackByName("Practice Music");        
+        auto& hack = gui.getWindow("Core").findHackByName("Practice Music"); 
+        
+        hack.setEarlyInit(false);
         hack.setHandler([](bool enabled) {
             auto gsm = GameStatsManager::get();
             auto gjbgl = GJBaseGameLayer::get();

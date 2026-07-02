@@ -40,7 +40,7 @@ class $modify(NoParticlesCCParticleSystemQuad, CCParticleSystemQuad) {
 
         hack.addHookPtr(self.getHook("cocos2d::CCParticleSystemQuad::create").unwrap());
 
-        hack.setCustomWindowImGui([=]() {
+        hack.setCustomWindowImGui([]() {
             auto& hackRef = GDH::Gui::get().getWindow("Cosmetic").findHackByName("No Particles");
             for (const auto& effect : g_effects) {
                 std::string fullKey = hackRef.formatAdditionalSetting(effect[1]);

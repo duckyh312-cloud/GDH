@@ -10,11 +10,10 @@ class $modify(RespawnTimePlayLayer, PlayLayer) {
     static void onModify(auto& self) {
         auto& gui = GDH::Gui::get();
         auto& hack = gui.getWindow("Level").findHackByName("Respawn Time");        
-            
-        auto hackID = hack.getID();
-        auto delayKey = hack.formatAdditionalSetting("delay");
 
-        hack.setCustomWindowImGui([hackID, delayKey]{
+        hack.setCustomWindowImGui([
+            delayKey = hack.formatAdditionalSetting("delay")
+        ]{
             ImGuiWidgetConfig::DragFloat("##Respawn_Time_value", delayKey, 0.01f, 0, FLT_MAX, 1.f, "Respawn Time: %.2fs");
         });
 

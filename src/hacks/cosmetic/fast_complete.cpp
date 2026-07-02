@@ -9,11 +9,11 @@ GUI_HACK_CREATE("Cosmetic", "Fast Level Complete", "Fast level completion withou
 class $modify(FastLevelCompletePlayLayer, PlayLayer) {
     static void onModify(auto& self) {
         auto& gui = GDH::Gui::get();
-        auto& hack = gui.getWindow("Cosmetic").findHackByName("Fast Level Complete");     
-        auto hackID = hack.getID();
-        auto veryFastKey = hack.formatAdditionalSetting("veryFast");
+        auto& hack = gui.getWindow("Cosmetic").findHackByName("Fast Level Complete");
 
-        hack.setCustomWindowImGui([hackID, veryFastKey]{
+        hack.setCustomWindowImGui([
+            veryFastKey = hack.formatAdditionalSetting("veryFast")
+        ]{
             ImGuiWidgetConfig::Checkbox("Very Fast", veryFastKey, false);
         });   
         

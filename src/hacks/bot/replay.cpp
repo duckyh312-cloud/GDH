@@ -48,7 +48,8 @@ class $modify(ReplayCCScheduler, cocos2d::CCScheduler) {
 class $modify(ReplayGJBaseGameLayer, GJBaseGameLayer) {
     static void onModify(auto& self) {
         auto& gui = GDH::Gui::get();
-        auto& hack = gui.getWindow("Invisible").findHackByName("TPS");        
+        auto& hack = gui.getWindow("Invisible").findHackByName("TPS");       
+        hack.setCheating(true); 
         hack.addHookPtr(self.getHook("GJBaseGameLayer::getModifiedDelta").unwrap());
     }
 

@@ -30,9 +30,9 @@ class $modify(StartposSwitcherPlayLayer, PlayLayer) {
         hack.addHookPtr(self.getHook("PlayLayer::addObject").unwrap());
         hack.addHookPtr(self.getHook("PlayLayer::createObjectsFromSetupFinished").unwrap());
 
-        auto resetCamera_key = hack.formatAdditionalSetting("reset_camera");
-
-        hack.setCustomWindowImGui([resetCamera_key] {
+        hack.setCustomWindowImGui([
+            resetCamera_key = hack.formatAdditionalSetting("reset_camera")
+        ] {
             ImGuiWidgetConfig::Checkbox("Reset Camera", resetCamera_key, false);
             ImGuiWidgetConfig::DrawCustomKeybindButton("startpos_switcher::left", "Left Switch", geode::Keybind(cocos2d::KEY_Q, KeyboardModifier::None));
             ImGuiWidgetConfig::DrawCustomKeybindButton("startpos_switcher::right", "Right Switch", geode::Keybind(cocos2d::KEY_E, KeyboardModifier::None));

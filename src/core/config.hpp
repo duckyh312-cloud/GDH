@@ -8,6 +8,7 @@
 #include <unordered_map>
 #include <variant>
 #include <type_traits>
+#include <asp/fs.hpp>
 
 static const auto folderPath = geode::Mod::get()->getSaveDir();
 static const auto folderMacroPath = folderPath / "Macros";
@@ -102,18 +103,19 @@ public:
     }
 
     template <typename T> requires is_valid_type<T>
-    void set(const std::string& key, T value) {
-        m_values[key] = value;
+    void set(std::string key, T value) {
+        m_values.insert_or_assign(std::move(key), std::move(value));
     }
 
     template <typename T, typename R = optional_ref<T>> requires is_valid_type<T>
-    R get(const std::string& key, const T& defaultValue) {
+    R get(std::string_view key, const T& defaultValue) {
         if (!inited) {
             auto CheckDir = [](const std::filesystem::path& path)
             {
-                if (!std::filesystem::is_directory(path) || !std::filesystem::exists(path))
+                std::error_code ec;
+                if (!std::filesystem::is_directory(path, ec) || !asp::fs::exists(path))
                 {
-                    std::filesystem::create_directory(path);
+                    std::filesystem::create_directory(path, ec);
                 }
             };
             CheckDir(folderMacroPath);
@@ -134,7 +136,7 @@ private:
     using Value = std::variant<bool, int, float, std::string>;
 
     Config() = default;
-    std::unordered_map<std::string, Value> m_values {};
-    
+    geode::utils::StringMap<Value> m_values {};
+
     bool inited = false;
 };

@@ -2,7 +2,7 @@
 #include <Geode/modify/CameraTriggerGameObject.hpp>
 #include "../../core/gui.hpp"
 
-GUI_HACK_CREATE("Cosmetic", "No Camera Move", "Disables camera movement via trigger", false);
+GUI_HACK_CREATE("Cosmetic", "No Camera Move", "Disables camera movement via trigger", true);
 
 class $modify(NoCameraMoveCameraTriggerGameObject, CameraTriggerGameObject) {
     static void onModify(auto& self) {

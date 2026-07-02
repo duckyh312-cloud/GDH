@@ -15,8 +15,8 @@
 
 using namespace GDH::Labels;
 
-std::chrono::steady_clock::time_point g_sessionStart;
-float g_rainbowHue = 0.0f;
+static std::chrono::steady_clock::time_point g_sessionStart;
+static float g_rainbowHue = 0.0f;
 
 $execute {
     GDH::Labels::Manager::get().load();
@@ -346,6 +346,22 @@ class $modify(LabelsPlayLayer, PlayLayer) {
     
     void postUpdate(float dt) {
         PlayLayer::postUpdate(dt);
+
+        auto& config = Config::get();
+        bool disable_all = config.get<bool>("labels::disable_all", false);
+
+        static bool was_disabled = false;
+
+        if (disable_all != was_disabled) {
+            was_disabled = disable_all;
+            for (auto &[corner, labelVec] : m_fields->labelObjs) {
+                for (auto* label : labelVec) {
+                    if (label) label->setVisible(!disable_all);
+                }
+            }
+        }
+
+        if (disable_all) return;
 
         CpsCounter::get().update();
 

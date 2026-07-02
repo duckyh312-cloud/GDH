@@ -48,7 +48,7 @@ static std::vector<std::vector<std::string>> g_layout = {
 };
 
 static std::vector<GDH::Layout::WindowInfo> g_fixedWindowSizes = {
-    {"Cosmetic", 0.f, 910.f},
+    {"Cosmetic", 0.f, 940.f},
     {"Labels", 240.f, 350.f},
     {"Replay Engine", 300.f, 200.f},
     {"Keybinds", 0.f, 180.f},
@@ -306,9 +306,13 @@ void RenderMain() {
             bool state = config.get(id, false);
 
             PushAnimateFoundColor(hackName);
+
+            if (hack.isCheating()) ImGui::PushStyleColor(ImGuiCol_Text, ImColor(255, 128, 128).Value);
             if (ImGuiH::Checkbox(hackName.c_str(), &state)) {
                 hack.toggle();
             }
+            if (hack.isCheating()) ImGui::PopStyleColor();
+            
             ImGui::PopStyleColor();
 
             ImGuiH::Tooltip(hack.getDesc().c_str(), !hack.getDesc().empty() && ImGui::IsItemHovered());

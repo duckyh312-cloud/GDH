@@ -12,8 +12,10 @@ $execute {
     auto& hack = gui.getWindow("Invisible").findHackByName("Pitch Shifter");   
     hack.setEarlyInit(false);
 
-    auto valueKey = hack.formatAdditionalSetting("value"); 
-    hack.setHandler([&config, valueKey](bool enabled) {
+    hack.setHandler([
+        &config,
+        valueKey = hack.formatAdditionalSetting("value") 
+    ](bool enabled) {
         GDH::Utils::setPitchShifter(enabled ? config.get<int>(valueKey, 0.f) : 0.f);
     });
 };

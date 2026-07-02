@@ -18,12 +18,12 @@ class $modify(NoclipPlayLayer, PlayLayer) {
         
         hack.addHookPtr(self.getHook("PlayLayer::destroyPlayer").unwrap());
 
-        auto tintOnDeathKey = hack.formatAdditionalSetting("tint_on_death");
-        auto opacityKey = hack.formatAdditionalSetting("tint_opacity");
-        auto fadeKey = hack.formatAdditionalSetting("tint_fade");
-        auto colorKey = hack.formatAdditionalSetting("tint_color");
-
-        hack.setCustomWindowImGui([tintOnDeathKey, opacityKey, fadeKey, colorKey]{
+        hack.setCustomWindowImGui([
+            tintOnDeathKey = hack.formatAdditionalSetting("tint_on_death"),
+            opacityKey = hack.formatAdditionalSetting("tint_opacity"),
+            fadeKey = hack.formatAdditionalSetting("tint_fade"),
+            colorKey = hack.formatAdditionalSetting("tint_color")
+        ]{
             ImGuiWidgetConfig::Checkbox("Tint On Death", tintOnDeathKey, false);
             ImGuiWidgetConfig::DragInt("##Tint Opacity", opacityKey, 1.f, 0, 255, 100, "Tint Opacity: %d");
             ImGuiWidgetConfig::DragFloat("##Tint Fade", fadeKey, 0.01f, 0, 1.f, 0.35f, "Tint Fade: %.2f");

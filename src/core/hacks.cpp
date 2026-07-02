@@ -18,10 +18,13 @@ bool Hack::getEnabled() const {
 
 void Hack::setGameVariableID(const std::string& key) {
     auto& config = Config::get();
-
     this->m_key = key;
-    bool enabled = GameManager::get()->getGameVariable(key.c_str());
-    config.set<bool>(m_ID, enabled);
+
+    std::string id = this->m_ID;
+    geode::queueInMainThread([id = std::move(id), &config]() {     
+        bool enabled = GameManager::get()->getGameVariable(id.c_str());
+        config.set<bool>(id, enabled);
+    });
 }
 
 void Hack::setEarlyInit(bool value) {
@@ -55,7 +58,7 @@ void Hack::setHandler(geode::Function<void(bool)> func) {
 
 void Hack::addHookPtr(geode::Hook* ptr) { 
     auto& config = Config::get();
-    m_hooksPtr.insert(ptr); 
+    m_hooksPtr.insert(ptr);
     (void)ptr->setAutoEnable(config.get(m_ID, false));
 }
 

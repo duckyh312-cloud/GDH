@@ -205,20 +205,20 @@ $execute {
     auto& gui = GDH::Gui::get();
     auto& hack = gui.getWindow("Level").findHackByName("Show Hitboxes");   
 
-    auto onDeathKey = hack.formatAdditionalSetting("show_on_death");
-    auto sizeKey = hack.formatAdditionalSetting("size");
-    auto fillAlphaKey = hack.formatAdditionalSetting("fill_alpha");
+    hack.setCustomWindowImGui([
+        onDeathKey = hack.formatAdditionalSetting("show_on_death"),
+        sizeKey = hack.formatAdditionalSetting("size"),
+        fillAlphaKey = hack.formatAdditionalSetting("fill_alpha"),
 
-    auto cTriggersKey = hack.formatAdditionalSetting("triggersColor");
-    auto cOtherKey = hack.formatAdditionalSetting("otherColor");
-    auto cPassableKey = hack.formatAdditionalSetting("passableColor");
-    auto cSolidKey = hack.formatAdditionalSetting("solidColor");
-    auto cDangerKey = hack.formatAdditionalSetting("dangerColor");
-    auto cPlayerRotateKey = hack.formatAdditionalSetting("playerRotateColor");
-    auto cPlayerInnerKey = hack.formatAdditionalSetting("playerInnerColor");
-    auto cPlayerKey = hack.formatAdditionalSetting("playerColor");
-
-    hack.setCustomWindowImGui([=]{
+        cTriggersKey = hack.formatAdditionalSetting("triggersColor"),
+        cOtherKey = hack.formatAdditionalSetting("otherColor"),
+        cPassableKey = hack.formatAdditionalSetting("passableColor"),
+        cSolidKey = hack.formatAdditionalSetting("solidColor"),
+        cDangerKey = hack.formatAdditionalSetting("dangerColor"),
+        cPlayerRotateKey = hack.formatAdditionalSetting("playerRotateColor"),
+        cPlayerInnerKey = hack.formatAdditionalSetting("playerInnerColor"),
+        cPlayerKey = hack.formatAdditionalSetting("playerColor")
+    ]{
         ImGuiWidgetConfig::Checkbox("Show on Death", onDeathKey, false);
         ImGuiWidgetConfig::DragFloat("##Hitbox_Size", sizeKey, 0.05f, 0, 20.f, 0.5f, "Size: %.2f");
         ImGuiWidgetConfig::DragFloat("##Hitbox_FillAlpha", fillAlphaKey, 0.01f, 0, 1.f, 0.2f, "Fill Alpha: %.2f");

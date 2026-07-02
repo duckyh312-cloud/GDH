@@ -5,7 +5,7 @@
 #include <imgui-cocos.hpp>
 #include <Geode/modify/GJBaseGameLayer.hpp>
 
-GUI_HACK_CREATE("Level", "Autoclicker", "", false);
+GUI_HACK_CREATE("Level", "Autoclicker", "", true);
 
 class $modify(AutoclickerGJBaseGameLayer, GJBaseGameLayer) {
     struct Fields {

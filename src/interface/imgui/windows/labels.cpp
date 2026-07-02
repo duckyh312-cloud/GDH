@@ -6,6 +6,7 @@
 #include "../../../core/gui.hpp"
 #include "../../../core/config.hpp"
 #include "../../../core/labels.hpp"
+#include "../widget_helper.hpp"
 #include "../widgetH.hpp"
 #include "../layout.hpp"
 
@@ -101,7 +102,7 @@ $execute {
 
     window.setCustomWindowImGui([&config, &gui, &layout] {
         auto& manager = GDH::Labels::Manager::get();
-
+        ImGuiWidgetConfig::Checkbox("Disable All", "labels::disable_all", false);
         ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
         ImGuiH::DragFloat("##LabelCorPadDrag", &manager.cornerPadding, 1.0f, 0.0f, 256.0f, "Corner Padding: %.1fpx");
         ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);

@@ -15,11 +15,10 @@ class $modify(AccuratePercentagePlayLayer, PlayLayer) {
 
         hack.addHookPtr(self.getHook("PlayLayer::updateProgressbar").unwrap());
 
-        auto hackID = hack.getID();
-        auto decimalsKey = hack.formatAdditionalSetting("demicals");
-        auto showMillisecondsKey = hack.formatAdditionalSetting("showMilliseconds");
-
-        hack.setCustomWindowImGui([hackID, decimalsKey, showMillisecondsKey]{
+        hack.setCustomWindowImGui([
+            decimalsKey = hack.formatAdditionalSetting("demicals"),
+            showMillisecondsKey = hack.formatAdditionalSetting("showMilliseconds")
+        ]{
             ImGuiWidgetConfig::InputInt("Demicals", decimalsKey, 2);
             ImGuiWidgetConfig::Checkbox("Show time in Milliseconds", showMillisecondsKey, true);
         });

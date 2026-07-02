@@ -32,18 +32,19 @@ class $modify(AutoDeafenPlayLayer, PlayLayer) {
         hack.addHookPtr(self.getHook("PlayLayer::updateProgressbar").unwrap());
         hack.addHookPtr(self.getHook("PlayLayer::pauseGame").unwrap());
 
-        auto bindKey = hack.formatAdditionalSetting("bind");
-
-        auto startKey = hack.formatAdditionalSetting("start");
-        auto endKey = hack.formatAdditionalSetting("end");
-        auto inPracticeKey = hack.formatAdditionalSetting("defaen_in_practice");
-        auto withStartPosKey = hack.formatAdditionalSetting("defaen_with_startpos");
-        auto undeafenOnPauseKey = hack.formatAdditionalSetting("undeafen_on_pause");
-
         auto& kb = GDH::Keybinds::get();
         auto& config = Config::get();
 
-        hack.setCustomWindowImGui([=, &kb, &config]() {
+        hack.setCustomWindowImGui([
+            bindKey = hack.formatAdditionalSetting("bind"),
+            startKey = hack.formatAdditionalSetting("start"),
+            endKey = hack.formatAdditionalSetting("end"),
+            inPracticeKey = hack.formatAdditionalSetting("defaen_in_practice"),
+            withStartPosKey = hack.formatAdditionalSetting("defaen_with_startpos"),
+            undeafenOnPauseKey = hack.formatAdditionalSetting("undeafen_on_pause"),
+            
+            &kb, &config
+        ]() {
             ImGuiWidgetConfig::DrawCustomKeybindButton(bindKey, "Bind key");
 
             static bool warningText = false;

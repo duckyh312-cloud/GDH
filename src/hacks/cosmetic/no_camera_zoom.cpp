@@ -2,7 +2,7 @@
 #include <Geode/modify/GJBaseGameLayer.hpp>
 #include "../../core/gui.hpp"
 
-GUI_HACK_CREATE("Cosmetic", "No Camera Zoom", "Disables camera zooming via trigger", false);
+GUI_HACK_CREATE("Cosmetic", "No Camera Zoom", "Disables camera zooming via trigger", true);
 
 class $modify(NoCameraZoomGJBaseGameLayer, GJBaseGameLayer) {
     static void onModify(auto& self) {

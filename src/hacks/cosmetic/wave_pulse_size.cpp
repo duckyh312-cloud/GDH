@@ -12,12 +12,13 @@ class $modify(MyHardStreak, HardStreak) {
         auto& gui = GDH::Gui::get();
         auto& hack = gui.getWindow("Cosmetic").findHackByName("Wave Pulse Size"); 
 
-        auto multiplyKey = hack.formatAdditionalSetting("multiply");
-        auto noPulseKey = hack.formatAdditionalSetting("noPulse");
-        auto valueKey = hack.formatAdditionalSetting("value");
-
         hack.addHookPtr(self.getHook("HardStreak::updateStroke").unwrap());
-        hack.setCustomWindowImGui([multiplyKey, noPulseKey, valueKey]() {
+
+        hack.setCustomWindowImGui([
+            multiplyKey = hack.formatAdditionalSetting("multiply"),
+            noPulseKey = hack.formatAdditionalSetting("noPulse"),
+            valueKey = hack.formatAdditionalSetting("value")
+        ]() {
             ImGuiWidgetConfig::Checkbox("No Pulse", noPulseKey, false);
             ImGuiWidgetConfig::Checkbox("Multiply pulsation", multiplyKey, true);
             ImGuiWidgetConfig::DragFloat("##WavePulseSizeValue", valueKey, 0.01f, 0, FLT_MAX, 0.5, "Pulse Size: %.2f");
