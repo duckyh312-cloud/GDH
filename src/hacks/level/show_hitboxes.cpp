@@ -238,4 +238,9 @@ $execute {
         ImGuiWidgetConfig::ColorEdit4Hex("Player Inner Box", cPlayerInnerKey, "#003FFFFF");
         ImGuiWidgetConfig::ColorEdit4Hex("Player Box", cPlayerKey, "#FF0000FF");
     });
+
+    hack.setCustomCheatingCheck([&config, onDeathKey = hack.formatAdditionalSetting("show_on_death")]() {
+        if (config.get<bool>(onDeathKey, false)) return false;
+        return true;
+    });
 }

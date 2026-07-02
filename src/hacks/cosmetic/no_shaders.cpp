@@ -2,7 +2,7 @@
 #include <Geode/modify/ShaderLayer.hpp>
 #include "../../core/gui.hpp"
 
-GUI_HACK_CREATE("Cosmetic", "No Shaders", "Disabling shaders in levels", false);
+GUI_HACK_CREATE("Cosmetic", "No Shaders", "Disabling shaders in levels", true);
 
 class $modify(NoShadersShaderLayer, ShaderLayer) {
     static void onModify(auto& self) {

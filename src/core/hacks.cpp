@@ -1,5 +1,4 @@
 #include "hacks.hpp"
-#include "utils.hpp"
 #include "config.hpp"
 #include "keybinds.hpp"
 

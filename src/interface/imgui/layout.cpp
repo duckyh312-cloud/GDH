@@ -43,6 +43,7 @@ void Layout::Manager::finishCollecting() {
 bool Layout::Manager::applyWindowTransform(const std::string& name) {
     if (m_stage == Stage::Collecting) {
         ImGui::SetNextWindowPos(ImVec2(-10000.f, -10000.f), ImGuiCond_Always);
+        ImGui::SetNextWindowSize(ImVec2(0.f, 0.f), ImGuiCond_Always);
         return true;
     }
 
