@@ -43,7 +43,6 @@ void Layout::Manager::finishCollecting() {
 bool Layout::Manager::applyWindowTransform(const std::string& name) {
     if (m_stage == Stage::Collecting) {
         ImGui::SetNextWindowPos(ImVec2(-10000.f, -10000.f), ImGuiCond_Always);
-        ImGui::SetNextWindowSize(ImVec2(0.f, 0.f), ImGuiCond_Always);
         return true;
     }
 
@@ -157,7 +156,14 @@ void Layout::Manager::calculateWindowPositions() {
     float scale_x = (display.x > 0) ? (display.x / total_width) : 1.0f;
     float scale_y = (display.y > 0) ? (display.y / max_layout_height) : 1.0f;
     
-    m_scale = std::min({scale_x, scale_y, 1.0f});
+    float raw_scale = std::min({scale_x, scale_y, 1.0f});
+    
+    const float STEP = 0.1f;
+    float discrete_scale = std::floor(raw_scale / STEP) * STEP;
+    
+    discrete_scale = std::max(0.1f, std::min(1.0f, discrete_scale));
+    
+    m_scale = discrete_scale;
     ImGuiH::ApplyStyle(m_scale);
 
     // horizontal center

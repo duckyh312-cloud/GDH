@@ -1,6 +1,7 @@
 #include <Geode/Geode.hpp>
 #include <Geode/modify/PlayLayer.hpp>
 #include <Geode/modify/LevelEditorLayer.hpp>
+#include <Geode/modify/GJBaseGameLayer.hpp>
 #include "../../core/gui.hpp"
 #include "../../core/config.hpp"
 #include "../../interface/imgui/widget_helper.hpp"
@@ -53,6 +54,41 @@ static void drawOrientedOrRect(GJBaseGameLayer* layer, cocos2d::CCDrawNode* draw
     }
 }
 
+struct FixedTrail {
+    std::vector<cocos2d::CCRect> buffer;
+    size_t head = 0;
+    size_t maxSize = 240;
+    bool isFull = false;
+
+    void init(size_t size) {
+        maxSize = size;
+        buffer.resize(size);
+        head = 0;
+        isFull = false;
+    }
+
+    void push(const cocos2d::CCRect& rect) {
+        if (maxSize == 0 || buffer.empty()) return;
+        
+        buffer[head] = rect;
+        head++;
+        
+        if (head >= maxSize) {
+            head = 0;
+            isFull = true;
+        }
+    }
+
+    void clear() {
+        head = 0;
+        isFull = false;
+    }
+};
+
+static FixedTrail playerTrail1, playerTrail2;
+static FixedTrail playerInnerTrail1, playerInnerTrail2;
+static size_t lastMaxLength = 0;
+
 void updateHitboxes(GJBaseGameLayer* layer, cocos2d::CCDrawNode* drawNode) {
     if (!drawNode) return;
     drawNode->clear();
@@ -71,7 +107,7 @@ void updateHitboxes(GJBaseGameLayer* layer, cocos2d::CCDrawNode* drawNode) {
     auto playerInnerColor = GDH::Utils::hexToColor4F(config.get<std::string>("level.show_hitboxes::playerInnerColor", "#003FFFFF"));
     auto playerColor = GDH::Utils::hexToColor4F(config.get<std::string>("level.show_hitboxes::playerColor", "#FF0000FF"));
 
-    auto size = config.get<float>("level.show_hitboxes::size", 0.5f);
+    auto size = config.get<float>("level.show_hitboxes::size", 0.25f);
     auto fillAlpha = config.get<float>("level.show_hitboxes::fill_alpha", 0.2f);
 
     auto getFillColor = [fillAlpha](cocos2d::ccColor4F color) -> cocos2d::ccColor4F {
@@ -165,7 +201,58 @@ void updateHitboxes(GJBaseGameLayer* layer, cocos2d::CCDrawNode* drawNode) {
 
     drawPlayer(layer->m_player1);
     if (layer->m_gameState.m_isDualMode) drawPlayer(layer->m_player2);
+
+    if (config.get<bool>("level.show_hitboxes::draw_trail", false)) {
+        auto renderTrail = [drawNode, size, getFillColor](const FixedTrail& trail, cocos2d::ccColor4F const& color) {
+            if (trail.maxSize == 0 || trail.buffer.empty()) return;
+            size_t actualSize = trail.isFull ? trail.maxSize : trail.head;
+            size_t startIndex = trail.isFull ? trail.head : 0;
+            for (size_t i = 0; i < actualSize; ++i) {
+                size_t index = (startIndex + i) % trail.maxSize;
+                drawRect(drawNode, trail.buffer[index], {0.f, 0.f, 0.f, 0.f}, size, color);
+            }
+        };
+
+        cocos2d::ccColor4F trailColor = {1.0f, 1.0f, 0.0f, 1.0f};
+        cocos2d::ccColor4F innerColor = {1.0f, 0.0f, 0.0f, 1.0f};
+
+        renderTrail(playerTrail1, trailColor);
+        renderTrail(playerInnerTrail1, innerColor);
+
+        renderTrail(playerTrail2, trailColor);
+        renderTrail(playerInnerTrail2, innerColor);
+    }
 }
+
+class $modify(ShowHitboxesGJBaseGameLayer, GJBaseGameLayer) {
+    void processCommands(float dt, bool isHalfTick, bool isLastTick) {        
+        GJBaseGameLayer::processCommands(dt, isHalfTick, isLastTick);
+        
+        auto& config = Config::get();
+        if (config.get<bool>("level.show_hitboxes::draw_trail", false)) {
+            auto maxLength = static_cast<size_t>(config.get<int>("level.show_hitboxes::trail_length", 240));
+            
+            if (lastMaxLength != maxLength) {
+                playerTrail1.init(maxLength);
+                playerTrail2.init(maxLength);
+                playerInnerTrail1.init(maxLength);
+                playerInnerTrail2.init(maxLength);
+                lastMaxLength = maxLength;
+            }
+
+            if (!m_playerDied) {
+                if (m_player1) {
+                    playerTrail1.push(m_player1->getObjectRect());
+                    playerInnerTrail1.push(m_player1->getObjectRect(0.3f, 0.3f));
+                }
+                if (m_gameState.m_isDualMode && m_player2) {
+                    playerTrail2.push(m_player2->getObjectRect());
+                    playerInnerTrail2.push(m_player2->getObjectRect(0.3f, 0.3f));
+                }
+            }
+        }
+    }
+};
 
 class $modify(ShowHitboxesPlayLayer, PlayLayer) {
     struct Fields {
@@ -180,6 +267,15 @@ class $modify(ShowHitboxesPlayLayer, PlayLayer) {
     void updateVisibility(float dt) override {
         PlayLayer::updateVisibility(dt);
         updateHitboxes(this, m_fields->m_drawNode);
+    }
+
+    void resetLevel() override {
+        playerTrail1.clear();
+        playerTrail2.clear();
+        playerInnerTrail1.clear();
+        playerInnerTrail2.clear();
+
+        PlayLayer::resetLevel();
     }
 };
 
@@ -198,6 +294,15 @@ class $modify(ShowHitboxesLevelEditorLayer, LevelEditorLayer) {
         LevelEditorLayer::updateVisibility(dt);
         updateHitboxes(this, m_fields->m_drawNode);
     }
+
+    void onPlaytest() {
+        playerTrail1.clear();
+        playerTrail2.clear();
+        playerInnerTrail1.clear();
+        playerInnerTrail2.clear();
+
+        LevelEditorLayer::onPlaytest();
+    }
 };
 
 $execute {
@@ -209,6 +314,8 @@ $execute {
         onDeathKey = hack.formatAdditionalSetting("show_on_death"),
         sizeKey = hack.formatAdditionalSetting("size"),
         fillAlphaKey = hack.formatAdditionalSetting("fill_alpha"),
+        drawTrailKey = hack.formatAdditionalSetting("draw_trail"),
+        trailLengthKey = hack.formatAdditionalSetting("trail_length"),
 
         cTriggersKey = hack.formatAdditionalSetting("triggersColor"),
         cOtherKey = hack.formatAdditionalSetting("otherColor"),
@@ -220,10 +327,19 @@ $execute {
         cPlayerKey = hack.formatAdditionalSetting("playerColor")
     ]{
         ImGuiWidgetConfig::Checkbox("Show on Death", onDeathKey, false);
-        ImGuiWidgetConfig::DragFloat("##Hitbox_Size", sizeKey, 0.05f, 0, 20.f, 0.5f, "Size: %.2f");
+        ImGuiWidgetConfig::DragFloat("##Hitbox_Size", sizeKey, 0.05f, 0, 20.f, 0.25f, "Size: %.2f");
         ImGuiWidgetConfig::DragFloat("##Hitbox_FillAlpha", fillAlphaKey, 0.01f, 0, 1.f, 0.2f, "Fill Alpha: %.2f");
 
+        ImGui::Spacing();
         ImGui::Separator();
+        ImGui::Spacing();
+
+        ImGuiWidgetConfig::Checkbox("Draw Trail", drawTrailKey, false);
+        ImGuiWidgetConfig::DragInt("##Trail_Length", trailLengthKey, 1, 0, 1000, 240, "Trail Length: %d");
+
+        ImGui::Spacing();
+        ImGui::Separator();
+        ImGui::Spacing();
         ImGui::Text("Hitbox Colors:");
 
         ImGuiWidgetConfig::ColorEdit4Hex("Triggers", cTriggersKey, "#FF00E6FF");
@@ -232,7 +348,9 @@ $execute {
         ImGuiWidgetConfig::ColorEdit4Hex("Solid (Blocks)", cSolidKey, "#003FFFFF");
         ImGuiWidgetConfig::ColorEdit4Hex("Danger (Spikes)", cDangerKey, "#FF0000FF");
         
+        ImGui::Spacing();
         ImGui::Separator();
+        ImGui::Spacing();
         ImGui::Text("Player:");
         ImGuiWidgetConfig::ColorEdit4Hex("Player Rotated Box", cPlayerRotateKey, "#800000FF");
         ImGuiWidgetConfig::ColorEdit4Hex("Player Inner Box", cPlayerInnerKey, "#003FFFFF");

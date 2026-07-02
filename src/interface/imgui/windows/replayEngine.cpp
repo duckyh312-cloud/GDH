@@ -6,7 +6,6 @@
 #include "../../../core/gui.hpp"
 #include "../../../core/replayEngine.hpp"
 #include "../../../core/config.hpp"
-#include "../../../core/utils.hpp"
 #include "../widgetH.hpp"
 #include "../layout.hpp"
 
@@ -35,6 +34,9 @@ $execute {
             
             auto& tps_bypass = gui.getWindow("Invisible").findHackByName("TPS");       
             if (!tps_bypass.getEnabled()) tps_bypass.toggle();
+
+            auto& respawn_lag = gui.getWindow("Level").findHackByName("Respawn Lag Fix");       
+            if (!respawn_lag.getEnabled()) respawn_lag.toggle();
             
             engine.mode = state::record;
         }

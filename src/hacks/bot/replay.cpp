@@ -2,6 +2,7 @@
 #include <Geode/modify/PlayLayer.hpp>
 #include <Geode/modify/GJBaseGameLayer.hpp>
 #include <Geode/modify/CCScheduler.hpp>
+#include <Geode/modify/LevelEditorLayer.hpp>
 #include "../../core/config.hpp"
 #include "../../core/replayEngine.hpp"
 #include "../../core/gui.hpp"
@@ -86,15 +87,17 @@ class $modify(ReplayGJBaseGameLayer, GJBaseGameLayer) {
     }
     
     // void processCommands(float dt, bool isHalfTick, bool isLastTick) {
-        //     GJBaseGameLayer::processCommands(dt, isHalfTick, isLastTick);
-        // }
+    //     GJBaseGameLayer::processCommands(dt, isHalfTick, isLastTick);
+    // }
         
     void processQueuedButtons(float dt, bool clearInputQueue) {
         GJBaseGameLayer::processQueuedButtons(dt, clearInputQueue);
         
-        auto &engine = GDH::ReplayEngine::get();
-        engine.handle_commands(this);
-        engine.handle_update(this);
+        if (!m_levelEndAnimationStarted) {
+            auto &engine = GDH::ReplayEngine::get();
+            engine.handle_commands(this);
+            engine.handle_update(this);
+        }
     }
 };
 
@@ -105,8 +108,7 @@ class $modify(ReplayPlayLayer, PlayLayer) {
 
         left_over = 0;
         PlayLayer::resetLevel();
-
-        if (engine.mode != disable) m_resumeTimer = 15;
+        
         engine.handle_reset();  
     }
 
@@ -127,5 +129,11 @@ class $modify(ReplayPlayLayer, PlayLayer) {
                 engine.mode = state::disable;
         });
     }
-    
+};
+
+class $modify(ReplayLevelEditorLayer, LevelEditorLayer) {
+    void onPlaytest() {
+        GDH::ReplayEngine::get().handle_reset();
+        LevelEditorLayer::onPlaytest();
+    }
 };
