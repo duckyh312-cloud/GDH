@@ -1017,17 +1017,73 @@ namespace ImGuiH {
         draw_list->_Path.Size = 0;
     }
 
-    void GlowWindow(ImU32 col_in, ImU32 col_out) {
-        ImVec2 pos  = ImGui::GetWindowPos();
-        ImVec2 size = ImGui::GetWindowSize();
-        ImDrawList* dl = ImGui::GetWindowDrawList();
-        ImVec2 center = ImVec2(pos.x + size.x * 0.5f, pos.y + size.y * 0.5f);
-        ImVec4 oldClipRect = dl->_ClipRectStack.back(); 
+    void GlowWindow(ImU32 col_in, ImU32 col_out, float glow_spread)
+    {
+        ImGuiWindow* window = ImGui::GetCurrentWindow();
+        if (window->SkipItems || ((col_in | col_out) & IM_COL32_A_MASK) == 0) 
+            return;
 
-        dl->PushClipRectFullScreen();
-        float radius = ImMax(size.x, size.y) * 1.5f;
-        ImGuiH::AddRadialGradient(dl, center, radius, col_in, col_out);
-        dl->PopClipRect();
+        ImVec2 pos  = window->Pos;
+        ImVec2 size = window->Size;
+        float corner_radius = window->WindowRounding; 
+
+        if (glow_spread <= 0.0f)
+            glow_spread = ImMax(size.x, size.y) * 0.3f;
+
+        if (glow_spread < 0.5f)
+            return;
+
+        ImDrawList* dl = ImGui::GetForegroundDrawList();
+
+        const int num_segments = 12;
+        const int total_pairs = (num_segments + 1) * 4;
+        const int total_vertices = total_pairs * 2;
+        const int total_indices = total_pairs * 6;
+        
+        dl->PrimReserve(total_indices, total_vertices);
+
+        ImRect rect_inner(pos, ImVec2(pos.x + size.x, pos.y + size.y));
+        unsigned int vtx_base = dl->_VtxCurrentIdx;
+        const ImVec2 uv = dl->_Data->TexUvWhitePixel;
+
+        float rad = ImMin(corner_radius, ImMin(size.x, size.y) * 0.5f);
+
+        ImVec2 centers[4] = {
+            ImVec2(rect_inner.Min.x + rad, rect_inner.Min.y + rad), // tl
+            ImVec2(rect_inner.Max.x - rad, rect_inner.Min.y + rad), // tr
+            ImVec2(rect_inner.Max.x - rad, rect_inner.Max.y - rad), // br
+            ImVec2(rect_inner.Min.x + rad, rect_inner.Max.y - rad)  // bl
+        };
+        
+        float start_angles[4] = { 3.14159265f, 3.14159265f * 1.5f, 0.0f, 3.14159265f * 0.5f };
+
+        for (int type = 0; type < 4; type++) 
+        {
+            for (int i = 0; i <= num_segments; i++) 
+            {
+                float angle = start_angles[type] + (i * (3.14159265f / 2.0f) / num_segments);
+                ImVec2 dir(cosf(angle), sinf(angle));
+                
+                dl->PrimWriteVtx(centers[type] + dir * rad, uv, col_in);
+                dl->PrimWriteVtx(centers[type] + dir * (rad + glow_spread), uv, col_out);
+            }
+        }
+
+        for (int i = 0; i < total_pairs; i++) 
+        {
+            int i0 = i * 2;
+            int i1 = i * 2 + 1;
+            int i2 = ((i + 1) % total_pairs) * 2;
+            int i3 = ((i + 1) % total_pairs) * 2 + 1;
+
+            dl->PrimWriteIdx((ImDrawIdx)(vtx_base + i0));
+            dl->PrimWriteIdx((ImDrawIdx)(vtx_base + i1));
+            dl->PrimWriteIdx((ImDrawIdx)(vtx_base + i3));
+
+            dl->PrimWriteIdx((ImDrawIdx)(vtx_base + i0));
+            dl->PrimWriteIdx((ImDrawIdx)(vtx_base + i3));
+            dl->PrimWriteIdx((ImDrawIdx)(vtx_base + i2));
+        }
     }
     
     struct SS { float y=0, t=0, h=0, wh=0, a=0; };

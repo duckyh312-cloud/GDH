@@ -2,6 +2,7 @@
 #include "imgui.h"
 #include <Geode/Geode.hpp>
 #include "../../../core/gui.hpp"
+#include "../layout.hpp"
 #include "../../../core/shortcuts.hpp"
 #include "../widgetH.hpp"
 #include <imgui-cocos.hpp>
@@ -11,6 +12,7 @@ $execute {
     auto& window = gui.getWindow("Shortcuts");
 
     window.setCustomWindowImGui([] {
+        auto& layout = GDH::Layout::Manager::get();
         float width = ImGui::GetContentRegionAvail().x;
         
         if (ImGuiH::Button("Options", {width, 0.f}))
@@ -51,7 +53,7 @@ $execute {
         }
 
         if (ImGui::BeginPopupModal("Crash the Game")) {
-            ImGuiH::GlowWindow(IM_COL32(71, 71, 131, 100), IM_COL32(255, 128, 128, 0));
+            ImGuiH::GlowWindow(IM_COL32(71, 71, 131, 150), IM_COL32(255, 128, 128, 0), layout.multipleScale(500.f));
             ImGui::Text("Are you sure you want to crash Geometry Dash?");
             ImGui::Text("Unsaved data will be lost");
 
