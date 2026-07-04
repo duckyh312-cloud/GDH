@@ -1,7 +1,6 @@
 #include <Geode/Geode.hpp>
 #include "../hacks_tab.hpp"
 #include "../../../core/gui.hpp"
-#include "../../../core/utils.hpp"
 #include "../../../core/labels.hpp"
 
 using namespace geode::prelude;
@@ -27,6 +26,10 @@ protected:
         title->setPosition({winSize.width / 2, winSize.height - 18.f});
         title->setScale(0.7f);
         m_mainLayer->addChild(title);
+
+        auto closeBtn = CCSprite::create("GDH_closeBtn.png"_spr);
+        closeBtn->setScale(0.75f);
+        m_closeBtn->setSprite(closeBtn);
 
         std::vector<std::pair<std::string, std::string>> templates = {
             {"Attempts", "Attempt {attempt}"},
@@ -119,6 +122,10 @@ protected:
     bool init(GDH::Labels::Corner corner, size_t index, HacksTab* tab) {
         if (!geode::Popup::init(280.f, 210.f, "GDH_square.png"_spr)) return false;
 
+        auto closeBtn = CCSprite::create("GDH_closeBtn.png"_spr);
+        closeBtn->setScale(0.75f);
+        m_closeBtn->setSprite(closeBtn);
+
         m_corner = corner;
         m_index = index;
         m_tab = tab;
@@ -140,7 +147,7 @@ protected:
 
         float y = winSize.height - 50.f;
 
-        auto toggle = CCMenuItemExt::createTogglerWithStandardSprites(0.6f, [&label](CCMenuItemToggler* sender) {
+        auto toggle = CCMenuItemExt::createTogglerWithFilename("GDH_togglerOn.png"_spr, "GDH_togglerOff.png"_spr, 0.6f, [&label](CCMenuItemToggler* sender) {
             label.enabled = !sender->isToggled();
         });
         toggle->setPosition({30.f, y});
@@ -157,6 +164,10 @@ protected:
 
         if (label.type == GDH::Labels::LabelType::Text) {
             auto input = TextInput::create(240.f, "Text", "chatFont.fnt");
+            if (auto* bg = input->getChildByType<geode::NineSlice>(0)) { 
+                bg->setColor({71, 71, 131}); 
+                bg->setOpacity(255); 
+            }
             input->setPosition({winSize.width / 2, y});
             input->setString(label.text);
             input->setCallback([&label](const std::string& str) {
@@ -172,6 +183,10 @@ protected:
             menu->addChild(sizeLabel);
 
             auto sizeInput = TextInput::create(60.f, "Size", "chatFont.fnt");
+            if (auto* bg = sizeInput->getChildByType<geode::NineSlice>(0)) { 
+                bg->setColor({71, 71, 131}); 
+                bg->setOpacity(255); 
+            }
             sizeInput->setPosition({95.f, y});
             sizeInput->setString(fmt::format("{:.2f}", label.size));
             sizeInput->setFilter("0123456789.");
@@ -184,7 +199,7 @@ protected:
 
             y -= 30.f;
             
-            auto rbToggle = CCMenuItemExt::createTogglerWithStandardSprites(0.5f, [&label](CCMenuItemToggler* sender) {
+            auto rbToggle = CCMenuItemExt::createTogglerWithFilename("GDH_togglerOn.png"_spr, "GDH_togglerOff.png"_spr, 0.5f, [&label](CCMenuItemToggler* sender) {
                 label.rainbow = !sender->isToggled();
             });
             rbToggle->setPosition({30.f, y});
@@ -197,7 +212,7 @@ protected:
             rbL->setPosition({45.f, y});
             menu->addChild(rbL);
 
-            auto cpsToggle = CCMenuItemExt::createTogglerWithStandardSprites(0.5f, [&label](CCMenuItemToggler* sender) {
+            auto cpsToggle = CCMenuItemExt::createTogglerWithFilename("GDH_togglerOn.png"_spr, "GDH_togglerOff.png"_spr, 0.5f, [&label](CCMenuItemToggler* sender) {
                 label.cps = !sender->isToggled();
             });
             cpsToggle->setPosition({120.f, y});
@@ -210,7 +225,7 @@ protected:
             cpsL->setPosition({135.f, y});
             menu->addChild(cpsL);
 
-            auto ncToggle = CCMenuItemExt::createTogglerWithStandardSprites(0.5f, [&label](CCMenuItemToggler* sender) {
+            auto ncToggle = CCMenuItemExt::createTogglerWithFilename("GDH_togglerOn.png"_spr, "GDH_togglerOff.png"_spr, 0.5f, [&label](CCMenuItemToggler* sender) {
                 label.noclip = !sender->isToggled();
             });
             ncToggle->setPosition({200.f, y});
@@ -230,6 +245,10 @@ protected:
             menu->addChild(spaceLabel);
 
             auto spaceInput = TextInput::create(80.f, "Px", "chatFont.fnt");
+                if (auto* bg = spaceInput->getChildByType<geode::NineSlice>(0)) { 
+                bg->setColor({71, 71, 131}); 
+                bg->setOpacity(255); 
+            }
             spaceInput->setPosition({150.f, y});
             spaceInput->setString(fmt::format("{:.1f}", label.size));
             spaceInput->setFilter("0123456789.");
@@ -274,7 +293,7 @@ protected:
         if (m_index >= targetLabels.size() - 1) downBtn->setOpacity(100);
         menu->addChild(downBtn);
 
-        auto delBtnSprite = ButtonSprite::create("Delete", 60, true, "GoogleSans.fnt"_spr, "GJ_button_06.png", 20.f, 0.4f);
+        auto delBtnSprite = ButtonSprite::create("Delete", 60, true, "GoogleSans.fnt"_spr, "GDH_button_01.png"_spr, 25.f, 0.4f);
         auto delBtn = CCMenuItemExt::createSpriteExtra(delBtnSprite, [this, corner, tab](auto) {
             auto& targetLabels = GDH::Labels::Manager::get().labels[corner];
             targetLabels.erase(targetLabels.begin() + m_index);
@@ -446,14 +465,8 @@ void refreshLabelsTab(HacksTab* tab) {
                 : fmt::format("Spacing: {:.1f}px", label.size);
 
             auto textLabel = CCLabelBMFont::create(displayText.c_str(), "GoogleSans.fnt"_spr);
-            textLabel->setScale(0.4f); 
-            if (!label.enabled) textLabel->setOpacity(90);
-            
-            if (textLabel->getScaledContentWidth() > 240.f) {
-                textLabel->setScale(textLabel->getScale() * (240.f / textLabel->getScaledContentWidth()));
-            }
-
             itemRow->addChild(textLabel);
+            
             itemRow->updateLayout();
             content->addChild(itemRow);
         }
