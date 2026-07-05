@@ -1,6 +1,7 @@
 #include "hacks.hpp"
 #include "config.hpp"
 #include "keybinds.hpp"
+#include "gui.hpp"
 
 using namespace GDH;
 
@@ -45,6 +46,15 @@ void Hack::toggle() {
         GameManager::get()->setGameVariable(this->m_key.c_str(), state);
 
     callHandler(state);
+    
+    if (this->isCheating() && this->getName() != "Auto Safe Mode") {
+        auto& activeCheats = Gui::get().getActiveCheats();
+        if (state) {
+            activeCheats.insert(m_name);
+        } else {
+            activeCheats.erase(m_name);
+        }
+    }
 }
 
 void Hack::setHandler(geode::Function<void(bool)> func) {

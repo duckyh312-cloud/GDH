@@ -17,7 +17,7 @@ bool HacksLayer::init() {
     auto& config = Config::get();
 
     m_index = config.get<int>("gui_mobile.index", 1);
-    m_lastIndexScroll = config.get<int>("gui_mobile.lastIndexScroll", -999.f);
+    m_lastIndexScroll = config.get<int>("gui_mobile.lastIndexScroll", -1);
 
     auto& windows = gui.getWindows();
 
@@ -77,8 +77,8 @@ bool HacksLayer::init() {
         else tab->addPadding(2.5f);
         
         tab->m_scrollLayer->m_contentLayer->updateLayout();
-        if (i == m_index && m_lastIndexScroll != -999.f)
-            tab->m_scrollLayer->m_contentLayer->setPositionY(m_lastIndexScroll);
+        if (i == m_index && m_lastIndexScroll != -1)
+            tab->m_scrollLayer->m_contentLayer->setPositionY(static_cast<float>(m_lastIndexScroll));
         else
             tab->m_scrollLayer->moveToTop();
 
@@ -132,7 +132,7 @@ bool HacksLayer::isOpened() {
 
 void HacksLayer::onClose(CCObject* object) {
     auto& config = Config::get();
-    config.set<int>("gui_mobile.lastIndexScroll", m_tabs[m_index]->m_scrollLayer->m_contentLayer->getPositionY());
+    config.set<int>("gui_mobile.lastIndexScroll", static_cast<int>(m_tabs[m_index]->m_scrollLayer->m_contentLayer->getPositionY()));
     config.save(fileDataPath);
     GDH::Labels::Manager::get().save();
 

@@ -102,6 +102,17 @@ class $modify(ReplayGJBaseGameLayer, GJBaseGameLayer) {
 };
 
 class $modify(ReplayPlayLayer, PlayLayer) {
+    bool init(GJGameLevel* level, bool useReplay, bool dontCreateObjects) {
+        if (!PlayLayer::init(level, useReplay, dontCreateObjects)) return false;
+        
+        auto& engine = GDH::ReplayEngine::get();
+        if (engine.get_actions_size() == 0) {
+            engine.replay_name = fmt::format("{}", level->m_levelName);
+        }
+
+        return true;
+    }
+
     void resetLevel() {
         auto &config = Config::get();
         auto &engine = GDH::ReplayEngine::get();

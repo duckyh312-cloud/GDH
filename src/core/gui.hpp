@@ -50,10 +50,14 @@ namespace GDH {
         std::vector<Window>& getWindows() { return m_windows; };
 
         Hack* findHackByIDGlobal(const std::string& ID);
+
+        void rescanActiveCheats();
+        std::unordered_set<std::string>& getActiveCheats() { return m_activeCheats; }
     private:
         Gui() = default;
 
         std::vector<Window> m_windows;
+        std::unordered_set<std::string> m_activeCheats;
     };
 } // namespace GDH
 

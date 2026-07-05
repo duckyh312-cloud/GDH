@@ -327,7 +327,7 @@ $execute {
         cPlayerInnerKey = hack.formatAdditionalSetting("playerInnerColor"),
         cPlayerKey = hack.formatAdditionalSetting("playerColor")
     ]{
-        ImGuiWidgetConfig::Checkbox("Show on Death", onDeathKey, false);
+        if (ImGuiWidgetConfig::Checkbox("Show on Death", onDeathKey, false)) GDH::Gui::get().rescanActiveCheats();
         ImGuiWidgetConfig::DragFloat("##Hitbox_Size", sizeKey, 0.05f, 0, 20.f, 0.25f, "Size: %.2f");
         ImGuiWidgetConfig::DragFloat("##Hitbox_FillAlpha", fillAlphaKey, 0.01f, 0, 1.f, 0.2f, "Fill Alpha: %.2f");
 
@@ -375,7 +375,7 @@ $execute {
         cPlayerKey = hack.formatAdditionalSetting("playerColor")
     ](cocos2d::CCNode* popupNode){
         auto* popup = static_cast<HackSettingsPopup*>(popupNode);
-        popup->addConfigToggle("Show on Death", onDeathKey, false);
+        popup->addConfigToggle("Show on Death", onDeathKey, false, [](bool enabled) { GDH::Gui::get().rescanActiveCheats(); });
         popup->addConfigFloatInput("Size", sizeKey, 0, 20.f, 0.25f);
         popup->addConfigFloatInput("Fill Alpha", fillAlphaKey, 0, 1.f, 0.2f);
 

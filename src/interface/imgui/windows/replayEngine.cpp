@@ -96,9 +96,7 @@ $execute {
                 
                 if (ImGuiH::Button(filename_str.c_str(), {ImGui::GetContentRegionAvail().x, 0.0f}))
                 {
-                    if (replay.extension() == ".re4")
-                        engine.replay_name = replay.stem().string();
-
+                    engine.replay_name = replay.stem().string();
                     ImGui::CloseCurrentPopup();
                 }
             }

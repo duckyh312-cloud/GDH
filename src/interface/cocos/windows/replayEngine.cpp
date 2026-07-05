@@ -1,5 +1,6 @@
 #include <Geode/Geode.hpp>
 #include "../hacks_tab.hpp"
+#include "../../../core/config.hpp"
 #include "../../../core/gui.hpp"
 #include "../../../core/replayEngine.hpp"
 
@@ -14,6 +15,77 @@ public:
             engine.get_current_index(), 
             engine.get_actions_size()
         ).c_str());
+    }
+};
+
+class ReplaySelectLayer : public geode::Popup {
+protected:
+    geode::TextInput* input;
+
+    bool init() {
+        if (!geode::Popup::init(300.f, 220.f, "GDH_square.png"_spr)) return false;
+
+        auto winSize = m_mainLayer->getContentSize();
+
+        auto title = CCLabelBMFont::create("Select Replay", "GoogleSans.fnt"_spr);
+        title->setPosition({winSize.width / 2, winSize.height - 18.f});
+        title->setScale(0.7f);
+        m_mainLayer->addChild(title);
+
+        auto closeBtn = CCSprite::create("GDH_closeBtn.png"_spr);
+        closeBtn->setScale(0.75f);
+        m_closeBtn->setSprite(closeBtn);
+
+        auto scroll = ScrollLayer::create({600.f, 180.f});
+        scroll->setPosition({winSize.width / 2 - 300.f, 10.f});
+        scroll->m_contentLayer->setLayout(
+            ColumnLayout::create()
+                ->setAutoScale(false)
+                ->setAxisReverse(true)
+                ->setAutoGrowAxis(true)
+                ->setGap(5.f)
+        );
+        m_mainLayer->addChild(scroll);
+
+        scroll->m_contentLayer->addChild(CCNode::create());
+
+        for (const auto& entry : std::filesystem::directory_iterator(folderMacroPath)) {
+            if (entry.is_regular_file() && entry.path().extension() == ".re4") {
+                std::string macroName = entry.path().stem().string();
+                std::filesystem::path macroPath = entry.path();
+
+                auto menu = CCMenu::create();
+                menu->setContentSize({600.f, 25.f});
+
+                auto btnSprite = ButtonSprite::create(macroName.c_str(), 220, true, "GoogleSans.fnt"_spr, "GDH_button_01.png"_spr, 26.f, 0.5f);
+                auto btn = CCMenuItemExt::createSpriteExtra(btnSprite, [this, macroPath](auto) {
+                    auto& engine = GDH::ReplayEngine::get();
+
+                    engine.replay_name = macroPath.stem().string();
+                    input->setString(engine.replay_name);
+
+                    this->m_closeBtn->activate();
+                });
+
+                btn->setPosition({300.f, 12.5f});
+                menu->addChild(btn);
+                scroll->m_contentLayer->addChild(menu);
+            }
+        }
+
+        scroll->m_contentLayer->addChild(CCNode::create());
+
+        scroll->m_contentLayer->updateLayout();
+        scroll->updateLayout();
+        scroll->moveToTop();
+        return true;
+    }
+public:
+    static ReplaySelectLayer* create(geode::TextInput* textInput) {
+        auto ret = new ReplaySelectLayer();
+        if (ret->init()) { ret->autorelease(); ret->input = textInput; return ret; }
+        delete ret;
+        return nullptr;
     }
 };
 
@@ -92,6 +164,15 @@ $execute {
         replayNameInput->setCallback([&engine](const std::string& text) { engine.replay_name = text; });
         engineTab->addChild(replayNameInput);
 
+        auto replayList = CCSprite::create("GDH_arrow.png"_spr);
+        replayList->setScale(0.65f);
+        replayList->setRotation(-90.f);
+        auto replayListClick = CCMenuItemExt::createSpriteExtra(replayList, [replayNameInput](CCMenuItemSpriteExtra* sender) {
+            ReplaySelectLayer::create(replayNameInput)->show();
+        });
+        replayListClick->setPosition({245.f, 200.f});
+        engineTab->addChild(replayListClick);
+
         auto saveButton = ButtonSprite::create("Save", 65, true, "GoogleSans.fnt"_spr, "GDH_button_01.png"_spr, 30.f, 0.7f);
         auto saveButtonClick = CCMenuItemExt::createSpriteExtra(saveButton, [&engine, infoLabel](CCMenuItemSpriteExtra* sender) {
             GDH::MaterialLayer(FLAlertLayer::create("Info", engine.save(engine.replay_name).c_str(), "OK"))->show();
@@ -113,7 +194,7 @@ $execute {
         });
         cleanButtonClick->setPosition({222, 163});
         engineTab->addChild(cleanButtonClick);
-        
+
         tab->m_scrollLayer->m_contentLayer->addChild(engineTab);
     });
 }

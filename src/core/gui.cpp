@@ -130,6 +130,17 @@ Hack* Gui::findHackByIDGlobal(const std::string& ID) {
     return nullptr;
 }
 
+void Gui::rescanActiveCheats() {
+    m_activeCheats.clear();
+    for (auto& window : m_windows) {
+        for (auto& hack : window.getHacks()) {
+            if (hack.getEnabled() && hack.isCheating()) { 
+                m_activeCheats.insert(hack.getName());
+            }
+        }
+    }
+}
+
 #include <Geode/modify/MenuLayer.hpp>
 class $modify(LateHacksInitMenuLayer, MenuLayer) {
     bool init() {
@@ -144,8 +155,14 @@ class $modify(LateHacksInitMenuLayer, MenuLayer) {
             size_t totalHacks = 0;
             for (auto& window : windows) {
                 for (auto& hack : window.getHacks()) {
-                    if (hack.getEnabled() && !hack.getEarlyInit())
+                    if (hack.getEnabled() && !hack.getEarlyInit()) {
                         hack.callHandler(true);
+                    }
+
+                    if (hack.getEnabled() && hack.isCheating()) {
+                        Gui::get().getActiveCheats().insert(hack.getName());
+                    }
+
                     totalHacks++;
                 }
             }

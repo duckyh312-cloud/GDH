@@ -14,7 +14,7 @@ public:
 
     void prepareNewRow();
 
-    void addConfigToggle(const std::string& labelText, const std::string& key, bool defaultValue = false);
+    void addConfigToggle(const std::string& labelText, const std::string& key, bool defaultValue = false, geode::Function<void(bool)> callback = nullptr);
     void addConfigIntInput(const std::string& labelText, const std::string& key, int min, int max, int defaultValue = 0, geode::Function<void(int)> callback = nullptr);
     void addConfigFloatInput(const std::string& labelText, const std::string& key, float min, float max, float defaultValue = 0.f, geode::Function<void(float)> callback = nullptr);
     void addConfigColor3Hex(const std::string& labelText, const std::string& key, const std::string& defaultHex);

@@ -86,13 +86,16 @@ void HackSettingsPopup::prepareNewRow() {
     m_scrollLayer->m_contentLayer->addChild(m_currentRow);
 }
 
-void HackSettingsPopup::addConfigToggle(const std::string& labelText, const std::string& key, bool defaultValue) {
+void HackSettingsPopup::addConfigToggle(const std::string& labelText, const std::string& key, bool defaultValue, geode::Function<void(bool)> callback) {
     auto& config = Config::get();
     prepareNewRow();
     
-    auto toggle = CCMenuItemExt::createTogglerWithFilename("GDH_togglerOn.png"_spr, "GDH_togglerOff.png"_spr, 0.8f, [key](CCMenuItemToggler* sender) {
-        Config::get().set<bool>(key, !sender->isOn());
-        geode::log::debug("{}", sender->isOn());
+    auto toggle = CCMenuItemExt::createTogglerWithFilename("GDH_togglerOn.png"_spr, "GDH_togglerOff.png"_spr, 0.8f, [key, callback = std::move(callback)](CCMenuItemToggler* sender) mutable {
+        bool newValue = !sender->isOn();
+        Config::get().set<bool>(key, newValue);
+        if (callback) {
+            callback(newValue);
+        }
     });
     toggle->toggle(config.get<bool>(key, defaultValue));
     m_currentRow->addChild(toggle);
