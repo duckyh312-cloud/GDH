@@ -1,8 +1,5 @@
 # GDH
 GDH is a mod menu for Geometry Dash featuring gameplay enhancements and a beautiful interface inspired by Material Design
-# Gallery
-![screenshot](tobyadd.gdh/pc_ui.png)
-![screenshot](tobyadd.gdh/mobile_ui.png)
 ## Features
 - A lot of hacks (100+)
 - Beautiful interface inspired by Material Design
