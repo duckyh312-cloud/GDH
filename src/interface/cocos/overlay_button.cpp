@@ -1,6 +1,6 @@
 #include "overlay_button.hpp"
 #include "../../core/config.hpp"
-
+#include "hacks_layer.hpp"
 #include <Geode/modify/MenuLayer.hpp>
 #include <Geode/modify/GameManager.hpp>
 
