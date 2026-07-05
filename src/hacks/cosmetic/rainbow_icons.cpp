@@ -5,6 +5,7 @@
 #include "../../core/gui.hpp"
 #include "../../core/utils.hpp"
 #include "../../interface/imgui/widget_helper.hpp"
+#include "../../interface/cocos/hack_settings_popup.hpp"
 
 GUI_HACK_CREATE("Cosmetic", "Rainbow Icon", "", false);
 
@@ -36,6 +37,52 @@ class $modify(RainbowIconGJBaseGameLayer, GJBaseGameLayer) {
             ImGuiWidgetConfig::Checkbox("Glow Color", glow, true);
             ImGuiWidgetConfig::Checkbox("Regular Trail", trail, true);
             ImGuiWidgetConfig::Checkbox("Wave Trail", wave, true);
+        });
+        hack.setCustomWindowImGui([
+            hue_speed  = hack.formatAdditionalSetting("hue_speed"),
+            saturation = hack.formatAdditionalSetting("saturation"),
+            value      = hack.formatAdditionalSetting("value"),
+            color1     = hack.formatAdditionalSetting("color1"),
+            color2     = hack.formatAdditionalSetting("color2"),
+            glow       = hack.formatAdditionalSetting("glow"),
+            trail      = hack.formatAdditionalSetting("trail"),
+            wave       = hack.formatAdditionalSetting("wave")
+        ]() {
+            ImGuiWidgetConfig::DragFloat("##RainbowSpeedFactor", hue_speed, 0.01f, 0.01f, 5.f, 0.25f, "Speed: %.2f");
+            ImGuiWidgetConfig::DragFloat("##RainbowSaturation", saturation, 0.01f, 0.0f, 1.f, 0.7f, "Saturation: %.2f");
+            ImGuiWidgetConfig::DragFloat("##RainbowValue", value, 0.01f, 0.0f, 1.f, 1.0f, "Value: %.2f");
+            
+            ImGui::Text("Apply to");
+
+            ImGuiWidgetConfig::Checkbox("Primary Color", color1, true);
+            ImGuiWidgetConfig::Checkbox("Secondary Color", color2, true);
+            ImGuiWidgetConfig::Checkbox("Glow Color", glow, true);
+            ImGuiWidgetConfig::Checkbox("Regular Trail", trail, true);
+            ImGuiWidgetConfig::Checkbox("Wave Trail", wave, true);
+        });
+
+        hack.setCustomWindowCocos([
+            hue_speed  = hack.formatAdditionalSetting("hue_speed"),
+            saturation = hack.formatAdditionalSetting("saturation"),
+            value      = hack.formatAdditionalSetting("value"),
+            color1     = hack.formatAdditionalSetting("color1"),
+            color2     = hack.formatAdditionalSetting("color2"),
+            glow       = hack.formatAdditionalSetting("glow"),
+            trail      = hack.formatAdditionalSetting("trail"),
+            wave       = hack.formatAdditionalSetting("wave")
+        ](cocos2d::CCNode* popupNode) {
+            auto* popup = static_cast<HackSettingsPopup*>(popupNode);
+            popup->addConfigFloatInput("Speed", hue_speed, 0.01f, 5.f, 0.25f);
+            popup->addConfigFloatInput("Saturation", saturation, 0.f, 1.f, 0.7f);
+            popup->addConfigFloatInput("Value", value, 0.f, 1.f, 1.0f);
+            
+            popup->addSeparator();
+
+            popup->addConfigToggle("Primary Color", color1, true);
+            popup->addConfigToggle("Secondary Color", color2, true);
+            popup->addConfigToggle("Glow Color", glow, true);
+            popup->addConfigToggle("Regular Trail", trail, true);
+            popup->addConfigToggle("Wave Trail", wave, true);
         });
     }
 

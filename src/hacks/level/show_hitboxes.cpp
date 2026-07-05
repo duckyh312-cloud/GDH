@@ -7,6 +7,7 @@
 #include "../../interface/imgui/widget_helper.hpp"
 #include "../../core/utils.hpp"
 #include "imgui.h"
+#include "../../interface/cocos/hack_settings_popup.hpp"
 
 using namespace geode::prelude;
 
@@ -355,6 +356,47 @@ $execute {
         ImGuiWidgetConfig::ColorEdit4Hex("Player Rotated Box", cPlayerRotateKey, "#800000FF");
         ImGuiWidgetConfig::ColorEdit4Hex("Player Inner Box", cPlayerInnerKey, "#003FFFFF");
         ImGuiWidgetConfig::ColorEdit4Hex("Player Box", cPlayerKey, "#FF0000FF");
+    });
+
+    hack.setCustomWindowCocos([
+        onDeathKey = hack.formatAdditionalSetting("show_on_death"),
+        sizeKey = hack.formatAdditionalSetting("size"),
+        fillAlphaKey = hack.formatAdditionalSetting("fill_alpha"),
+        drawTrailKey = hack.formatAdditionalSetting("draw_trail"),
+        trailLengthKey = hack.formatAdditionalSetting("trail_length"),
+
+        cTriggersKey = hack.formatAdditionalSetting("triggersColor"),
+        cOtherKey = hack.formatAdditionalSetting("otherColor"),
+        cPassableKey = hack.formatAdditionalSetting("passableColor"),
+        cSolidKey = hack.formatAdditionalSetting("solidColor"),
+        cDangerKey = hack.formatAdditionalSetting("dangerColor"),
+        cPlayerRotateKey = hack.formatAdditionalSetting("playerRotateColor"),
+        cPlayerInnerKey = hack.formatAdditionalSetting("playerInnerColor"),
+        cPlayerKey = hack.formatAdditionalSetting("playerColor")
+    ](cocos2d::CCNode* popupNode){
+        auto* popup = static_cast<HackSettingsPopup*>(popupNode);
+        popup->addConfigToggle("Show on Death", onDeathKey, false);
+        popup->addConfigFloatInput("Size", sizeKey, 0, 20.f, 0.25f);
+        popup->addConfigFloatInput("Fill Alpha", fillAlphaKey, 0, 1.f, 0.2f);
+
+        popup->addSeparator();
+
+        popup->addConfigToggle("Draw Trail", drawTrailKey, false);
+        popup->addConfigIntInput("Trail Length", trailLengthKey, 0, 1000, 240);
+
+        popup->addSeparator();
+
+        popup->addConfigColor4Hex("Triggers", cTriggersKey, "#FF00E6FF");
+        popup->addConfigColor4Hex("Other Objects", cOtherKey, "#00FF00FF");
+        popup->addConfigColor4Hex("Passable Blocks", cPassableKey, "#00FFFFFF");
+        popup->addConfigColor4Hex("Solid (Blocks)", cSolidKey, "#003FFFFF");
+        popup->addConfigColor4Hex("Danger (Spikes)", cDangerKey, "#FF0000FF");
+        
+        popup->addSeparator();
+
+        popup->addConfigColor4Hex("Player Rotated Box", cPlayerRotateKey, "#800000FF");
+        popup->addConfigColor4Hex("Player Inner Box", cPlayerInnerKey, "#003FFFFF");
+        popup->addConfigColor4Hex("Player Box", cPlayerKey, "#FF0000FF");
     });
 
     hack.setCustomCheatingCheck([&config, onDeathKey = hack.formatAdditionalSetting("show_on_death")]() {

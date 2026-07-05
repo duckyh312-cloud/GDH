@@ -4,10 +4,11 @@
 #include "../../core/config.hpp"
 #include "../../core/gui.hpp"
 #include "../../interface/imgui/widget_helper.hpp"
+#include "../../interface/cocos/hack_settings_popup.hpp"
 
 GUI_HACK_CREATE("Cosmetic", "Wave Pulse Size", "Resizes the wave trail", false);
 
-class $modify(MyHardStreak, HardStreak) {
+class $modify(WavePulseSizeHardStreak, HardStreak) {
     static void onModify(auto& self) {
         auto& gui = GDH::Gui::get();
         auto& hack = gui.getWindow("Cosmetic").findHackByName("Wave Pulse Size"); 
@@ -19,9 +20,20 @@ class $modify(MyHardStreak, HardStreak) {
             noPulseKey = hack.formatAdditionalSetting("noPulse"),
             valueKey = hack.formatAdditionalSetting("value")
         ]() {
-            ImGuiWidgetConfig::Checkbox("No Pulse", noPulseKey, false);
-            ImGuiWidgetConfig::Checkbox("Multiply pulsation", multiplyKey, true);
-            ImGuiWidgetConfig::DragFloat("##WavePulseSizeValue", valueKey, 0.01f, 0, FLT_MAX, 0.5, "Pulse Size: %.2f");
+            ImGuiWidgetConfig::Checkbox("No Pulse##Wave", noPulseKey, false);
+            ImGuiWidgetConfig::Checkbox("Multiply pulsation##Wave", multiplyKey, true);
+            ImGuiWidgetConfig::DragFloat("##WavePulseSizeValue", valueKey, 0.01f, 0, FLT_MAX, 0.5, "Wave Pulse Size: %.2f");
+        });
+
+        hack.setCustomWindowCocos([
+            multiplyKey = hack.formatAdditionalSetting("multiply"),
+            noPulseKey = hack.formatAdditionalSetting("noPulse"),
+            valueKey = hack.formatAdditionalSetting("value")
+        ](cocos2d::CCNode* popupNode) {
+            auto* popup = static_cast<HackSettingsPopup*>(popupNode);
+            popup->addConfigToggle("No Pulse", noPulseKey, false);
+            popup->addConfigToggle("Multiply pulsation", multiplyKey, true);
+            popup->addConfigFloatInput("Wave Pulse Size", valueKey, 0.01f, FLT_MAX, 0.5f);
         });
     }
 

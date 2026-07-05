@@ -21,7 +21,7 @@ $execute {
         tab->addSeparator();
         tab->prepareNewRow();
 
-        tab->addConfigFloatInput("Speedhack Value", "invisible.speedhack::value", 1.f, 0.01f, 500.f);
+        tab->addConfigFloatInput("Speedhack Value", "invisible.speedhack::value", 1.f, 0.01f, 50.f);
         tab->addConfigToggle("Speedhack Enabled", "invisible.speedhack");
         tab->addConfigToggle("Speedhack Audio", "invisible.speedhack_audio");
 

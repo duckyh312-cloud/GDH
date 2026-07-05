@@ -5,6 +5,7 @@
 #include "../../interface/imgui/widget_helper.hpp"
 #include "imgui.h"
 #include <imgui-cocos.hpp>
+#include "../../interface/cocos/hack_settings_popup.hpp"
 
 GUI_HACK_CREATE("Level", "Reverb Effect", "", false);
 
@@ -26,5 +27,14 @@ $execute {
         if (ImGuiWidgetConfig::DragFloat("##reverb_effect::value", "level.reverb_effect::value", 100.f, 100.f, 20000.f, 10000.f, "Decay Time: %.2fms")) {
             GDH::Utils::setReverb(config.get<float>(valueKey, 0.f));
         }
+    });
+
+    hack.setCustomWindowCocos([
+        &config, valueKey = hack.formatAdditionalSetting("value")
+    ](cocos2d::CCNode* popupNode) {
+        auto* popup = static_cast<HackSettingsPopup*>(popupNode);
+        popup->addConfigFloatInput("Delay Time (100 to 20000)", "level.reverb_effect::value", 100.f, 20000.f, 10000.f, [](float value) {
+            GDH::Utils::setReverb(value);
+        });
     });
 }

@@ -4,6 +4,7 @@
 #include "../../core/config.hpp"
 #include "../../core/gui.hpp"
 #include "../../interface/imgui/widget_helper.hpp"
+#include "../../interface/cocos/hack_settings_popup.hpp"
 
 GUI_HACK_CREATE("Cosmetic", "Pulse Size", "Changes pulsation of falls, orbs, etc", false);
 
@@ -12,16 +13,29 @@ class $modify(PulseSizePlayLayer, PlayLayer) {
         auto& gui = GDH::Gui::get();
         auto& hack = gui.getWindow("Cosmetic").findHackByName("Pulse Size");        
 
-        auto multiplyKey = hack.formatAdditionalSetting("multiply");
-        auto noPulseKey = hack.formatAdditionalSetting("noPulse");
-        auto valueKey = hack.formatAdditionalSetting("value");
-
         hack.addHookPtr(self.getHook("PlayLayer::updateVisibility").unwrap());
-        hack.setCustomWindowImGui([multiplyKey, noPulseKey, valueKey]() {
+
+        hack.setCustomWindowImGui([
+            multiplyKey = hack.formatAdditionalSetting("multiply"),
+            noPulseKey = hack.formatAdditionalSetting("noPulse"),
+            valueKey = hack.formatAdditionalSetting("value")
+        ]{
             ImGuiWidgetConfig::Checkbox("No Pulse", noPulseKey, false);
             ImGuiWidgetConfig::Checkbox("Multiply pulsation", multiplyKey, true);
             ImGuiWidgetConfig::DragFloat("##PulseSizeValue", valueKey, 0.01f, 0, FLT_MAX, 0.5, "Pulse Size: %.2f");
         });
+
+        hack.setCustomWindowCocos([
+            multiplyKey = hack.formatAdditionalSetting("multiply"),
+            noPulseKey = hack.formatAdditionalSetting("noPulse"),
+            valueKey = hack.formatAdditionalSetting("value")
+        ](cocos2d::CCNode* popupNode) {
+            auto* popup = static_cast<HackSettingsPopup*>(popupNode);
+            popup->addConfigToggle("No Pulse", noPulseKey, false);
+            popup->addConfigToggle("Multiply pulsation", multiplyKey, true);
+            popup->addConfigFloatInput("Pulse Size", valueKey, 0.01f, FLT_MAX, 0.5f);
+        });
+        
     }
 
     void updateVisibility(float dt) {   

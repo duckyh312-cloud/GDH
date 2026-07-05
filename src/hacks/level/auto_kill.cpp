@@ -3,6 +3,7 @@
 #include "../../core/gui.hpp"
 #include "../../core/config.hpp"
 #include "../../interface/imgui/widget_helper.hpp"
+#include "../../interface/cocos/hack_settings_popup.hpp"
 #include "imgui.h"
 #include <imgui-cocos.hpp>
 
@@ -25,7 +26,18 @@ class $modify(AutoKillGJBaseGameLayer, GJBaseGameLayer) {
             ImGui::SetNextItemWidth(160.f);
             ImGuiWidgetConfig::InputFloat("##auto_kill::time", "level.auto_kill::time", 90.f);
             ImGui::SameLine();
-            ImGuiWidgetConfig::Checkbox("Time (s)", "level.auto_kill::time_enabled", false);
+            ImGuiWidgetConfig::Checkbox("Time (seconds)", "level.auto_kill::time_enabled", false);
+        });
+
+        hack.setCustomWindowCocos([](cocos2d::CCNode* popupNode) {
+            auto* popup = static_cast<HackSettingsPopup*>(popupNode);
+            popup->addConfigFloatInput("Percentage", "level.auto_kill::percentage", 0, 100.f, 50.f);
+            popup->addConfigToggle("Enabled", "level.auto_kill::percentage_enabled", true);
+
+            popup->addSeparator();
+            
+            popup->addConfigFloatInput("Time (s)", "level.auto_kill::time", 0.f, FLT_MAX, 90.f);
+            popup->addConfigToggle("Enabled", "level.auto_kill::time_enabled", false);
         });
     }
 

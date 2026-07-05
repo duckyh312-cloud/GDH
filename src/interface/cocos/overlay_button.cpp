@@ -1,6 +1,4 @@
 #include "overlay_button.hpp"
-#include "Geode/ui/OverlayManager.hpp"
-#include "hacks_layer.hpp"
 #include "../../core/config.hpp"
 
 #include <Geode/modify/MenuLayer.hpp>
@@ -104,6 +102,7 @@ void OverlayButton::registerWithTouchDispatcher() {
     CCTouchDispatcher::get()->addTargetedDelegate(this, -1000, true);
 }
 
+#ifdef GEODE_IS_ANDROID
 static bool inited = false;
 class $modify(CocosInitMenuLayer, MenuLayer) {
     bool init() {
@@ -129,3 +128,4 @@ class $modify(RefreshSpriteHook, GameManager) {
         GameManager::reloadAll(switchingModes, toFullscreen, borderless, fix, unused);
     }
 };
+#endif

@@ -4,6 +4,7 @@
 #include "../../interface/imgui/widget_helper.hpp"
 #include <imgui-cocos.hpp>
 #include <Geode/modify/GJBaseGameLayer.hpp>
+#include "../../interface/cocos/hack_settings_popup.hpp"
 
 GUI_HACK_CREATE("Level", "Autoclicker", "", true);
 
@@ -18,11 +19,19 @@ class $modify(AutoclickerGJBaseGameLayer, GJBaseGameLayer) {
         auto& hack = gui.getWindow("Level").findHackByName("Autoclicker");        
         
         hack.addHookPtr(self.getHook("GJBaseGameLayer::processQueuedButtons").unwrap());
-        hack.setCustomWindowImGui([]() {
+        hack.setCustomWindowImGui([] {
             ImGuiWidgetConfig::DragInt("##autoclicker::push_length", "level.autoclicker::push_length", 1.f, 1, INT_MAX, 4, "Push Length: %d");
             ImGuiWidgetConfig::DragInt("##autoclicker::release_length", "level.autoclicker::release_length", 1.f, 1, INT_MAX, 4, "Release Length: %d");
             ImGuiWidgetConfig::Checkbox("First Player", "level.autoclicker::p1", true);
             ImGuiWidgetConfig::Checkbox("Second Player", "level.autoclicker::p2", false);
+        });
+
+        hack.setCustomWindowCocos([](cocos2d::CCNode* popupNode) {
+            auto* popup = static_cast<HackSettingsPopup*>(popupNode);
+            popup->addConfigIntInput("Push Length", "level.autoclicker::push_length", 1, INT_MAX, 4);
+            popup->addConfigIntInput("Release Length", "level.autoclicker::release_length", 1, INT_MAX, 4);
+            popup->addConfigToggle("First Player", "level.autoclicker::p1", true);
+            popup->addConfigToggle("Second Player", "level.autoclicker::p2", false);
         });
     }
 

@@ -16,8 +16,8 @@ bool HacksLayer::init() {
     auto& gui = GDH::Gui::get();
     auto& config = Config::get();
 
-    m_index = config.get<int>("gui_mobile.index", 0);
-    m_lastIndexScroll = config.get<int>("gui_mobile.lastIndexScroll", 20.f);
+    m_index = config.get<int>("gui_mobile.index", 1);
+    m_lastIndexScroll = config.get<int>("gui_mobile.lastIndexScroll", -999.f);
 
     auto& windows = gui.getWindows();
 
@@ -77,7 +77,7 @@ bool HacksLayer::init() {
         else tab->addPadding(2.5f);
         
         tab->m_scrollLayer->m_contentLayer->updateLayout();
-        if (i == m_index && m_lastIndexScroll != 20.f)
+        if (i == m_index && m_lastIndexScroll != -999.f)
             tab->m_scrollLayer->m_contentLayer->setPositionY(m_lastIndexScroll);
         else
             tab->m_scrollLayer->moveToTop();

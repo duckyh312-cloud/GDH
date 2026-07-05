@@ -4,6 +4,7 @@
 #include "../../core/config.hpp"
 #include "../../core/utils.hpp"
 #include "../../interface/imgui/widget_helper.hpp"
+#include "../../interface/cocos/hack_settings_popup.hpp"
 #include <imgui-cocos.hpp>
 
 GUI_HACK_CREATE("Cosmetic", "Accurate Percentage", "Shows decimals in level progress", false);
@@ -21,6 +22,15 @@ class $modify(AccuratePercentagePlayLayer, PlayLayer) {
         ]{
             ImGuiWidgetConfig::InputInt("Demicals", decimalsKey, 2);
             ImGuiWidgetConfig::Checkbox("Show time in Milliseconds", showMillisecondsKey, true);
+        });
+
+        hack.setCustomWindowCocos([
+            decimalsKey = hack.formatAdditionalSetting("demicals"),
+            showMillisecondsKey = hack.formatAdditionalSetting("showMilliseconds")
+        ](cocos2d::CCNode* popupNode) {
+            auto* popup = static_cast<HackSettingsPopup*>(popupNode);
+            popup->addConfigIntInput("Demicals", decimalsKey, 1, 10, 2);
+            popup->addConfigToggle("Show time in Milliseconds", showMillisecondsKey, true);
         });
     }
 

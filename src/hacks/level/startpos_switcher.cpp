@@ -4,7 +4,7 @@
 #include "../../core/config.hpp"
 #include "../../core/keybinds.hpp"
 #include "../../interface/imgui/widget_helper.hpp"
-#include "Geode/cocos/robtop/keyboard_dispatcher/CCKeyboardDelegate.h"
+#include "../../interface/cocos/hack_settings_popup.hpp"
 
 using namespace geode::prelude;
 
@@ -36,6 +36,13 @@ class $modify(StartposSwitcherPlayLayer, PlayLayer) {
             ImGuiWidgetConfig::Checkbox("Reset Camera", resetCamera_key, false);
             ImGuiWidgetConfig::DrawCustomKeybindButton("startpos_switcher::left", "Left Switch", geode::Keybind(cocos2d::KEY_Q, KeyboardModifier::None));
             ImGuiWidgetConfig::DrawCustomKeybindButton("startpos_switcher::right", "Right Switch", geode::Keybind(cocos2d::KEY_E, KeyboardModifier::None));
+        });
+
+        hack.setCustomWindowCocos([
+            resetCamera_key = hack.formatAdditionalSetting("reset_camera")
+        ](cocos2d::CCNode* popupNode) {
+            auto* popup = static_cast<HackSettingsPopup*>(popupNode);
+            popup->addConfigToggle("Reset Camera", resetCamera_key, false);
         });
     }
 

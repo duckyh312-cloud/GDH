@@ -1,6 +1,7 @@
 #include "hacks_tab.hpp"
 #include "../../core/gui.hpp"
 #include "../../core/config.hpp"
+#include "hack_settings_popup.hpp"
 
 HacksTab* HacksTab::create() {
     auto ret = new HacksTab();
@@ -47,23 +48,39 @@ void HacksTab::addToggle(GDH::Hack& hck) {
     label->setAnchorPoint({0.f, 0.5f});
     label->setScale(0.65f); 
     label->setPosition({toggle->getPositionX() + 22.f, 15.f});
-    
-    float maxLabelWidth = columnWidth - label->getPositionX() - 30.f; 
+    if (hck.isCheating()) label->setColor({255, 128, 128});
+
+    float maxLabelWidth = columnWidth - label->getPositionX() - 45.f; 
     if (label->getScaledContentWidth() > maxLabelWidth) {
         label->setScale(label->getScale() * (maxLabelWidth / label->getScaledContentWidth()));
     }
     hackNode->addChild(label);
 
-    std::string desc = hck.getDesc();
+    float iconXOffset = label->getPositionX() + label->getScaledContentWidth() + 13.f;
+    if (hck.avaibleCustomWindowCocos()) {
+        auto customSettingsBtn = CCSprite::create("GDH_settingsBtn.png"_spr);
+        customSettingsBtn->setScale(0.45f);
 
+        auto customSettingsBtnClick = CCMenuItemExt::createSpriteExtra(customSettingsBtn, [&hck](CCMenuItemSpriteExtra* sender) {
+            if (auto popup = HackSettingsPopup::create(hck)) {
+                popup->show();
+            }
+        });
+        
+        customSettingsBtnClick->setPosition({iconXOffset, 15.f});
+        hackNode->addChild(customSettingsBtnClick);
+        iconXOffset += 18.5f;
+    }
+
+    std::string desc = hck.getDesc();
     if (!desc.empty()) {
         auto descSprite = CCSprite::create("GDH_infoIcon.png"_spr);
-        descSprite->setScale(0.45f);
+        descSprite->setScale(0.5f);
         auto descClick = CCMenuItemExt::createSpriteExtra(descSprite, [name, desc](CCMenuItemSpriteExtra* sender) {
             GDH::MaterialLayer(FLAlertLayer::create(name.c_str(), desc.c_str(), "OK"))->show();
         });
         
-        descClick->setPosition({label->getPositionX() + label->getScaledContentWidth() + 10.f, 17.f});
+        descClick->setPosition({iconXOffset, 15.f});
         hackNode->addChild(descClick);
     }
 

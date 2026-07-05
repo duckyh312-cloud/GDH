@@ -6,6 +6,7 @@
 #include "../../../core/shortcuts.hpp"
 #include "../widgetH.hpp"
 #include <imgui-cocos.hpp>
+#include "../../cocos/hacks_layer.hpp"
 
 $execute {
     auto& gui = GDH::Gui::get();
@@ -23,6 +24,9 @@ $execute {
 
         if (ImGuiH::Button("Quests Page", {width, 0.f}))
             GDH::Shortcuts::openQuests();
+
+        if (ImGuiH::Button("Open Mobile UI", {width, 0.f}))
+            HacksLayer::isOpened() ? HacksLayer::get()->onClose(nullptr) : HacksLayer::get()->show();
 
         if (ImGuiH::Button("Reset Level", {width, 0.f})) 
             GDH::Shortcuts::resetLevel();

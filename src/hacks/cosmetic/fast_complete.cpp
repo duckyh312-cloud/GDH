@@ -3,6 +3,7 @@
 #include "../../core/gui.hpp"
 #include "../../core/config.hpp"
 #include "../../interface/imgui/widget_helper.hpp"
+#include "../../interface/cocos/hack_settings_popup.hpp"
 
 GUI_HACK_CREATE("Cosmetic", "Fast Level Complete", "Fast level completion without animations", false);
 
@@ -16,6 +17,13 @@ class $modify(FastLevelCompletePlayLayer, PlayLayer) {
         ]{
             ImGuiWidgetConfig::Checkbox("Very Fast", veryFastKey, false);
         });   
+
+        hack.setCustomWindowCocos([
+            veryFastKey = hack.formatAdditionalSetting("veryFast")
+        ](cocos2d::CCNode* popupNode) {
+            auto* popup = static_cast<HackSettingsPopup*>(popupNode);
+            popup->addConfigToggle("Very Fast", veryFastKey, false);
+        });
         
         hack.addHookPtr(self.getHook("PlayLayer::showCompleteEffect").unwrap());
     }

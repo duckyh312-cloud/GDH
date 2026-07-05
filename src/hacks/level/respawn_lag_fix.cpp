@@ -3,6 +3,7 @@
 #include "../../core/gui.hpp"
 #include "../../core/config.hpp"
 #include "../../interface/imgui/widget_helper.hpp"
+#include "../../interface/cocos/hack_settings_popup.hpp"
 
 GUI_HACK_CREATE("Level", "Respawn Lag Fix", "Smoothing respawns with a spawn delay", false);
 
@@ -15,6 +16,13 @@ class $modify(RespawnLagFixPauseLayer, PlayLayer) {
             delay = hack.formatAdditionalSetting("delay")
         ]() {
             ImGuiWidgetConfig::DragInt("##RespawnLagFixFrames", delay, 1.f, 2, INT_MAX, 30, "Delay: %d frames");
+        });
+
+        hack.setCustomWindowCocos([
+            delay = hack.formatAdditionalSetting("delay")
+        ](cocos2d::CCNode* popupNode) {
+            auto* popup = static_cast<HackSettingsPopup*>(popupNode);
+            popup->addConfigIntInput("Delay (frames)", delay, 2, INT_MAX, 30);
         });
     }
     

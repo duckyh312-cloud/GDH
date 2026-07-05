@@ -3,6 +3,7 @@
 #include "../../core/gui.hpp"
 #include "../../core/config.hpp"
 #include "../../interface/imgui/widget_helper.hpp"
+#include "../../interface/cocos/hack_settings_popup.hpp"
 
 GUI_HACK_CREATE("Level", "Respawn Time", "Changes respawn time on death", false);
 
@@ -15,6 +16,13 @@ class $modify(RespawnTimePlayLayer, PlayLayer) {
             delayKey = hack.formatAdditionalSetting("delay")
         ]{
             ImGuiWidgetConfig::DragFloat("##Respawn_Time_value", delayKey, 0.01f, 0, FLT_MAX, 1.f, "Respawn Time: %.2fs");
+        });
+
+        hack.setCustomWindowCocos([
+            delayKey = hack.formatAdditionalSetting("delay")
+        ](cocos2d::CCNode* popupNode) {
+            auto* popup = static_cast<HackSettingsPopup*>(popupNode);
+            popup->addConfigFloatInput("Delay (seconds)", delayKey, 0.01f, FLT_MAX, 1.f);
         });
 
         hack.addHookPtr(self.getHook("PlayLayer::destroyPlayer").unwrap());

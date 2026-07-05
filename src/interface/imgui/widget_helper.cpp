@@ -141,13 +141,12 @@ void ImGuiWidgetConfig::ColorEdit3Hex(const char* label, const std::string& key,
     };
 
     if (ImGui::ColorEdit3(label, color, ImGuiColorEditFlags_NoInputs)) {
-        char newHex[8];
-        snprintf(newHex, sizeof(newHex), "%02X%02X%02X", 
-                 (int)(color[0] * 255.f), 
-                 (int)(color[1] * 255.f), 
-                 (int)(color[2] * 255.f));
+        std::string newHex = fmt::format("{:02X}{:02X}{:02X}", 
+            static_cast<int>(color[0] * 255.f), 
+            static_cast<int>(color[1] * 255.f), 
+            static_cast<int>(color[2] * 255.f));
         
-        config.set<std::string>(key, std::string(newHex));
+        config.set<std::string>(key, newHex);
     }
 
     ImGui::SameLine();
@@ -160,7 +159,7 @@ void ImGuiWidgetConfig::ColorEdit4Hex(const char* label, const std::string& key,
     auto& config = Config::get(); 
     std::string currentHex = config.get<std::string>(key, defaultHex);
     
-    std::string cleanHex = currentHex[0] == '#' ? currentHex.substr(1) : currentHex;
+    std::string cleanHex = (currentHex[0] == '#' ? currentHex.substr(1) : currentHex);
     if (cleanHex.length() == 6) {
         cleanHex += "FF";
     }
@@ -178,14 +177,13 @@ void ImGuiWidgetConfig::ColorEdit4Hex(const char* label, const std::string& key,
     };
 
     if (ImGui::ColorEdit4(label, color, ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_AlphaBar)) {
-        char newHex[10];
-        snprintf(newHex, sizeof(newHex), "%02X%02X%02X%02X", 
-                 (int)(color[0] * 255.f), 
-                 (int)(color[1] * 255.f), 
-                 (int)(color[2] * 255.f),
-                 (int)(color[3] * 255.f));
+        std::string newHex = fmt::format("{:02X}{:02X}{:02X}{:02X}", 
+            static_cast<int>(color[0] * 255.f), 
+            static_cast<int>(color[1] * 255.f), 
+            static_cast<int>(color[2] * 255.f),
+            static_cast<int>(color[3] * 255.f));
         
-        config.set<std::string>(key, std::string(newHex));
+        config.set<std::string>(key, newHex);
     }
 
     ImGui::SameLine();

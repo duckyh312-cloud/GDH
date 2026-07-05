@@ -3,7 +3,7 @@
 #include <imgui-cocos.hpp>
 #include "../../core/gui.hpp"
 
-GUI_HACK_CREATE("Cosmetic", "No Mirror", "Disables level mirroring", false);
+GUI_HACK_CREATE("Cosmetic", "No Mirror", "Disables level mirroring", true);
 
 class $modify(NoMirrorGJBaseGameLayer, GJBaseGameLayer) {
     static void onModify(auto& self) {

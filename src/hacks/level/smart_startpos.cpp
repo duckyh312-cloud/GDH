@@ -3,6 +3,7 @@
 #include "../../core/gui.hpp"
 #include "../../core/config.hpp"
 #include "../../interface/imgui/widget_helper.hpp"
+#include "../../interface/cocos/hack_settings_popup.hpp"
 
 using namespace geode::prelude;
 
@@ -33,6 +34,21 @@ class $modify(SmartStartposPlayLayer, PlayLayer) {
             ImGuiWidgetConfig::Checkbox("Gamemode Portals", gamemodePortals, true);
             ImGuiWidgetConfig::Checkbox("Mini Portals", miniPortals, true);
             ImGuiWidgetConfig::Checkbox("Speed Changes", speedChanges, true);
+        });
+
+        hack.setCustomWindowCocos([
+            gravityPortals = hack.formatAdditionalSetting("gravityPortals"),
+            dualPortals = hack.formatAdditionalSetting("dualPortals"),
+            gamemodePortals = hack.formatAdditionalSetting("gamemodePortals"),
+            miniPortals = hack.formatAdditionalSetting("miniPortals"),
+            speedChanges = hack.formatAdditionalSetting("speedChanges")
+        ](cocos2d::CCNode* popupNode) {
+            auto* popup = static_cast<HackSettingsPopup*>(popupNode);
+            popup->addConfigToggle("Gravity Portals", gravityPortals, false);
+            popup->addConfigToggle("Dual Portals", dualPortals, true);
+            popup->addConfigToggle("Gamemode Portals", gamemodePortals, true);
+            popup->addConfigToggle("Mini Portals", miniPortals, true);
+            popup->addConfigToggle("Speed Changes", speedChanges, true);
         });
     }
 

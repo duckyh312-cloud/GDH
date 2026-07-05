@@ -26,7 +26,7 @@ namespace GDH {
         void setGameVariableID(const std::string& key);
 
         void setCustomWindowImGui(geode::Function<void()> func) { m_handlerImGui = std::move(func); };
-        void setCustomWindowCocos(geode::Function<void()> func) { m_handlerCocos = std::move(func); };
+        void setCustomWindowCocos(geode::Function<void(cocos2d::CCNode*)> func) { m_handlerCocos = std::move(func); };
 
         bool getEnabled() const;
         bool getEarlyInit() const;
@@ -43,7 +43,7 @@ namespace GDH {
         geode::Keybind getKeybind() const { return m_keybind; }
 
         void callCustomWindowImGui() { if (m_handlerImGui) m_handlerImGui(); };
-        void callCustomWindowCocos() { if (m_handlerCocos) m_handlerCocos(); };
+        void callCustomWindowCocos(cocos2d::CCNode* popupContent) { if (m_handlerCocos) m_handlerCocos(popupContent); };
 
         bool avaibleCustomWindowImGui() { return m_handlerImGui != nullptr; };
         bool avaibleCustomWindowCocos() { return m_handlerCocos != nullptr;  };
@@ -70,7 +70,7 @@ namespace GDH {
         geode::Keybind m_keybind;
 
         geode::Function<void()> m_handlerImGui = nullptr;
-        geode::Function<void()> m_handlerCocos = nullptr;
+        geode::Function<void(cocos2d::CCNode*)> m_handlerCocos = nullptr;
 
         bool m_earlyInit = true;
         geode::Function<bool()> m_customCheatingCheck = nullptr;

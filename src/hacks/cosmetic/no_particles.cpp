@@ -4,7 +4,7 @@
 #include "../../core/gui.hpp"
 #include "../../core/config.hpp"
 #include "../../interface/imgui/widget_helper.hpp"
-#include <string>
+#include "../../interface/cocos/hack_settings_popup.hpp"
 
 GUI_HACK_CREATE("Cosmetic", "No Particles", "Disables aspects of the particle system", false);
 
@@ -40,11 +40,20 @@ class $modify(NoParticlesCCParticleSystemQuad, CCParticleSystemQuad) {
 
         hack.addHookPtr(self.getHook("cocos2d::CCParticleSystemQuad::create").unwrap());
 
-        hack.setCustomWindowImGui([]() {
+        hack.setCustomWindowImGui([] {
             auto& hackRef = GDH::Gui::get().getWindow("Cosmetic").findHackByName("No Particles");
             for (const auto& effect : g_effects) {
                 std::string fullKey = hackRef.formatAdditionalSetting(effect[1]);
                 ImGuiWidgetConfig::Checkbox(effect[0], fullKey, true);
+            }
+        });
+
+        hack.setCustomWindowCocos([](cocos2d::CCNode* popupNode) {
+            auto* popup = static_cast<HackSettingsPopup*>(popupNode);
+            auto& hackRef = GDH::Gui::get().getWindow("Cosmetic").findHackByName("No Particles");
+            for (const auto& effect : g_effects) {
+                std::string fullKey = hackRef.formatAdditionalSetting(effect[1]);
+                popup->addConfigToggle(effect[0], fullKey, true);
             }
         });
     }
