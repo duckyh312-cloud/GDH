@@ -11,6 +11,8 @@ class $modify(RespawnLagFixPauseLayer, PlayLayer) {
     static void onModify(auto& self) {
         auto& gui = GDH::Gui::get();
         auto& hack = gui.getWindow("Level").findHackByName("Respawn Lag Fix");  
+
+        hack.addHookPtr(self.getHook("PlayLayer::resetLevel").unwrap());
         
         hack.setCustomWindowImGui([
             delay = hack.formatAdditionalSetting("delay")
