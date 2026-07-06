@@ -6,7 +6,7 @@
 	},
 	"id": "tobyadd.gdh",
 	"name": "GDH",
-	"version": "v5.1.0-alpha.1",
+	"version": "v5.1.0-beta.1",
 	"developer": "TobyAdd",
 	"description": "Mod menu for Geometry Dash",
 	"early-load": true,

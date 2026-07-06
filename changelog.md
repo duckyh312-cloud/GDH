@@ -1,20 +1,20 @@
-# v5.1.0-alpha.1
-This probably isn't what you were expecting, since a lot of features might be missing, but Introducing the new version of GDH v5.1 Alpha!
+# v5.1.0-beta.1
+This probably isn't what you were expecting, since a lot of features might be missing, but Introducing the new version of GDH v5.1 Beta!
 
 What's new:
 - Complete rewrite from scratch - which means the code runs significantly faster and more stable
-- Some downgrades compared to the last v5 released for 2.2074, unfortunately - since this is an alpha, many features may be absent (they'll be added over time!)
+- Some downgrades compared to the last v5 released for 2.2074, unfortunately - since this is an beta, many features may be absent (they'll be added over time!)
 - Redesigned UI - both the desktop and Android interfaces have been rewritten in Material Design style
 - Dynamic hooking - this should improve performance since disabled hacks won't perform unnecessary checks, making the entire structure way more optimized than v5
 - Frame Extrapolation - probably the first, well actually the second, free implementation that visually smooths out the gameplay experience if you have a monitor above 240Hz
 - Theme Editor - you can now customize almost every UI component to match your color preferences
-- Keybind system - it now supports modifiers, adding way more key combination variations (unfortunately not everything is bindable yet, but this is still an alpha)
+- Keybind system - it now supports modifiers, adding way more key combination variations (unfortunately not everything is bindable yet, but this is still an beta)
 - Replay Engine v4 - a new, way more stable replay bot system that's much more accurate and finally supports a stable Practice Fix (unfortunately no backward compatibility with v3 macros yet, but that will be added later)
 - Uncomplete Level - it existed before, but it's been improved and now properly cleans level stats (including orbs, stars, and full statistics)
 - Reverb Effect - creates a spatial room effect for music to give it a pleasant acoustic feel
 - Pitch Shifter - the limit has been increased from -24 semitones to 24 semitones, which is twice as much as before (actually, the software limit has been raised to -72 to 72, but shhh)
 
-Honestly, there's a lot more waiting for you in future alpha releases - again, not everything is done yet, but the core features are there and working stable (despite this being an alpha)
+Honestly, there's a lot more waiting for you in future beta releases - again, not everything is done yet, but the core features are there and working stable (despite this being an beta)
 
 Thanks to aciddev, prevter, dejid, "malenkya nadeshda" and everyone else who helped with implementations and ideas. And again, I want to apologize if your expectations weren't met with what's done right now - everything will be polished over time
 
