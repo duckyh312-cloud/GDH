@@ -78,26 +78,22 @@ void ReplayEngine::handle_update(GJBaseGameLayer* self) {
 
     if (mode == state::record) {
         bool frameExist = !m_physicFrames.empty() && m_physicFrames.back().frame == frame;
-        if (!frameExist)
-            m_physicFrames.push_back({
-                frame, 
-                self->m_player1->getPositionX(),
-                self->m_player1->getPositionY(),
-                self->m_player1->m_yVelocity,
-                false //first player
-            });
-
-        if (!self->m_gameState.m_isDualMode)
-            return;
         
-        if (!frameExist)
-            m_physicFrames.push_back({
-                frame, 
-                self->m_player2->getPositionX(),
-                self->m_player2->getPositionY(),
-                self->m_player2->m_yVelocity,
-                true //second player
-            });
+        if (!frameExist) {
+            auto recordPlayerFrame = [this, frame](auto* player, bool isSecondPlayer) {
+                m_physicFrames.push_back({
+                    frame, 
+                    player->getPositionX(),
+                    player->getPositionY(),
+                    player->m_yVelocity,
+                    isSecondPlayer
+                });
+            };
+
+            recordPlayerFrame(self->m_player1, false);
+            if (self->m_gameState.m_isDualMode)
+                recordPlayerFrame(self->m_player2, true);
+        }
     }
     else if (mode == state::play) {
         while (m_physicIndex < m_physicFrames.size() && frame >= m_physicFrames[m_physicIndex].frame)
@@ -106,7 +102,9 @@ void ReplayEngine::handle_update(GJBaseGameLayer* self) {
             auto* player = physicFrame.isPlayer2 ? self->m_player2 : self->m_player1;
 
             player->setPosition({physicFrame.x, physicFrame.y});
-            player->m_yVelocity = physicFrame.y_accel;
+
+            if (physicFrame.y_accel != 0.f)
+                player->m_yVelocity = physicFrame.y_accel;
 
             m_physicIndex++;
         }

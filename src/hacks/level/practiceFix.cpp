@@ -5,6 +5,7 @@
 #include "../../core/gui.hpp"
 #include "../../core/checkpointData.hpp"
 #include "../../core/replayEngine.hpp"
+#include "frame_stepper.hpp"
 
 GUI_HACK_CREATE("Level", "Practice Fix", "The right way to respawn a player", false);
 
@@ -24,7 +25,7 @@ class $modify(PracticeFixPlayLayer, PlayLayer) {
         auto& hack = gui.getWindow("Level").findHackByName("Practice Fix");        
         
         hack.addHookPtr(self.getHook("PlayLayer::createCheckpoint").unwrap());
-        hack.addHookPtr(self.getHook("PlayLayer::removeCheckpoint").unwrap());
+        // hack.addHookPtr(self.getHook("PlayLayer::removeCheckpoint").unwrap());
         hack.addHookPtr(self.getHook("PlayLayer::loadFromCheckpoint").unwrap());
         hack.addHookPtr(self.getHook("PlayLayer::resetLevel").unwrap());
     }
@@ -60,6 +61,13 @@ class $modify(PracticeFixPlayLayer, PlayLayer) {
         auto fields = m_fields.self();
         if (checkpoint && fields->m_checkpoints.contains(checkpoint)) {
             fields->m_checkpoints.erase(checkpoint);
+        }
+
+        if (FrameStepper::g_back && m_checkpointArray->count()) {
+            if (first) m_checkpointArray->removeObjectAtIndex(0);
+            else m_checkpointArray->removeLastObject();
+            
+            return;
         }
 
         PlayLayer::removeCheckpoint(first);

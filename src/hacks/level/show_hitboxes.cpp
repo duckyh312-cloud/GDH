@@ -5,9 +5,10 @@
 #include "../../core/gui.hpp"
 #include "../../core/config.hpp"
 #include "../../interface/imgui/widget_helper.hpp"
-#include "../../core/utils.hpp"
-#include "imgui.h"
 #include "../../interface/cocos/hack_settings_popup.hpp"
+#include "../../core/utils.hpp"
+#include "../../core/ringBuffer.hpp"
+#include "imgui.h"
 
 using namespace geode::prelude;
 
@@ -55,39 +56,8 @@ static void drawOrientedOrRect(GJBaseGameLayer* layer, cocos2d::CCDrawNode* draw
     }
 }
 
-struct FixedTrail {
-    std::vector<cocos2d::CCRect> buffer;
-    size_t head = 0;
-    size_t maxSize = 240;
-    bool isFull = false;
-
-    void init(size_t size) {
-        maxSize = size;
-        buffer.resize(size);
-        head = 0;
-        isFull = false;
-    }
-
-    void push(const cocos2d::CCRect& rect) {
-        if (maxSize == 0 || buffer.empty()) return;
-        
-        buffer[head] = rect;
-        head++;
-        
-        if (head >= maxSize) {
-            head = 0;
-            isFull = true;
-        }
-    }
-
-    void clear() {
-        head = 0;
-        isFull = false;
-    }
-};
-
-static FixedTrail playerTrail1, playerTrail2;
-static FixedTrail playerInnerTrail1, playerInnerTrail2;
+static RingBuffer<cocos2d::CCRect> playerTrail1, playerTrail2;
+static RingBuffer<cocos2d::CCRect> playerInnerTrail1, playerInnerTrail2;
 static size_t lastMaxLength = 0;
 
 void updateHitboxes(GJBaseGameLayer* layer, cocos2d::CCDrawNode* drawNode) {
@@ -204,14 +174,10 @@ void updateHitboxes(GJBaseGameLayer* layer, cocos2d::CCDrawNode* drawNode) {
     if (layer->m_gameState.m_isDualMode) drawPlayer(layer->m_player2);
 
     if (config.get<bool>("level.show_hitboxes::draw_trail", false)) {
-        auto renderTrail = [drawNode, size, getFillColor](const FixedTrail& trail, cocos2d::ccColor4F const& color) {
-            if (trail.maxSize == 0 || trail.buffer.empty()) return;
-            size_t actualSize = trail.isFull ? trail.maxSize : trail.head;
-            size_t startIndex = trail.isFull ? trail.head : 0;
-            for (size_t i = 0; i < actualSize; ++i) {
-                size_t index = (startIndex + i) % trail.maxSize;
-                drawRect(drawNode, trail.buffer[index], {0.f, 0.f, 0.f, 0.f}, size, color);
-            }
+        auto renderTrail = [drawNode, size](const RingBuffer<cocos2d::CCRect>& trail, cocos2d::ccColor4F const& color) {
+            trail.for_each([drawNode, size, &color](const cocos2d::CCRect& rect) {
+                drawRect(drawNode, rect, {0.f, 0.f, 0.f, 0.f}, size, color);
+            });
         };
 
         cocos2d::ccColor4F trailColor = {1.0f, 1.0f, 0.0f, 1.0f};

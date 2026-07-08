@@ -312,7 +312,7 @@ static bool m_push = false;
 
 class $modify(LabelsPlayLayer, PlayLayer) {
     struct Fields {
-        std::unordered_map<Corner, std::vector<cocos2d::CCLabelBMFont *>> labelObjs;
+        std::unordered_map<Corner, std::vector<cocos2d::CCLabelBMFont*>> labelObjs;
     };
 
     bool init(GJGameLevel *level, bool useReplay, bool dontCreateObjects) {
@@ -343,9 +343,15 @@ class $modify(LabelsPlayLayer, PlayLayer) {
         CpsCounter::get().reset();
         NoclipAccuracy::get().handle_reset();
     }
-    
+
     void postUpdate(float dt) {
         PlayLayer::postUpdate(dt);
+        g_rainbowHue += 0.125f * dt;
+        if (g_rainbowHue > 1.0f) g_rainbowHue -= 1.0f;
+    }
+    
+    void updateProgressbar() {
+        PlayLayer::updateProgressbar();
 
         auto& config = Config::get();
         bool disable_all = config.get<bool>("labels::disable_all", false);
@@ -367,8 +373,6 @@ class $modify(LabelsPlayLayer, PlayLayer) {
 
         auto& manager = GDH::Labels::Manager::get();
         auto windowSize = cocos2d::CCDirector::sharedDirector()->getWinSize();
-        g_rainbowHue += 0.125f * dt;
-        if (g_rainbowHue > 1.0f) g_rainbowHue -= 1.0f;
         
         for (auto &[corner, labelVec] : m_fields->labelObjs) {
             float y = 0.0f, labelsHeight = 0.0f; int i = 0;

@@ -54,7 +54,7 @@ class $modify(AutoSafeModePlayLayer, PlayLayer) {
         auto& gui = GDH::Gui::get();
         auto& hack = gui.getWindow("Level").findHackByName("Auto Safe Mode");
         
-        hack.addHookPtr(self.getHook("PlayLayer::init").unwrap());
+        // hack.addHookPtr(self.getHook("PlayLayer::init").unwrap());
         hack.addHookPtr(self.getHook("PlayLayer::destroyPlayer").unwrap());
         hack.addHookPtr(self.getHook("PlayLayer::resetLevel").unwrap());
         hack.addHookPtr(self.getHook("PlayLayer::levelComplete").unwrap());
