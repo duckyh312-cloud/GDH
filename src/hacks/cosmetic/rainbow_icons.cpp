@@ -123,7 +123,6 @@ class $modify(RainbowIconGJBaseGameLayer, GJBaseGameLayer) {
             
             if (toggle_glow) {
                 player->m_glowColor = primary;
-                player->updateGlowColor();
             }
 
             if (toggle_trail && player->m_regularTrail) {

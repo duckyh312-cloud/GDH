@@ -26,25 +26,28 @@ $execute {
         }
         ImGui::SameLine();
         
-        
+        auto enableHackIfDisabled = [&](const char* windowName, const char* hackName) {
+            auto& hack = gui.getWindow(windowName).findHackByName(hackName);
+            if (!hack.getEnabled()) {
+                hack.toggle();
+            }
+        };
+                
         if (ImGuiH::RadioButton("Record", engine.mode == state::record)) {
             if (engine.mode != state::record)
                 engine.clear();
 
-            auto& practiceFix = gui.getWindow("Level").findHackByName("Practice Fix");   
-            if (!practiceFix.getEnabled()) practiceFix.toggle();
-            
-            auto& tps_bypass = gui.getWindow("Invisible").findHackByName("TPS");       
-            if (!tps_bypass.getEnabled()) tps_bypass.toggle();
-
-            auto& respawn_lag = gui.getWindow("Level").findHackByName("Respawn Lag Fix");       
-            if (!respawn_lag.getEnabled()) respawn_lag.toggle();
+            enableHackIfDisabled("Level", "Practice Fix");
+            enableHackIfDisabled("Invisible", "TPS");
+            enableHackIfDisabled("Level", "Respawn Lag Fix");
             
             engine.mode = state::record;
         }
         ImGui::SameLine();
         
         if (ImGuiH::RadioButton("Play", engine.mode == state::play)) {
+            enableHackIfDisabled("Invisible", "TPS");
+            
             engine.mode = state::play;
         }
         
