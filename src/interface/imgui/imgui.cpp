@@ -376,7 +376,7 @@ class $modify(ImGuiInitMenuLayer, MenuLayer) {
 		static bool inited = false;
         if (!inited) {
             GDH::Keybinds::get().addCallback("gui::toggle_ui", geode::Keybind(cocos2d::KEY_Tab, geode::KeyboardModifier::None),
-                []() {
+                [](bool repeat) {
                     ToggleUI();
                 }
             );
