@@ -15,7 +15,7 @@ class $modify(ReplayCCScheduler, cocos2d::CCScheduler) {
 
         auto& gui = GDH::Gui::get();
         auto& hack = gui.getWindow("Invisible").findHackByName("TPS");   
-        hack.setCheating(false);     
+        hack.setCheating(true);     
         hack.addHookPtr(self.getHook("cocos2d::CCScheduler::update").unwrap());
     }
 

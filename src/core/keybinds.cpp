@@ -10,10 +10,16 @@ void Keybinds::init() {
     rebuildCache();
 
     auto listener = geode::KeyboardInputEvent().listen([this](geode::KeyboardInputData& event) {
-        if (event.action == geode::KeyboardInputData::Action::Press) {
-            m_pressedKeys.insert(event.key);
+        if (event.action == geode::KeyboardInputData::Action::Press || 
+            event.action == geode::KeyboardInputData::Action::Repeat) {
+            
+            if (event.action == geode::KeyboardInputData::Action::Press) {
+                m_pressedKeys.insert(event.key);
+            }
             
             if (!m_recordingWindow.empty() || !m_recordingCustomId.empty()) {
+                if (event.action == geode::KeyboardInputData::Action::Repeat) return ListenerResult::Stop;
+
                 if (event.key == cocos2d::KEY_LeftControl || event.key == cocos2d::KEY_RightControl ||
                     event.key == cocos2d::KEY_LeftShift || event.key == cocos2d::KEY_RightShift || event.key == cocos2d::KEY_Alt) {
                     return ListenerResult::Stop;
@@ -37,12 +43,13 @@ void Keybinds::init() {
             
             for (auto& [id, customPair] : m_customBinds) {
                 if (customPair.first == pressedBind && customPair.second) {
-                    customPair.second();
+                    bool isRepeat = (event.action == geode::KeyboardInputData::Action::Repeat);
+                    customPair.second(isRepeat);
                     return ListenerResult::Stop;
                 }
             }
 
-            if (m_bindsMap.contains(pressedBind)) {
+            if (event.action == geode::KeyboardInputData::Action::Press && m_bindsMap.contains(pressedBind)) {
                 for (const auto& [windowName, hackName] : m_bindsMap[pressedBind]) {
                     Gui::get().getWindow(windowName).findHackByName(hackName).toggle();
                 }
@@ -182,7 +189,7 @@ bool Keybinds::isMouseButtonDown(geode::MouseInputData::Button button) const {
     return m_pressedMouseButtons.contains(button);
 }
 
-void Keybinds::addCallback(const std::string& id, geode::Keybind defaultBind, geode::Function<void()> callback) {
+void Keybinds::addCallback(const std::string& id, geode::Keybind defaultBind, geode::Function<void(bool)> callback) {
     if (m_customBinds.contains(id)) {
         m_customBinds[id].second = std::move(callback);
     } else {

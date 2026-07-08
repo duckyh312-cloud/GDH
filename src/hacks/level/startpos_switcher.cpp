@@ -159,12 +159,14 @@ class $modify(StartposSwitcherPlayLayer, PlayLayer) {
             m_uiLayer->addChild(fields->startposSwitcherUI);
 
             auto& kb = GDH::Keybinds::get();
-            kb.addCallback("startpos_switcher::left", geode::Keybind(cocos2d::KEY_Q, KeyboardModifier::None), [left_arrowClick]() {
+            kb.addCallback("startpos_switcher::left", geode::Keybind(cocos2d::KEY_Q, KeyboardModifier::None), [left_arrowClick](bool repeat) {
+                if (repeat) return;
                 if (auto pl = PlayLayer::get()) 
                     left_arrowClick->activate();
             });
 
-            kb.addCallback("startpos_switcher::right", geode::Keybind(cocos2d::KEY_E, KeyboardModifier::None), [right_arrowClick]() {
+            kb.addCallback("startpos_switcher::right", geode::Keybind(cocos2d::KEY_E, KeyboardModifier::None), [right_arrowClick](bool repeat) {
+                if (repeat) return;
                 if (auto pl = PlayLayer::get()) 
                     right_arrowClick->activate();
             });
