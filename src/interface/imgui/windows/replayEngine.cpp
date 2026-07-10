@@ -6,8 +6,90 @@
 #include "../../../core/gui.hpp"
 #include "../../../core/replayEngine.hpp"
 #include "../../../core/config.hpp"
+#include "../../../core/recorder/recorder.hpp"
 #include "../widgetH.hpp"
+#include "../widget_helper.hpp"
 #include "../layout.hpp"
+
+void drawRecorderInterface() {
+    auto& layout = GDH::Layout::Manager::get();
+    auto& recorder = GDH::Recorder::get();
+    if (ImGuiH::Checkbox("Record##Recorder", &recorder.enabled)) {
+        if (recorder.enabled) {
+            recorder.compile_command();
+            recorder.start();
+        }
+        else {
+            recorder.stop();
+        }
+    }
+
+    
+    ImGui::SameLine();
+    
+    ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
+    ImGui::InputText("##videoname", &recorder.videoName);
+    
+    ImGuiH::Checkbox("Native Mode", &recorder.native_mode);
+    
+    ImGui::Text("Resolution:");
+    ImGui::Separator();
+
+    ImGui::PushItemWidth(layout.multipleScale(45.f));
+    if (ImGui::InputInt("##width", &recorder.width, 0) && recorder.lock_aspect_ratio) {
+        float aspect_ratio = 16.0f / 9.0f;
+        recorder.height = static_cast<int>(recorder.width / aspect_ratio);
+    }
+    ImGui::SameLine(0, 5);
+
+    ImGui::Text("x");
+    ImGui::SameLine(0, 5);
+
+    ImGui::PushItemWidth(layout.multipleScale(45.f));
+    if (ImGui::InputInt("##height", &recorder.height, 0) && recorder.lock_aspect_ratio) {
+        float aspect_ratio = 16.0f / 9.0f;
+        recorder.width = static_cast<int>(recorder.height * aspect_ratio);
+    }
+    ImGui::SameLine(0, 5);
+
+    ImGui::Text("@");
+    ImGui::SameLine(0, 5);
+
+    ImGui::PushItemWidth(layout.multipleScale(35.f));
+    ImGui::InputInt("##fps", &recorder.fps, 0);
+
+    ImGui::SameLine(0, 5);
+
+    ImGuiH::Checkbox("Lock Aspect Ratio (16:9)", &recorder.lock_aspect_ratio);
+
+    ImGui::Spacing();
+
+    ImGui::Text("Encoding Settings");
+    ImGui::Separator(); 
+
+    ImGui::PushItemWidth(layout.multipleScale(50.f));
+    ImGui::InputText("Bitrate", &recorder.bitrate); 
+
+    ImGui::SameLine();
+
+    ImGui::PushItemWidth(layout.multipleScale(80.f));
+    ImGui::InputText("Codec", &recorder.codec);
+
+    ImGui::PushItemWidth(layout.multipleScale(450.f));
+    ImGui::InputText("Extra Arguments", &recorder.extra_args);
+
+    ImGui::PushItemWidth(layout.multipleScale(450.f));
+    ImGui::InputText("VF Args", &recorder.vf_args);
+
+    ImGui::Spacing();
+    ImGui::Text("Folders");
+    ImGui::Separator();
+
+    if (ImGuiH::Button("Open Showcase Folder")) {
+        geode::utils::file::openFolder(recorder.folder);
+    }
+    ImGui::Text("Showcase Folder: %s", recorder.folder.string().c_str());
+}
 
 $execute {
     auto& gui = GDH::Gui::get();
@@ -20,34 +102,37 @@ $execute {
         using namespace GDH;
 
         static std::vector<std::filesystem::path> replay_list;
+        static bool isProSettingsOpen = true;
 
-        if (ImGuiH::RadioButton("Disable", engine.mode == state::disable)) {
-            engine.mode = state::disable;
-        }
-        ImGui::SameLine();
-        
         auto enableHackIfDisabled = [&](const char* windowName, const char* hackName) {
             auto& hack = gui.getWindow(windowName).findHackByName(hackName);
             if (!hack.getEnabled()) {
                 hack.toggle();
             }
         };
+
+        if (ImGuiH::RadioButton("Disable", engine.mode == state::disable)) {
+            engine.mode = state::disable;
+        }
+        ImGui::SameLine();
                 
         if (ImGuiH::RadioButton("Record", engine.mode == state::record)) {
-            if (engine.mode != state::record)
-                engine.clear();
-
-            enableHackIfDisabled("Level", "Practice Fix");
-            enableHackIfDisabled("Invisible", "TPS");
-            enableHackIfDisabled("Level", "Respawn Lag Fix");
-            
-            engine.mode = state::record;
+            if (engine.mode != state::record) {
+                if (engine.get_actions_size() > 0) {
+                    ImGui::OpenPopup("Record Overwrite Warning");
+                } else {
+                    engine.clear();
+                    enableHackIfDisabled("Level", "Practice Fix");
+                    enableHackIfDisabled("Invisible", "TPS");
+                    enableHackIfDisabled("Level", "Respawn Lag Fix");
+                    engine.mode = state::record;
+                }
+            }
         }
         ImGui::SameLine();
         
         if (ImGuiH::RadioButton("Play", engine.mode == state::play)) {
             enableHackIfDisabled("Invisible", "TPS");
-            
             engine.mode = state::play;
         }
         
@@ -70,25 +155,106 @@ $execute {
         }
                 
         if (ImGuiH::Button("Save", {ImGui::GetContentRegionAvail().x / 3, NULL})) {
-            ImGuiH::AddPopup(engine.save(engine.replay_name));
+            std::filesystem::path savePath = folderMacroPath / (engine.replay_name + ".re4");
+            if (std::filesystem::exists(savePath)) {
+                ImGui::OpenPopup("Save Overwrite Warning");
+            } else {
+                ImGuiH::AddPopup(engine.save(engine.replay_name));
+            }
         }
         ImGui::SameLine();
         
         if (ImGuiH::Button("Load", {ImGui::GetContentRegionAvail().x / 2, NULL})) {
-            ImGuiH::AddPopup(engine.load(engine.replay_name));
+            if (engine.get_actions_size() > 0) {
+                ImGui::OpenPopup("Load Overwrite Warning");
+            } else {
+                ImGuiH::AddPopup(engine.load(engine.replay_name));
+            }
         }
         ImGui::SameLine();
         
         if (ImGuiH::Button("Clear", {ImGui::GetContentRegionAvail().x, NULL})) {
-            engine.clear();
-            ImGuiH::AddPopup("Replay has been cleared");
+            if (engine.get_actions_size() > 0) {
+                ImGui::OpenPopup("Clear Warning");
+            } else {
+                engine.clear();
+                ImGuiH::AddPopup("Replay has been cleared");
+            }
         }
 
         ImGui::Text("Replay Size: %zu/%zu", engine.get_current_index(), engine.get_actions_size());
         ImGui::Text("Frame: %llu", engine.get_frame());
 
         ImGui::Separator();
-        ImGui::Selectable("More Settings");
+        if (ImGui::Selectable("Pro Settings")) {
+            isProSettingsOpen = true;
+            ImGui::OpenPopup("Pro Settings");
+        }
+
+        if (ImGui::BeginPopupModal("Record Overwrite Warning", NULL, ImGuiWindowFlags_AlwaysAutoResize)) {
+            ImGuiH::GlowWindow(IM_COL32(71, 71, 131, 150), IM_COL32(255, 128, 128, 0), layout.multipleScale(500.f));
+            ImGui::Text("You currently have actions stored in the buffer.\nStarting a new recording will clear your current unsaved active macro.\n\nAre you sure you want to proceed?");
+            ImGuiH::SpaceSeparator();
+            if (ImGuiH::Button("Yes, Overwrite", {ImGui::GetContentRegionAvail().x / 2, 0})) {
+                engine.clear();
+                enableHackIfDisabled("Level", "Practice Fix");
+                enableHackIfDisabled("Invisible", "TPS");
+                enableHackIfDisabled("Level", "Respawn Lag Fix");
+                engine.mode = state::record;
+                ImGui::CloseCurrentPopup();
+            }
+            ImGui::SameLine();
+            if (ImGuiH::Button("Cancel", {ImGui::GetContentRegionAvail().x, 0})) {
+                ImGui::CloseCurrentPopup();
+            }
+            ImGui::EndPopup();
+        }
+
+        if (ImGui::BeginPopupModal("Save Overwrite Warning", NULL, ImGuiWindowFlags_AlwaysAutoResize)) {
+            ImGuiH::GlowWindow(IM_COL32(71, 71, 131, 150), IM_COL32(255, 128, 128, 0), layout.multipleScale(500.f));
+            ImGui::Text("A macro named \"%s.re4\" already exists.\nAre you sure you want to overwrite it?", engine.replay_name.c_str());
+            ImGuiH::SpaceSeparator();
+            if (ImGuiH::Button("Yes, Overwrite", {ImGui::GetContentRegionAvail().x / 2, 0})) {
+                ImGuiH::AddPopup(engine.save(engine.replay_name));
+                ImGui::CloseCurrentPopup();
+            }
+            ImGui::SameLine();
+            if (ImGuiH::Button("Cancel", {ImGui::GetContentRegionAvail().x, 0 })) {
+                ImGui::CloseCurrentPopup();
+            }
+            ImGui::EndPopup();
+        }
+
+        if (ImGui::BeginPopupModal("Load Overwrite Warning", NULL, ImGuiWindowFlags_AlwaysAutoResize)) {
+            ImGuiH::GlowWindow(IM_COL32(71, 71, 131, 150), IM_COL32(255, 128, 128, 0), layout.multipleScale(500.f));
+            ImGui::Text("You currently have recorded actions actively loaded.\nLoading this macro will clear your unsaved working progress.\n\nAre you sure you want to proceed?");
+            ImGuiH::SpaceSeparator();
+            if (ImGuiH::Button("Yes, Load", {ImGui::GetContentRegionAvail().x / 2, 0})) {
+                ImGuiH::AddPopup(engine.load(engine.replay_name));
+                ImGui::CloseCurrentPopup();
+            }
+            ImGui::SameLine();
+            if (ImGuiH::Button("Cancel", {ImGui::GetContentRegionAvail().x, 0})) {
+                ImGui::CloseCurrentPopup();
+            }
+            ImGui::EndPopup();
+        }
+
+        if (ImGui::BeginPopupModal("Clear Warning", NULL, ImGuiWindowFlags_AlwaysAutoResize)) {
+            ImGuiH::GlowWindow(IM_COL32(71, 71, 131, 150), IM_COL32(255, 128, 128, 0), layout.multipleScale(500.f));
+            ImGui::Text("Are you sure you want to completely clear the current macro?\nThis action cannot be undone.");
+            ImGuiH::SpaceSeparator();
+            if (ImGuiH::Button("Yes, Clear", {ImGui::GetContentRegionAvail().x / 2, 0})) {
+                engine.clear();
+                ImGuiH::AddPopup("Replay has been cleared");
+                ImGui::CloseCurrentPopup();
+            }
+            ImGui::SameLine();
+            if (ImGuiH::Button("Cancel", {ImGui::GetContentRegionAvail().x, 0})) {
+                ImGui::CloseCurrentPopup();
+            }
+            ImGui::EndPopup();
+        }
 
         if (ImGui::BeginPopupModal("Select Replay", 0, ImGuiWindowFlags_NoResize)) {
             ImGuiH::GlowWindow(IM_COL32(120, 100, 240, 100), IM_COL32(120, 100, 240, 0), layout.multipleScale(250.f));
@@ -112,6 +278,38 @@ $execute {
             if (ImGuiH::Button("Close", {ImGui::GetContentRegionAvail().x, NULL})) {
                 ImGui::CloseCurrentPopup();
             }
+            ImGui::EndPopup();
+        }
+
+        static bool onceResize = false;
+        if (!onceResize && ImGui::IsPopupOpen("Pro Settings")) {
+            onceResize = true;
+            ImGui::SetNextWindowSize({layout.multipleScale(800.f), layout.multipleScale(540.f)});
+        }
+        
+        if (ImGui::BeginPopupModal("Pro Settings", &isProSettingsOpen)) {
+            ImGuiH::GlowWindow(IM_COL32(120, 100, 240, 100), IM_COL32(120, 100, 240, 0), layout.multipleScale(250.f));
+
+            if (ImGui::BeginTabBar("ProSettingsTabBar")) {
+                if (ImGui::BeginTabItem("Settings")) {
+                    ImGui::Spacing();
+
+                    ImGuiWidgetConfig::Checkbox("Accuracy Fix", "engine::accuracy_fix", true);
+                    ImGui::SameLine();
+                    ImGuiWidgetConfig::Checkbox("Y Velocity Fix", "engine::velocity_fix", false);
+                    ImGuiH::SpaceSeparator();
+
+                    ImGui::EndTabItem();
+                }
+
+                if (ImGui::BeginTabItem("Recorder")) {
+                    ImGui::Spacing();
+                    drawRecorderInterface();
+                    ImGui::EndTabItem();
+                }
+                ImGui::EndTabBar();
+            }
+
             ImGui::EndPopup();
         }
     });

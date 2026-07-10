@@ -103,7 +103,7 @@ void ReplayEngine::handle_update(GJBaseGameLayer* self) {
 
             player->setPosition({physicFrame.x, physicFrame.y});
 
-            if (physicFrame.y_accel != 0.f)
+            if (config.get<bool>("engine::velocity_fix", false))
                 player->m_yVelocity = physicFrame.y_accel;
 
             m_physicIndex++;

@@ -49,7 +49,7 @@ static std::vector<std::vector<std::string>> g_layout = {
 
 static std::vector<GDH::Layout::WindowInfo> g_fixedWindowSizes = {
     {"Cosmetic", 0.f, 1100.f},
-    {"Labels", 240.f, 350.f},
+    {"Labels", 240.f, 380.f},
     {"Replay Engine", 300.f, 200.f},
     {"Keybinds", 0.f, 180.f},
     // {"Level", 0.f, 495.f},
@@ -290,7 +290,7 @@ void RenderMain() {
         
         layoutManager.applyWindowTransform(windowName);
 
-        (windowName == "Framerate") ? ImGui::Begin(windowName.c_str()) : ImGuiH::BeginSmoothScroll(windowName.c_str());
+        (windowName == "Framerate" || windowName == "Replay Engine") ? ImGui::Begin(windowName.c_str()) : ImGuiH::BeginSmoothScroll(windowName.c_str());
         
         if (window.avaibleCustomWindowImGui()) window.callCustomWindowImGui();
 

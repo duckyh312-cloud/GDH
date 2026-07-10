@@ -98,9 +98,9 @@ namespace ImGuiH {
         {ImGuiCol_HeaderHovered,         COLOR_F32(0x6868BFFF)},
         {ImGuiCol_HeaderActive,          COLOR_F32(0x37376EFF)},
 
-        {ImGuiCol_Tab,                   COLOR_F32(0x323234FF)},
-        {ImGuiCol_TabHovered,            COLOR_F32(0x464648FF)},
-        {ImGuiCol_TabActive,             COLOR_F32(0x58585AFF)},
+        {ImGuiCol_Tab,                   COLOR_F32(0x37376EFF)},
+        {ImGuiCol_TabHovered,            COLOR_F32(0x474783FF)},
+        {ImGuiCol_TabActive,             COLOR_F32(0x4e4e9cFF)},
 
         {ImGuiCol_TableHeaderBg,         COLOR_F32(0x3C3C3CFF)},
         {ImGuiCol_TableBorderStrong,     COLOR_F32(0x505050FF)},
@@ -305,6 +305,20 @@ namespace ImGuiH {
 
             ImGui::Text("Hover here for Tooltip");
             ImGuiH::Tooltip("This is your tooltip window!", ImGui::IsItemHovered());
+
+            if (ImGui::BeginTabBar("ExampleTabBar")) {
+                if (ImGui::BeginTabItem("Example 1")) {
+                    ImGui::Text("Hello world! First tab");
+                    ImGui::EndTabItem();
+                }
+
+                if (ImGui::BeginTabItem("Example 2")) {
+                    ImGui::Spacing();
+                    ImGui::Text("Hello world! Second tab");
+                    ImGui::EndTabItem();
+                }
+                ImGui::EndTabBar();
+            }
         }
         ImGui::End();
 
@@ -679,6 +693,12 @@ namespace ImGuiH {
 
         IMGUI_TEST_ENGINE_ITEM_INFO(id, label, g.LastItemData.StatusFlags);
         return pressed;
+    }
+
+    void SpaceSeparator() {
+        ImGui::Spacing();
+        ImGui::Separator();
+        ImGui::Spacing();
     }
 
     void Tooltip(const char* text, bool hovered)

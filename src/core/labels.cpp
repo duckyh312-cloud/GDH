@@ -182,6 +182,8 @@ bool renderVariable(geode::utils::StringBuffer<> &stream, std::string_view var_n
             if (parsed.ok()) decimal_points = *parsed;
         }
         stream.append(fmt::format("{:.{}f}", GDH::Utils::getFps(true), decimal_points));
+    } else if (var_name == "is_dual_mode") {      
+        stream.append(fmt::format("{}", pl ? pl->m_gameState.m_isDualMode : false));
     } else {
         return false;
     }

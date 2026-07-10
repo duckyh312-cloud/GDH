@@ -6,6 +6,7 @@
 #include "../../core/config.hpp"
 #include "../../core/replayEngine.hpp"
 #include "../../core/gui.hpp"
+#include "../../core/recorder/recorder.hpp"
 
 float left_over = 0.f;
 
@@ -23,6 +24,18 @@ class $modify(ReplayCCScheduler, cocos2d::CCScheduler) {
 
         float tps_value = config.get<float>("invisible.tps::value", 240.f);
         float new_dt = 1.f / tps_value;
+
+        auto& recorder = GDH::Recorder::get();
+        if (recorder.is_recording && PlayLayer::get()) {
+            auto start = std::chrono::high_resolution_clock::now();
+            using namespace std::literals;
+            do {
+                CCScheduler::update(new_dt);
+            } while (recorder.is_recording
+                     && std::chrono::high_resolution_clock::now() - start < 50ms);
+            left_over = 0.f;
+            return;
+        }
 
         unsigned times = static_cast<int>((dt + left_over) / new_dt);  
         if (dt <= 0.f)

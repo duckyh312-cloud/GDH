@@ -25,6 +25,7 @@ const std::vector<std::pair<const char*, const char*>> g_labelTemplates = {
     {"Custom text", "Edit me!"},
     {"Date", "{date}"},
     {"Death Counter", "{deaths} Deaths"},
+    {"Dual Mode", "Dual: {is_dual_mode}"},
     {"FPS", "{fps} FPS"},
     {"Frame", "{frame} Frame"},
     {"Level Info", "{level_name} by {level_creator}"},

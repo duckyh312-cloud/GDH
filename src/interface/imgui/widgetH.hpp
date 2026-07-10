@@ -76,6 +76,7 @@ namespace ImGuiH {
     void SaveTheme();
     void LoadTheme();
 
+    void SpaceSeparator();
     void Tooltip(const char* text, bool hovered = true);
     
     bool DragFloat(const char* label, float* v, float speed = 1.f, float v_min = 0.f,
