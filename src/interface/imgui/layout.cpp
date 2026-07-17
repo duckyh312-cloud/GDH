@@ -153,19 +153,32 @@ void Layout::Manager::calculateWindowPositions() {
     }
 
     ImVec2 display = ImGui::GetIO().DisplaySize;
-    float scale_x = (display.x > 0) ? (display.x / total_width) : 1.0f;
-    float scale_y = (display.y > 0) ? (display.y / max_layout_height) : 1.0f;
     
-    float raw_scale = std::min({scale_x, scale_y, 1.0f});
+    float fill_scale_x = (display.x > 0) ? (display.x / total_width) : 1.0f;
+    float fill_scale_y = (display.y > 0) ? (display.y / max_layout_height) : 1.0f;
+    float perfect_fill_scale = std::min(fill_scale_x, fill_scale_y);
+
+    float final_scale = 1.0f;
+
+    if (perfect_fill_scale < 1.0f) {
+        final_scale = perfect_fill_scale;
+    } else {        
+        float screen_scale_x = display.x / 1920.f;
+        float screen_scale_y = display.y / 1080.f;
+        float auto_hi_dpi_scale = std::min(screen_scale_x, screen_scale_y);
+        
+        final_scale = std::min({auto_hi_dpi_scale, perfect_fill_scale, 2.5f});
+        
+        if (final_scale < 1.0f) final_scale = 1.0f;
+    }
     
     const float STEP = 0.1f;
-    float discrete_scale = std::floor(raw_scale / STEP) * STEP;
-    
-    discrete_scale = std::max(0.1f, std::min(1.0f, discrete_scale));
+    float discrete_scale = std::floor(final_scale / STEP) * STEP;
+    discrete_scale = std::max(0.1f, discrete_scale);
     
     m_scale = discrete_scale;
     ImGuiH::ApplyStyle(m_scale);
-
+    
     // horizontal center
     auto& config = Config::get();
     bool horizontal_center = config.get<bool>("gui::horizontal_center", false);

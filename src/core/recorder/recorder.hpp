@@ -2,6 +2,7 @@
 #include <Geode/Geode.hpp>
 #include "render_textute.hpp"
 #include "../config.hpp"
+#include <condition_variable>
 
 namespace GDH {
     class Recorder {
@@ -44,13 +45,23 @@ namespace GDH {
         bool frame_has_data = false;
 
         std::mutex lock;
+        std::condition_variable cv;
 
         void start();
         void stop();
         void capture_frame();
 
         void handle_recording(float dt);
+
+        void resize_resolution(geode::Function<void()> action);
+        
     private:
         Recorder() = default;
+
+        bool needRevertOld = false;
+        cocos2d::CCSize oldDesignResolution;
+        cocos2d::CCSize newDesignResolution;
+        cocos2d::CCSize originalScreenScale;
+        cocos2d::CCSize newScreenScale;
     };
 }

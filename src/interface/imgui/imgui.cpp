@@ -41,19 +41,21 @@ static std::string g_search_text = "";
 static std::vector<std::vector<std::string>> g_layout = {
     {"Core", "Bypass"},
     {"Cosmetic"},
-    {"Level", "Framerate", "GDH Settings"},
+    {"Level", "Framerate"},
     {"Creator", "Labels"},
     {"Replay Engine", "Keybinds"},
-    {"Shortcuts"}
+    {"Shortcuts"},
+    {"GDH Settings"}
 };
 
 static std::vector<GDH::Layout::WindowInfo> g_fixedWindowSizes = {
     {"Cosmetic", 0.f, 1100.f},
-    {"Labels", 240.f, 380.f},
+    // {"Labels", 240.f, 380.f},
     {"Replay Engine", 300.f, 200.f},
     {"Keybinds", 0.f, 180.f},
     // {"Level", 0.f, 495.f},
-    {"Shortcuts", 180.f, 0.f}
+    {"Shortcuts", 180.f, 0.f},
+    {"GDH Settings", 225.f, 0.f},
 };
 
 void onOpen() {
@@ -306,13 +308,13 @@ void RenderMain() {
             bool state = config.get(id, false);
 
             PushAnimateFoundColor(hackName);
+            if (hack.isCheating() && g_search_text.empty()) ImGui::PushStyleColor(ImGuiCol_Text, ImColor(255, 128, 128).Value);
 
-            if (hack.isCheating()) ImGui::PushStyleColor(ImGuiCol_Text, ImColor(255, 128, 128).Value);
             if (ImGuiH::Checkbox(hackName.c_str(), &state)) {
                 hack.toggle();
             }
-            if (hack.isCheating()) ImGui::PopStyleColor();
-            
+
+            if (hack.isCheating() && g_search_text.empty()) ImGui::PopStyleColor();
             ImGui::PopStyleColor();
 
             ImGuiH::Tooltip(hack.getDesc().c_str(), !hack.getDesc().empty() && ImGui::IsItemHovered());

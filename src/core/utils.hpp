@@ -22,4 +22,6 @@ namespace GDH { namespace Utils {
 
     cocos2d::ccColor3B hexToColor(const std::string& hexStr);
     cocos2d::ccColor4F hexToColor4F(const std::string& hexStr);
+
+    uintptr_t PatternScan(uintptr_t base, uintptr_t scanSize, const std::string signature);
 } }

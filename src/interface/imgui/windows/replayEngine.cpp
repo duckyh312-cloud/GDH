@@ -82,6 +82,50 @@ void drawRecorderInterface() {
     ImGui::InputText("VF Args", &recorder.vf_args);
 
     ImGui::Spacing();
+    ImGui::Text("Presets");
+    ImGui::Separator();
+
+    if (ImGuiH::Button("HD")) { recorder.width = 1280; recorder.height = 720; recorder.fps = 60; recorder.bitrate = "25M"; }   
+    ImGui::SameLine();  
+    if (ImGuiH::Button("FULL HD")) { recorder.width = 1920; recorder.height = 1080; recorder.fps = 60; recorder.bitrate = "50M"; }   
+    ImGui::SameLine();  
+    if (ImGuiH::Button("2K")) { recorder.width = 2560; recorder.height = 1440; recorder.fps = 60; recorder.bitrate = "70M"; }   
+    ImGui::SameLine();  
+    if (ImGuiH::Button("4K")) { recorder.width = 3840; recorder.height = 2160; recorder.fps = 60; recorder.bitrate = "80M"; }   
+    ImGui::SameLine();  
+    if (ImGuiH::Button("8K")) { recorder.width = 7680; recorder.height = 4320; recorder.fps = 60; recorder.bitrate = "250M";}
+
+    if (ImGuiH::Button("CPU x264")) {
+        recorder.codec = "libx264";
+        recorder.extra_args = "-pix_fmt yuv420p -preset ultrafast";
+    } ImGui::SameLine();  
+
+    if (ImGuiH::Button("CPU x265")) {
+        recorder.codec = "libx265";
+        recorder.extra_args = "-pix_fmt yuv420p -preset ultrafast";
+    } ImGui::SameLine();
+
+    if (ImGuiH::Button("CPU AV1 Lossless")) {
+        recorder.codec = "libsvtav1";
+        recorder.extra_args = "-crf 0 -pix_fmt yuv420p";
+    }
+
+    if (ImGuiH::Button("NVIDIA H264")) {
+        recorder.codec = "h264_nvenc";
+        recorder.extra_args = "-pix_fmt yuv420p -preset p7";
+    } ImGui::SameLine();
+
+    if (ImGuiH::Button("NVIDIA H265")) {
+        recorder.codec = "hevc_nvenc";
+        recorder.extra_args = "-pix_fmt yuv420p -preset p7";
+    } ImGui::SameLine();
+    
+    if (ImGuiH::Button("NVIDIA AV1 (Only RTX40 Series)")) {
+        recorder.codec = "av1_nvenc";
+        recorder.extra_args = "-pix_fmt yuv420p -preset p7";
+    }
+
+    ImGui::Spacing();
     ImGui::Text("Folders");
     ImGui::Separator();
 

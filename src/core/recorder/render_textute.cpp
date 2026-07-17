@@ -1,4 +1,5 @@
 #include "render_textute.hpp"
+#include "recorder.hpp"
 
 using namespace cocos2d;
 
@@ -15,7 +16,7 @@ bool RenderTexture::init(unsigned width, unsigned height) {
     m_height = height;
 
     GLint old_fbo;
-    glGetIntegerv(GL_FRAMEBUFFER_BINDING_EXT, &old_fbo);
+    glGetIntegerv(GL_FRAMEBUFFER_BINDING, &old_fbo);
 
     m_texture = new CCTexture2D();
     if (!m_texture) return false;
@@ -36,11 +37,11 @@ bool RenderTexture::init(unsigned width, unsigned height) {
 
     m_texture->setAliasTexParameters();
 
-    glGenFramebuffersEXT(1, &m_fbo);
-    glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, m_fbo);
-    glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_TEXTURE_2D, m_texture->getName(), 0);
+    glGenFramebuffers(1, &m_fbo);
+    glBindFramebuffer(GL_FRAMEBUFFER, m_fbo);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, m_texture->getName(), 0);
 
-    glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, old_fbo);
+    glBindFramebuffer(GL_FRAMEBUFFER, old_fbo);
     m_initialized = true;
 
     return true;
@@ -50,7 +51,7 @@ void RenderTexture::cleanup() {
     if (!m_initialized) return;
 
     if (m_fbo) {
-        glDeleteFramebuffersEXT(1, &m_fbo);
+        glDeleteFramebuffers(1, &m_fbo);
         m_fbo = 0;
     }
     if (m_texture) {
@@ -62,14 +63,16 @@ void RenderTexture::cleanup() {
     m_initialized = false;
 }
 
-void RenderTexture::capture(cocos2d::CCNode* target_node, std::mutex& lock, std::vector<uint8_t>& data, volatile bool& frame_has_data) {
+void RenderTexture::capture(cocos2d::CCNode* target_node, std::mutex& lock, std::condition_variable& cv, std::vector<uint8_t>& data, bool& frame_has_data) {
     if (!m_initialized || !target_node) return;
 
+    auto& recorder = GDH::Recorder::get();
+
     GLint old_fbo;
-    glGetIntegerv(GL_FRAMEBUFFER_BINDING_EXT, &old_fbo);
+    glGetIntegerv(GL_FRAMEBUFFER_BINDING, &old_fbo);
 
     glViewport(0, 0, m_width, m_height);
-    glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, m_fbo);
+    glBindFramebuffer(GL_FRAMEBUFFER, m_fbo);
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -77,11 +80,12 @@ void RenderTexture::capture(cocos2d::CCNode* target_node, std::mutex& lock, std:
 
     glPixelStorei(GL_PACK_ALIGNMENT, 1);
     
-    lock.lock();
+    std::unique_lock<std::mutex> u_lock(lock);
     frame_has_data = true;
     glReadPixels(0, 0, m_width, m_height, GL_RGB, GL_UNSIGNED_BYTE, data.data());
-    lock.unlock();
+    u_lock.unlock();
+    cv.notify_one();
 
-    glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, old_fbo);
+    glBindFramebuffer(GL_FRAMEBUFFER, old_fbo);
     CCDirector::sharedDirector()->setViewport();
 }

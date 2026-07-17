@@ -33,6 +33,11 @@ $execute {
         ImGuiWidgetConfig::DragFloat("##TPS_Value", "invisible.tps::value", 1, 1, FLT_MAX, 240.f, "%.0f TPS");
         ImGui::SameLine();
         ImGuiWidgetConfig::HackCheckbox("##TPS_Enabled", "invisible.tps", false);
+
+        ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x - layout.multipleScale(52.f));
+        ImGuiWidgetConfig::DragFloat("##LockDelta_Value", "invisible.lock_delta::value", 1, 1, FLT_MAX, 240.f, "Lock DT: %.0f FPS");
+        ImGui::SameLine();
+        ImGuiWidgetConfig::HackCheckbox("##LockDelta_Enabled", "invisible.lock_delta", false);
         
         ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x - layout.multipleScale(52.f));
         ImGuiWidgetConfig::DragFloat("##Speedhack_Value", "invisible.speedhack::value", 0.01f, 0, 500.f, 1.f, "Speed: %.2fx");
@@ -49,6 +54,8 @@ $execute {
         
         ImGuiWidgetConfig::HackCheckbox("Speedhack Audio", "invisible.speedhack_audio", false);
         ImGuiWidgetConfig::HackCheckbox("Vertical Sync", "invisible.vertical_sync", false);
+
+        ImGuiWidgetConfig::Checkbox("Real Time (Lock Delta)", "invisible.lock_delta::real_time", true);
     });
 }
 #endif

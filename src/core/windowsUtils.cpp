@@ -38,6 +38,15 @@ HWND GDH::WindowUtils::FindMainHWND() {
     return hwnd_window;
 }
 
+
+struct WindowStateBackup {
+    HWND hwnd;
+    LONG Style;
+    LONG ExStyle;
+    RECT ClientRect;
+    POINT WindowPos;
+};
+
 void GDH::WindowUtils::setWindowBorderless(bool apply, int width, int height) {
     static WindowStateBackup backup;
     if (apply) {

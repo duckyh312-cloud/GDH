@@ -15,6 +15,7 @@ GDH::Labels::Corner g_popupCorner;
 int g_popupId = 0;
 bool g_openPopup = false;
 bool g_editPopup = false;
+bool g_updateSize = false;
 
 float g_newLabelSize = 0.35f;
 std::array<float, 4> g_newLabelColor = { 1.0f, 1.0f, 1.0f, 0.30f };
@@ -42,9 +43,12 @@ const std::vector<std::pair<const char*, const char*>> g_labelTemplates = {
     {"Time (24h)", "{time_24}"}
 };
 
-void drawLabelCornerControls(GDH::Labels::Corner corner) {
-    ImGui::BeginChild("Labels");
-    
+void drawLabelCornerControls(GDH::Labels::Corner corner) {  
+    if (g_updateSize) {
+        g_updateSize = false;
+        ImGui::SetWindowSize({ImGui::GetWindowSize().x, 0});
+    } 
+
     ImGui::PushID(static_cast<int>(corner));
     ImGui::Spacing();
     
@@ -92,7 +96,6 @@ void drawLabelCornerControls(GDH::Labels::Corner corner) {
     }
     
     ImGui::PopID();
-    ImGui::EndChild();
 }
 
 $execute {
@@ -155,12 +158,15 @@ $execute {
                     );
 
                     if (isRainbowButton) g_newLabelColor[3] = 0.30f;
+
+                    g_updateSize = true;
                     ImGui::CloseCurrentPopup();
                 }
             }
             
             if (ImGuiH::Button("Spacing", {layout.multipleScale(290.f), 0.f})) {
                 manager.labels[g_popupCorner].push_back(GDH::Labels::Label(g_newLabelSize));
+                g_updateSize = true;
                 ImGui::CloseCurrentPopup();
             }
 
@@ -217,6 +223,7 @@ $execute {
             
             if (ImGuiH::Button("Delete")) {
                 targetLabels.erase(targetLabels.begin() + g_popupId);
+                g_updateSize = true;
                 ImGui::CloseCurrentPopup();
             }
             
