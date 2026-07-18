@@ -3,22 +3,20 @@
 #include <imgui.h>
 #include "../../core/config.hpp"
 
-using namespace GDH;
-
-void Layout::Manager::setLayout(const std::vector<std::vector<std::string>>& layout) {
+void GDH::Layout::Manager::setLayout(const std::vector<std::vector<std::string>>& layout) {
     m_layout = layout;
 }
 
-void Layout::Manager::setFixedWindowSizeInfo(const std::vector<WindowInfo>& fixedWindows) {
+void GDH::Layout::Manager::setFixedWindowSizeInfo(const std::vector<GDH::Layout::WindowInfo>& fixedWindows) {
     m_fixedWindows = fixedWindows;
 }
 
-void Layout::Manager::startCollecting() {
+void GDH::Layout::Manager::startCollecting() {
     m_windows.clear();
     m_stage = Stage::Collecting;
 }
 
-void Layout::Manager::addWindowInfo(const std::string& name, float width, float height) {
+void GDH::Layout::Manager::addWindowInfo(const std::string& name, float width, float height) {
     if (m_stage != Stage::Collecting) return;
 
     if (WindowInfo* window = findFixedWindow(name)) {
@@ -33,14 +31,14 @@ void Layout::Manager::addWindowInfo(const std::string& name, float width, float 
     });
 }
 
-void Layout::Manager::finishCollecting() {
+void GDH::Layout::Manager::finishCollecting() {
     if (m_stage == Stage::Collecting) {
         m_stage = Stage::Calculating;
         calculateWindowPositions();
     }
 }
 
-bool Layout::Manager::applyWindowTransform(const std::string& name) {
+bool GDH::Layout::Manager::applyWindowTransform(const std::string& name) {
     if (m_stage == Stage::Collecting) {
         ImGui::SetNextWindowPos(ImVec2(-10000.f, -10000.f), ImGuiCond_Always);
         return true;
@@ -60,34 +58,34 @@ bool Layout::Manager::applyWindowTransform(const std::string& name) {
     return false;
 }
 
-bool Layout::Manager::isCollecting() {
+bool GDH::Layout::Manager::isCollecting() {
     return m_stage == Stage::Collecting;
 }
 
-void Layout::Manager::startApplying() {
+void GDH::Layout::Manager::startApplying() {
     m_stage = Stage::Applying;
 }
 
-bool Layout::Manager::isApplying() {
+bool GDH::Layout::Manager::isApplying() {
     return m_stage == Stage::Applying;
 }
 
-void Layout::Manager::finishApplying() {
+void GDH::Layout::Manager::finishApplying() {
     if (m_stage == Stage::Applying) {
         reset();
     }
 }
 
-Layout::WindowInfo* Layout::Manager::getWindowInfo(const std::string& name) {
+GDH::Layout::WindowInfo* GDH::Layout::Manager::getWindowInfo(const std::string& name) {
     return findWindow(name);
 }
 
-void Layout::Manager::reset() {
+void GDH::Layout::Manager::reset() {
     // m_windows.clear();
     m_stage = Stage::Idle;
 }
 
-Layout::WindowInfo* Layout::Manager::findWindow(const std::string& name) {
+GDH::Layout::WindowInfo* GDH::Layout::Manager::findWindow(const std::string& name) {
     for (auto& window : m_windows) {
         if (window.window_name == name) {
             return &window;
@@ -96,7 +94,7 @@ Layout::WindowInfo* Layout::Manager::findWindow(const std::string& name) {
     return nullptr;
 }
 
-Layout::WindowInfo* Layout::Manager::findFixedWindow(const std::string& name) {
+GDH::Layout::WindowInfo* GDH::Layout::Manager::findFixedWindow(const std::string& name) {
     for (auto& window : m_fixedWindows) {
         if (window.window_name == name) {
             return &window;
@@ -105,7 +103,7 @@ Layout::WindowInfo* Layout::Manager::findFixedWindow(const std::string& name) {
     return nullptr;
 }
 
-float Layout::Manager::getMaxWidthInColumn(const std::vector<std::string>& column) {
+float GDH::Layout::Manager::getMaxWidthInColumn(const std::vector<std::string>& column) {
     float max_width = 0.0f;
     for (const auto& name : column) {
         WindowInfo* window = findWindow(name);
@@ -116,7 +114,7 @@ float Layout::Manager::getMaxWidthInColumn(const std::vector<std::string>& colum
     return max_width;
 }
 
-float Layout::Manager::getColumnHeight(const std::vector<std::string>& column) {
+float GDH::Layout::Manager::getColumnHeight(const std::vector<std::string>& column) {
     float total_height = 0.0f;
     for (size_t i = 0; i < column.size(); i++) {
         WindowInfo* window = findWindow(column[i]);
@@ -130,7 +128,7 @@ float Layout::Manager::getColumnHeight(const std::vector<std::string>& column) {
     return total_height;
 }
 
-void Layout::Manager::calculateWindowPositions() {
+void GDH::Layout::Manager::calculateWindowPositions() {
     if (m_layout.empty()) return;
 
     if (!m_isBaseCollected && !m_windows.empty()) {

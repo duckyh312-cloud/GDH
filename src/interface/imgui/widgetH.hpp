@@ -1,3 +1,4 @@
+#pragma once
 #include <imgui-cocos.hpp>
 
 namespace ImGuiH {
