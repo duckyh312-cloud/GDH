@@ -46,8 +46,7 @@ namespace GDH { namespace Shortcuts {
     }
 
     inline void openResourcesFolder() {
-        std::string path = cocos2d::CCFileUtils::get()->getWritablePath2();
-        geode::utils::file::openFolder(path);
+        geode::utils::file::openFolder(geode::dirs::getGameDir());
     }
 
     inline void openAppDataFolder() {

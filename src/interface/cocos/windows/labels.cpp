@@ -246,7 +246,7 @@ protected:
             menu->addChild(spaceLabel);
 
             auto spaceInput = TextInput::create(80.f, "Px", "chatFont.fnt");
-                if (auto* bg = spaceInput->getChildByType<geode::NineSlice>(0)) { 
+            if (auto* bg = spaceInput->getChildByType<geode::NineSlice>(0)) { 
                 bg->setColor({71, 71, 131}); 
                 bg->setOpacity(255); 
             }
@@ -323,52 +323,62 @@ void refreshLabelsTab(HacksTab* tab) {
 
     content->setLayout(
         ColumnLayout::create()
-            ->setAutoScale(false)
-            ->setAxisReverse(true)
-            ->setAutoGrowAxis(true)
-            ->setGap(5.f)
+        ->setAutoScale(false)
+        ->setAxisReverse(true)
+        ->setAutoGrowAxis(true)
+        ->setGap(5.f)
     );
+    
 
-    auto topSpacer = CCNode::create();
-    topSpacer->setContentSize({0.f, 5.f});
-    content->addChild(topSpacer);
+    tab->addConfigToggle("Disable All", "labels::disable_all", false);
+    auto layout = static_cast<geode::RowLayout*>(tab->m_currentRow->getLayout());
+    layout->setPadding({35.f, 0.f, 0.f, 0.f});
+    tab->m_currentRow->updateLayout();
 
     auto& manager = GDH::Labels::Manager::get();
 
     auto padsMenu = CCMenu::create();
-    padsMenu->setContentSize({340.f, 35.f});
-    padsMenu->setLayout(RowLayout::create()->setAxisAlignment(AxisAlignment::Start)->setCrossAxisAlignment(AxisAlignment::Center)->setGap(8.f));
+    padsMenu->setContentSize({305.f, 20.f});
+    padsMenu->setLayout(RowLayout::create()->setAxisAlignment(AxisAlignment::Start)->setCrossAxisAlignment(AxisAlignment::Center)->setGap(7.f)->setPadding({-10.f,0,0,0}));
 
     auto padsSpacer = CCNode::create();
     padsSpacer->setContentSize({5.f, 0.f});
     padsMenu->addChild(padsSpacer);
 
     auto lbl1 = CCLabelBMFont::create("Corner Pad:", "GoogleSans.fnt"_spr);
-    lbl1->setScale(0.5f);
     padsMenu->addChild(lbl1);
 
     auto input1 = TextInput::create(55.f, "Pad", "GoogleSans.fnt"_spr);
-    input1->setScale(0.65f);
     input1->setString(fmt::format("{:.1f}", manager.cornerPadding));
     input1->setCallback([](const std::string& str) {
         if (auto val = geode::utils::numFromString<float>(str)) {
             GDH::Labels::Manager::get().cornerPadding = std::clamp(val.unwrap(), 0.f, 256.f);
         }
     });
+    if (auto* bg = input1->getChildByType<geode::NineSlice>(0)) { 
+        bg->setColor({71, 71, 131}); 
+        bg->setOpacity(255); 
+    }
     padsMenu->addChild(input1);
 
+    auto padSpacer = CCNode::create();
+    padSpacer->setContentSize({8.f, 0.f});
+    padsMenu->addChild(padSpacer);
+
     auto lbl2 = CCLabelBMFont::create("Mid Pad:", "GoogleSans.fnt"_spr);
-    lbl2->setScale(0.5f);
     padsMenu->addChild(lbl2);
 
     auto input2 = TextInput::create(55.f, "Pad", "GoogleSans.fnt"_spr);
-    input2->setScale(0.65f);
     input2->setString(fmt::format("{:.1f}", manager.midPadding));
     input2->setCallback([](const std::string& str) {
         if (auto val = geode::utils::numFromString<float>(str)) {
             GDH::Labels::Manager::get().midPadding = std::clamp(val.unwrap(), 0.f, 256.f);
         }
     });
+    if (auto* bg = input2->getChildByType<geode::NineSlice>(0)) { 
+        bg->setColor({71, 71, 131}); 
+        bg->setOpacity(255); 
+    }
     padsMenu->addChild(input2);
     padsMenu->updateLayout();
     content->addChild(padsMenu);

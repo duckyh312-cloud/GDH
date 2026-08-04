@@ -21,6 +21,7 @@ using namespace geode::prelude;
 #include "../../core/utils.hpp"
 #include "../../core/labels.hpp"
 #include "../../core/keybinds.hpp"
+#include "../../core/recorder/recorder.hpp"
 
 static bool g_show = false;
 
@@ -39,7 +40,7 @@ static bool g_inited = false;
 static std::string g_search_text = "";
 
 static std::vector<std::vector<std::string>> g_layout = {
-    {"Core", "Bypass"},
+    {"Core", "Bypass", "Variables"},
     {"Cosmetic"},
     {"Level", "Framerate"},
     {"Creator", "Labels"},
@@ -211,8 +212,48 @@ void KeybindsRender() {
     ImGui::Begin(windowName.c_str());
 
     ImGuiH::Checkbox("Keybinds Mode", &kb.m_isKeybindsMode);
+    
+    ImGuiWidgetConfig::Checkbox("Shortcuts", "shortcuts::enable", false);
+    ImGui::SameLine();
+    if (ImGuiH::ArrowButton("##Shortcuts Keys", ImGuiDir_Right)) {
+        ImGui::OpenPopup("Shortcuts Keys");
+    }
+
+    if (ImGui::BeginPopup("Shortcuts Keys")) {
+        ImGuiWidgetConfig::DrawCustomKeybindButton("shortcut::options", "Options");
+        ImGuiWidgetConfig::DrawCustomKeybindButton("shortcut::graphics", "Graphics Settings");
+        ImGuiWidgetConfig::DrawCustomKeybindButton("shortcut::quests", "Quests Page");
+        ImGuiWidgetConfig::DrawCustomKeybindButton("shortcut::mobile_ui", "Open Mobile UI");
+        ImGuiWidgetConfig::DrawCustomKeybindButton("shortcut::reset_level", "Reset Level");
+        ImGuiWidgetConfig::DrawCustomKeybindButton("shortcut::practice_mode", "Practice Mode");
+        ImGuiWidgetConfig::DrawCustomKeybindButton("shortcut::reset_volume", "Reset Volume");
+        ImGuiWidgetConfig::DrawCustomKeybindButton("shortcut::uncomplete_level", "Uncomplete Level");
+        ImGuiWidgetConfig::DrawCustomKeybindButton("shortcut::resources", "Resources");
+        ImGuiWidgetConfig::DrawCustomKeybindButton("shortcut::appdata", "AppData");
+        ImGuiWidgetConfig::DrawCustomKeybindButton("shortcut::gdh_appdata", "GDH AppData");
+        ImGuiWidgetConfig::DrawCustomKeybindButton("shortcut::crash_game", "Crash Game");
+        ImGui::EndPopup();
+    }
+
+    ImGuiWidgetConfig::Checkbox("Framerate", "framerate::enable", false);
+    ImGui::SameLine();
+    if (ImGuiH::ArrowButton("##Framerate Keys", ImGuiDir_Right)) {
+        ImGui::OpenPopup("Framerate Keys");
+    }
+
+    if (ImGui::BeginPopup("Framerate Keys")) {
+        ImGuiWidgetConfig::DrawCustomKeybindButton("keybinds::speedhack", "Sppedhack");
+        ImGuiWidgetConfig::DrawCustomKeybindButton("keybinds::speedhack_inc", "Speedhack +0.05x");
+        ImGuiWidgetConfig::DrawCustomKeybindButton("keybinds::speedhack_dec", "Speedhack -0.05x");
+        ImGui::EndPopup();
+    }
+
 
     ImGuiWidgetConfig::DrawCustomKeybindButton("gui::toggle_ui", "Toggle UI");
+
+    auto& gui = GDH::Gui::get();
+    auto& hack = gui.getWindow("Invisible").findHackByName("Speedhack");     
+    ImGuiWidgetConfig::DrawKeybindButton("Invisible", hack);
 
     if (layoutManager.isCollecting()) {
         auto size = ImGui::GetWindowSize();
@@ -220,6 +261,41 @@ void KeybindsRender() {
     }
 
     ImGui::End();
+}
+
+void RenderRecordingBadge() {
+    ImGuiIO& io = ImGui::GetIO();
+    auto& layout = GDH::Layout::Manager::get();
+    ImDrawList* drawList = ImGui::GetBackgroundDrawList();
+    ImFont* font = ImGui::GetFont();
+    
+    float fontSize = layout.multipleScale(32.0f); 
+
+    const char* recText = "Recording";
+    ImVec2 recSize = font->CalcTextSizeA(fontSize, FLT_MAX, 0.0f, recText);
+
+    float dotRadius = layout.multipleScale(8.0f);
+    float dotPadding = layout.multipleScale(10.0f);
+    float sidePadding = layout.multipleScale(12.0f);
+    
+    float totalWidth = sidePadding + dotRadius * 2.0f + dotPadding + recSize.x + sidePadding;
+    float pillHeight = recSize.y + layout.multipleScale(10.0f);
+    float totalHeight = pillHeight + layout.multipleScale(16.0f);
+
+    float screenPadding = layout.multipleScale(10.0f);
+    ImVec2 badgePosMin = ImVec2(screenPadding, io.DisplaySize.y - totalHeight - screenPadding);
+    ImVec2 badgePosMax = ImVec2(screenPadding + totalWidth, io.DisplaySize.y - screenPadding);
+    
+    drawList->AddRectFilled(badgePosMin, badgePosMax, IM_COL32(0, 0, 0, 125), 999.0f);
+    
+    ImVec2 dotCenter = ImVec2(
+        badgePosMin.x + sidePadding + dotRadius,
+        badgePosMin.y + (totalHeight / 2.0f)
+    );
+    drawList->AddCircleFilled(dotCenter, dotRadius, IM_COL32(255, 0, 0, 255));
+
+    ImVec2 recTextPos = ImVec2(dotCenter.x + dotRadius + dotPadding, badgePosMin.y + layout.multipleScale(13.0f));
+    drawList->AddText(font, fontSize, recTextPos, IM_COL32(255, 255, 255, 255), recText);
 }
 
 void RenderVersionBadge() {
@@ -265,6 +341,7 @@ void RenderMain() {
     animateAlpha();
 
     ImGuiH::RenderPopups();
+    if (GDH::Recorder::get().isRecording()) RenderRecordingBadge();
     
     if (!g_show) return;
 

@@ -12,6 +12,8 @@
 
 static const auto folderPath = geode::Mod::get()->getSaveDir();
 static const auto folderMacroPath = folderPath / "Macros";
+static const auto folderPresetsPath = folderPath / "Presets";
+static const auto folderShowcasesPath = folderPath / "Showcases";
 static const auto fileDataPath = folderPath / "config3.json";
 static const auto labelsDataPath = folderPath / "labels.json";
 static const auto colorsDataPath = folderPath / "colors.txt";
@@ -119,6 +121,8 @@ public:
                 }
             };
             CheckDir(folderMacroPath);
+            CheckDir(folderShowcasesPath);
+            CheckDir(folderPresetsPath);
 
             this->load(fileDataPath);
             inited = true;

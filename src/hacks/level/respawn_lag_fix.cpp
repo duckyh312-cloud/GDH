@@ -2,6 +2,7 @@
 #include <Geode/modify/PlayLayer.hpp>
 #include "../../core/gui.hpp"
 #include "../../core/config.hpp"
+#include "../../core/recorder/recorder.hpp"
 #include "../../interface/imgui/widget_helper.hpp"
 #include "../../interface/cocos/hack_settings_popup.hpp"
 
@@ -33,5 +34,8 @@ class $modify(RespawnLagFixPauseLayer, PlayLayer) {
 
         auto& config = Config::get();
         m_resumeTimer = config.get<int>("level.respawn_lag_fix::delay", 30);
+        if (GDH::Recorder::get().isRecording()) {
+            m_resumeTimer = 0;
+        }
     }
 };

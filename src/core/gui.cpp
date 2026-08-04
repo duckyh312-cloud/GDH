@@ -49,6 +49,18 @@ Window& Gui::getWindow(const std::string& name) {
     return m_windows.emplace_back(name);
 }
 
+void Window::sortHacksAlphabetically() {
+    std::sort(m_hacks.begin(), m_hacks.end(), [](const Hack& a, const Hack& b) {
+        return a.getName() < b.getName();
+    });
+}
+
+void Gui::sortAllHacksAlphabetically() {
+    for (auto& window : m_windows) {
+        window.sortHacksAlphabetically();
+    }
+}
+
 std::string Window::formatID(const std::string& windowName, const std::string& hackName) {
     std::string config = fmt::format("{}.{}",
         Utils::String::replaceChar(
@@ -154,6 +166,8 @@ class $modify(LateHacksInitMenuLayer, MenuLayer) {
 
             size_t totalHacks = 0;
             for (auto& window : windows) {
+                window.sortHacksAlphabetically();
+                
                 for (auto& hack : window.getHacks()) {
                     if (hack.getEnabled() && !hack.getEarlyInit()) {
                         hack.callHandler(true);

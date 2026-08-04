@@ -1,0 +1,81 @@
+default:
+  tags:
+    - raspberry
+  interruptible: true
+
+cache:
+  key: ffmpeg-android-x264-v1
+  paths:
+    - .cache/ffmpeg/ffmpeg.7z
+
+stages:
+  - build
+  - combine
+
+.geode-cli-build:
+  stage: build
+  before_script:
+    - apt-get update && apt-get install -y p7zip-full
+    - mkdir -p .cache/ffmpeg
+    - |
+      if [ ! -f .cache/ffmpeg/ffmpeg.7z ]; then
+        echo "Downloading FFmpeg..."
+        curl -L -o .cache/ffmpeg/ffmpeg.7z \
+          https://gitlab.com/tobyadd/ffmpeg-android-x264-dev/-/releases/build/downloads/ffmpeg.7z
+      else
+        echo "Using cached FFmpeg archive"
+      fi
+    - mkdir -p libs
+    - 7z x .cache/ffmpeg/ffmpeg.7z -olibs -y
+    - echo "FFmpeg extracted to libs/"
+
+  script:
+    - geode build -p "$GEODE_PLATFORM" --config Release -- -G Ninja
+    - mkdir -p artifacts/$GEODE_PLATFORM
+    - find build* -type f -name "*.geode" -exec mv {} artifacts/$GEODE_PLATFORM/ \; || true
+    - find build* -type f -name "*.pdb" -exec mv {} artifacts/$GEODE_PLATFORM/ \; || true
+    - find build* -type f -name "*.sym" -exec cp -r {} artifacts/$GEODE_PLATFORM/ \; || true
+
+  artifacts:
+    when: always
+    paths:
+      - artifacts/$GEODE_PLATFORM
+
+build-windows:
+  extends: .geode-cli-build
+  image: prevter/geode-sdk:windows
+  variables:
+    GEODE_PLATFORM: "windows"
+
+build-android32:
+  extends: .geode-cli-build
+  image: prevter/geode-sdk:android
+  variables:
+    GEODE_PLATFORM: "android32"
+
+build-android64:
+  extends: .geode-cli-build
+  image: prevter/geode-sdk:android
+  variables:
+    GEODE_PLATFORM: "android64"
+
+combine-artifacts:
+  stage: combine
+  image: prevter/geode-sdk:android
+  needs:
+    - build-windows
+    - build-android32
+    - build-android64
+
+  script:
+    - mkdir -p final_artifacts
+    - FIRST_PACKAGE=$(find artifacts -name "*.geode" | head -n 1)
+    - find artifacts -name "*.geode" | xargs geode package merge
+    - mv "$FIRST_PACKAGE" final_artifacts/
+    - find artifacts -name "*.pdb" -exec cp {} final_artifacts/ \; || true
+    - find artifacts -name "*.sym" -exec cp {} final_artifacts/ \; || true
+
+  artifacts:
+    when: always
+    paths:
+      - final_artifacts/

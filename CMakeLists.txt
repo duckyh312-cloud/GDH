@@ -24,6 +24,14 @@ endif()
 
 add_subdirectory($ENV{GEODE_SDK} ${CMAKE_CURRENT_BINARY_DIR}/geode)
 
+if(DEFINED ENV{CI})
+    set_target_properties(
+        ${PROJECT_NAME} PROPERTIES
+        UNITY_BUILD ON
+        UNITY_BUILD_UNIQUE_ID "GEODE_UNITY_NS_ID"
+    )
+endif()
+
 target_include_directories(${PROJECT_NAME} PRIVATE libs libs/imgui)
 
 set(HAS_IMGUI ON)
@@ -36,5 +44,31 @@ if (WIN32)
 endif()
 
 target_link_libraries(${PROJECT_NAME} imgui-cocos imgui)
+
+if (ANDROID AND ANDROID_ABI STREQUAL "arm64-v8a") 
+    target_link_options(${PROJECT_NAME} PRIVATE "-Wl,-Bsymbolic")
+    target_include_directories(${PROJECT_NAME} PRIVATE libs/ffmpeg/arm64-v8a)
+    target_link_libraries(${PROJECT_NAME} ${CMAKE_SOURCE_DIR}/libs/ffmpeg/arm64-v8a/libavcodec/libavcodec.a)
+    target_link_libraries(${PROJECT_NAME} ${CMAKE_SOURCE_DIR}/libs/ffmpeg/arm64-v8a/libavdevice/libavdevice.a)
+    target_link_libraries(${PROJECT_NAME} ${CMAKE_SOURCE_DIR}/libs/ffmpeg/arm64-v8a/libavfilter/libavfilter.a)
+    target_link_libraries(${PROJECT_NAME} ${CMAKE_SOURCE_DIR}/libs/ffmpeg/arm64-v8a/libavformat/libavformat.a)
+    target_link_libraries(${PROJECT_NAME} ${CMAKE_SOURCE_DIR}/libs/ffmpeg/arm64-v8a/libavutil/libavutil.a)
+    target_link_libraries(${PROJECT_NAME} ${CMAKE_SOURCE_DIR}/libs/ffmpeg/arm64-v8a/libswresample/libswresample.a)
+    target_link_libraries(${PROJECT_NAME} ${CMAKE_SOURCE_DIR}/libs/ffmpeg/arm64-v8a/libswscale/libswscale.a)
+    target_link_libraries(${PROJECT_NAME} ${CMAKE_SOURCE_DIR}/libs/ffmpeg/arm64-v8a/x264/libx264.a)
+endif()
+
+if (ANDROID AND ANDROID_ABI STREQUAL "armeabi-v7a") 
+    target_link_options(${PROJECT_NAME} PRIVATE "-Wl,-Bsymbolic")
+    target_include_directories(${PROJECT_NAME} PRIVATE libs/ffmpeg/armeabi-v7a)
+    target_link_libraries(${PROJECT_NAME} ${CMAKE_SOURCE_DIR}/libs/ffmpeg/armeabi-v7a/libavcodec/libavcodec.a)
+    target_link_libraries(${PROJECT_NAME} ${CMAKE_SOURCE_DIR}/libs/ffmpeg/armeabi-v7a/libavdevice/libavdevice.a)
+    target_link_libraries(${PROJECT_NAME} ${CMAKE_SOURCE_DIR}/libs/ffmpeg/armeabi-v7a/libavfilter/libavfilter.a)
+    target_link_libraries(${PROJECT_NAME} ${CMAKE_SOURCE_DIR}/libs/ffmpeg/armeabi-v7a/libavformat/libavformat.a)
+    target_link_libraries(${PROJECT_NAME} ${CMAKE_SOURCE_DIR}/libs/ffmpeg/armeabi-v7a/libavutil/libavutil.a)
+    target_link_libraries(${PROJECT_NAME} ${CMAKE_SOURCE_DIR}/libs/ffmpeg/armeabi-v7a/libswresample/libswresample.a)
+    target_link_libraries(${PROJECT_NAME} ${CMAKE_SOURCE_DIR}/libs/ffmpeg/armeabi-v7a/libswscale/libswscale.a)
+    target_link_libraries(${PROJECT_NAME} ${CMAKE_SOURCE_DIR}/libs/ffmpeg/armeabi-v7a/x264/libx264.a)
+endif()
 
 setup_geode_mod(${PROJECT_NAME})

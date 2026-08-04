@@ -3,6 +3,7 @@
 #include "../../../core/config.hpp"
 #include "../../../core/gui.hpp"
 #include "../../../core/replayEngine.hpp"
+#include "../../../core/recorder/recorder.hpp"
 
 class LabelInfoScheduler : public CCLabelBMFont {
 public:
@@ -15,6 +16,143 @@ public:
             engine.get_current_index(), 
             engine.get_actions_size()
         ).c_str());
+    }
+};
+
+class RecorderLayer : public geode::Popup {
+protected:
+    geode::TextInput* nameInput;
+    geode::TextInput* widthInput;
+    geode::TextInput* heightInput;
+    geode::TextInput* fpsInput;
+    geode::TextInput* bitrateInput;
+
+    bool init() {
+        if (!geode::Popup::init(360.f, 200.f, "GDH_square.png"_spr)) return false;
+
+        auto& recorder = GDH::Recorder::get();
+        auto winSize = m_mainLayer->getContentSize();
+
+        auto menu = CCMenu::create();
+        menu->setPosition({0, 0});
+        m_mainLayer->addChild(menu);
+
+        auto title = CCLabelBMFont::create("Recorder Settings", "GoogleSans.fnt"_spr);
+        title->setPosition({winSize.width / 2, winSize.height - 16.f});
+        title->setScale(0.7f);
+        m_mainLayer->addChild(title);
+
+        auto closeBtn = CCSprite::create("GDH_closeBtn.png"_spr);
+        closeBtn->setScale(0.75f);
+        m_closeBtn->setSprite(closeBtn);
+
+        auto createLabel = [&menu](const std::string& text, const cocos2d::CCPoint& position, float scale = 0.6f) {
+            auto label = CCLabelBMFont::create(text.c_str(), "GoogleSans.fnt"_spr);
+            label->setAnchorPoint({0.f, 0.5f});
+            label->setPosition(position);
+            label->setScale(scale);
+            menu->addChild(label);
+            return label;
+        };
+
+        auto recordToggle = CCMenuItemExt::createTogglerWithFilename("GDH_togglerOn.png"_spr, "GDH_togglerOff.png"_spr, 0.8f,
+            [&recorder](CCMenuItemToggler* sender) {
+                auto pl = PlayLayer::get();
+                recorder.enabled = !sender->isOn();
+
+                if (pl && pl->m_hasCompletedLevel) {
+                    GDH::MaterialLayer(FLAlertLayer::create("Recorder", "Restart level to start recording", "OK"))->show();
+                    recorder.enabled = false;
+                    sender->toggle(true);
+                    return;
+                }
+
+                if (recorder.enabled) {
+                    recorder.start();
+                    GDH::MaterialLayer(FLAlertLayer::create("Info", "Recorder started", "OK"))->show();
+                } else {
+                    recorder.stop();
+                    GDH::MaterialLayer(FLAlertLayer::create("Info", "Recorder stopped", "OK"))->show();
+                }
+            });
+        
+        recordToggle->toggle(recorder.enabled);
+        recordToggle->setPosition({45.f, 145.f});
+        menu->addChild(recordToggle);
+        
+        createLabel("Record", {recordToggle->getPositionX() - 10.f + recordToggle->getScaledContentWidth(), recordToggle->getPositionY()}, 0.7f);
+
+        createLabel("Video Name:", {30.f, 110.f});
+        nameInput = geode::TextInput::create(170.f, "video_name", "GoogleSans.fnt"_spr);
+        nameInput->setPosition({245.f, 110.f});
+        nameInput->setString(recorder.videoName);
+        nameInput->setCallback([&recorder](const std::string& text) { recorder.videoName = text; });
+        menu->addChild(nameInput);
+
+        createLabel("Resolution / FPS:", {30.f, 75.f});
+
+        widthInput = geode::TextInput::create(45.f, "W", "GoogleSans.fnt"_spr);
+        widthInput->setPosition({182.f, 75.f}); 
+        widthInput->setString(std::to_string(recorder.width));
+        widthInput->setFilter("1234567890");
+        widthInput->setCallback([&recorder](const std::string& text) { 
+            auto value = geode::utils::numFromString<int>(text);
+            if (!value.isErr()) recorder.width = value.unwrap();
+        });
+        menu->addChild(widthInput);
+
+        createLabel("x", {210.f, 75.f}, 0.5f);
+
+        heightInput = geode::TextInput::create(45.f, "H", "GoogleSans.fnt"_spr);
+        heightInput->setPosition({240.f, 75.f});
+        heightInput->setString(std::to_string(recorder.height));
+        heightInput->setFilter("1234567890");
+        heightInput->setCallback([&recorder](const std::string& text) { 
+            auto value = geode::utils::numFromString<int>(text);
+            if (!value.isErr()) recorder.height = value.unwrap();
+        });
+        menu->addChild(heightInput);
+
+        createLabel("@", {267.f, 75.f}, 0.5f);
+
+        fpsInput = geode::TextInput::create(40.f, "FPS", "GoogleSans.fnt"_spr);
+        fpsInput->setPosition({300.f, 75.f});
+        fpsInput->setString(std::to_string(recorder.fps));
+        fpsInput->setFilter("1234567890");
+        fpsInput->setCallback([&recorder](const std::string& text) { 
+            auto value = geode::utils::numFromString<int>(text);
+            if (!value.isErr()) recorder.fps = value.unwrap();
+        });
+        menu->addChild(fpsInput);
+
+        createLabel("Bitrate:", {30.f, 40.f});
+        bitrateInput = geode::TextInput::create(80.f, "e.g. 50M", "GoogleSans.fnt"_spr);
+        bitrateInput->setPosition({200.f, 40.f});
+        bitrateInput->setFilter("0123456789MKmk");
+        bitrateInput->setString(recorder.bitrate);
+        bitrateInput->setCallback([&recorder](const std::string& text) { recorder.bitrate = text; });
+        menu->addChild(bitrateInput);
+
+        auto applyStyle = [](geode::TextInput* input) {
+            if (auto* bg = input->getChildByType<geode::NineSlice>(0)) { 
+                bg->setColor({71, 71, 131}); 
+                bg->setOpacity(255); 
+            }
+        };
+        applyStyle(nameInput);
+        applyStyle(widthInput);
+        applyStyle(heightInput);
+        applyStyle(fpsInput);
+        applyStyle(bitrateInput);
+
+        return true;
+    }
+public:
+    static RecorderLayer* create() {
+        auto ret = new RecorderLayer();
+        if (ret->init()) { ret->autorelease(); return ret; }
+        delete ret;
+        return nullptr;
     }
 };
 
@@ -145,6 +283,10 @@ $execute {
                 }
 
                 engine.mode = !sender->isOn() ? state::play : state::disable;
+
+                auto& gui = GDH::Gui::get();
+                auto& tps_bypass = gui.getWindow("Invisible").findHackByName("TPS");       
+                if (!tps_bypass.getEnabled()) tps_bypass.toggle();
             });
 
         playToggle->setPosition({123.f, 235.f});
@@ -194,6 +336,13 @@ $execute {
         });
         cleanButtonClick->setPosition({222, 163});
         engineTab->addChild(cleanButtonClick);
+
+        auto recorderButton = ButtonSprite::create("Recorder", 65, true, "GoogleSans.fnt"_spr, "GDH_button_01.png"_spr, 30.f, 0.7f);
+        auto recorderButtonClick = CCMenuItemExt::createSpriteExtra(recorderButton, [&engine, infoLabel](CCMenuItemSpriteExtra* sender) {
+            RecorderLayer::create()->show();
+        });
+        recorderButtonClick->setPosition({300.f, 20.f});
+        engineTab->addChild(recorderButtonClick);
 
         tab->m_scrollLayer->m_contentLayer->addChild(engineTab);
     });

@@ -6,6 +6,10 @@
 #include "../windowsUtils.hpp"
 #endif
 
+#ifdef GEODE_IS_ANDROID64
+#include "h264_encoder.hpp"
+#endif
+
 using namespace GDH;
 
 void Recorder::start() {
@@ -14,65 +18,163 @@ void Recorder::start() {
     is_recording = true;
 
     #ifdef GEODE_IS_WINDOWS
-    if (native_mode)
-        GDH::WindowUtils::setWindowBorderless(true, width, height);
+    compile_command();
     #endif
 
-    RecorderAudio::get().start();
-
-    last_frame_time = extra_time = 0;
+    last_frame_time = 0;
+    extra_time = 0;
     after_end_extra_time = 0;
-
     frame_has_data = false;
+
     current_frame.resize(width * height * 3, 0);
     texture.init(width, height);
 
+    setupResolution();
+
+    #ifdef GEODE_IS_WINDOWS
+    startWindowsEncoder();
+    #elif defined(GEODE_IS_ANDROID64)
+    startAndroidEncoder();
+    #endif
+}
+
+void Recorder::setupResolution() {
     auto view = cocos2d::CCEGLView::get();
+    if (!view) return;
 
     oldDesignResolution = view->getDesignResolutionSize();
     float aspectRatio = static_cast<float>(width) / static_cast<float>(height);
-    newDesignResolution = cocos2d::CCSize(roundf(320.f * aspectRatio), 320.f);
+    newDesignResolution = cocos2d::CCSize(std::round(320.f * aspectRatio), 320.f);
 
     originalScreenScale = cocos2d::CCSize(view->m_fScaleX, view->m_fScaleY);
-    newScreenScale = cocos2d::CCSize(static_cast<float>(width) / newDesignResolution.width, static_cast<float>(height) / newDesignResolution.height);
+    newScreenScale = cocos2d::CCSize(
+        static_cast<float>(width) / newDesignResolution.width, 
+        static_cast<float>(height) / newDesignResolution.height
+    );
+}
 
-    #ifdef GEODE_IS_WINDOWS
-    std::thread([&, command = command] {
-        auto process = subprocess::Popen(command);
+#ifdef GEODE_IS_WINDOWS
+void Recorder::startWindowsEncoder() {
+    std::thread([this]() {
+        auto process = subprocess::Popen(command, !console);
+        std::vector<uint8_t> local_frame(width * height * 3, 0);
+
         while (is_recording || frame_has_data) {
             std::unique_lock<std::mutex> u_lock(lock);
-            cv.wait(u_lock, [&] { return frame_has_data || !is_recording; });
+            cv.wait(u_lock, [this] { return frame_has_data || !is_recording; });
 
             if (frame_has_data) {
-                const auto frame = current_frame;
+                std::swap(local_frame, current_frame);
                 frame_has_data = false;
                 u_lock.unlock();
                 cv.notify_one();
-                process.m_stdin.write(frame.data(), frame.size());
+
+                if (!process.m_stdin.write(local_frame.data(), local_frame.size())) {
+                    geode::queueInMainThread([] { Recorder::get().force_stop = true; });
+                    geode::log::error("failed to write frame to ffmpeg pipe!");
+                }
+
             } else {
                 u_lock.unlock();
             }
         }
-        if (process.close()) {
+        
+        int render_code = process.close();
+
+        if (render_code != 0) {
+            geode::log::error("render process failed ({})", render_code);
             return;
         }
+
+        if (record_audio) {
+            std::filesystem::path video_path = folder / videoName;
+            std::filesystem::path audio_path = folder / AudioRecorder::get().audio_name;
+            std::filesystem::path temp_video_path = folder / ("temp_" + videoName);
+
+            std::error_code ec;
+            if (!std::filesystem::exists(video_path, ec) || !std::filesystem::exists(audio_path, ec)) {
+                geode::log::error("video or audio file missing before merge");
+                return;
+            }
+
+            std::filesystem::rename(video_path, temp_video_path, ec);
+            if (ec) {
+                geode::log::error("failed to rename video for temp processing");
+                return;
+            }
+
+            std::string merge_cmd = fmt::format(
+                "ffmpeg.exe -y -i \"{}\" -i \"{}\" -c:v copy {} -shortest \"{}\"",
+                temp_video_path.string(),
+                audio_path.string(),
+                audio_args,
+                video_path.string()
+            );
+
+            auto merge_process = subprocess::Popen(merge_cmd, !console);
+            int merge_code = merge_process.close();
+
+            if (merge_code == 0 && std::filesystem::exists(video_path, ec)) {
+                std::filesystem::remove(temp_video_path, ec);
+                std::filesystem::remove(audio_path, ec);
+            } else {
+                geode::log::error("merge process failed ({}), restoring original video", merge_code);
+                std::filesystem::rename(temp_video_path, video_path, ec);
+            }
+        }
     }).detach();
-    #endif
 }
+#endif
+
+#ifdef GEODE_IS_ANDROID64
+void Recorder::startAndroidEncoder() {
+    std::thread([this]() {
+        auto encoder = new H264Encoder(width, height, fps, bitrate);
+        if (!encoder->start((folder / videoName).string())) {
+            delete encoder;
+            return;
+        }
+
+        std::vector<uint8_t> local_frame(width * height * 3, 0);
+
+        while (is_recording || frame_has_data) {
+            std::unique_lock<std::mutex> u_lock(lock);
+            cv.wait(u_lock, [this] { return frame_has_data || !is_recording; });
+
+            if (frame_has_data) {
+                std::swap(local_frame, current_frame);
+                frame_has_data = false;
+                u_lock.unlock();
+                cv.notify_one();
+
+                encoder->encode_frame(local_frame);
+            } else {
+                u_lock.unlock();
+            }
+        }
+        
+        if (record_audio) {
+            auto audio_samples = AudioRecorder::get().get_data();
+            encoder->finalize_with_audio(audio_samples);
+        }
+
+        encoder->stop();
+        delete encoder;
+    }).detach();
+}
+#endif
 
 void Recorder::stop() {
     if (!is_recording) return;
 
     texture.cleanup();
 
-    #ifdef GEODE_IS_WINDOWS
-    if (native_mode)
-        GDH::WindowUtils::setWindowBorderless(false);
-    #endif
-
     needRevertOld = true;
-    
-    RecorderAudio::get().stop();
+    force_stop = false;
+
+    if (record_audio) {
+        AudioRecorder::get().stop();
+    }
 
     {
         std::lock_guard<std::mutex> u_lock(lock);
@@ -84,7 +186,7 @@ void Recorder::stop() {
 
 void Recorder::capture_frame() {
     std::unique_lock<std::mutex> u_lock(lock);
-    cv.wait(u_lock, [&] { return !frame_has_data; });
+    cv.wait(u_lock, [this] { return !frame_has_data; });
     u_lock.unlock();
 
     texture.capture(PlayLayer::get(), lock, cv, current_frame, frame_has_data);
@@ -92,22 +194,21 @@ void Recorder::capture_frame() {
 
 void Recorder::handle_recording(float dt) {
     auto playLayer = PlayLayer::get();
-    if (!playLayer->m_hasCompletedLevel || after_end_extra_time < after_end_duration) {
+    
+    if (!force_stop && (!playLayer->m_hasCompletedLevel || after_end_extra_time < after_end_duration)) {
         if (playLayer->m_hasCompletedLevel) {
             after_end_extra_time += dt;
         }
 
         double frame_dt = 1.0 / static_cast<double>(fps);
-        double time = playLayer->m_gameState.m_levelTime + extra_time - last_frame_time;
+        double time = (playLayer->m_gameState.m_levelTime - delay) + extra_time - last_frame_time;
+        
         if (time >= frame_dt) {
             extra_time = time - frame_dt;
-            last_frame_time = playLayer->m_gameState.m_levelTime;
-            
-            RecorderAudio::get().advance_target_time(frame_dt);
+            last_frame_time = playLayer->m_gameState.m_levelTime - delay;
             capture_frame();
         }
-    }
-    else {
+    } else {        
         stop();
     } 
 }
@@ -115,41 +216,40 @@ void Recorder::handle_recording(float dt) {
 void Recorder::compile_command() {
     command = fmt::format("ffmpeg.exe -y -f rawvideo -pix_fmt rgb24 -s {}x{} -r {} -i -", width, height, fps);
 
-    if (!codec.empty()) {
-        command += fmt::format(" -c:v {}", codec);
-    }
-
-    if (!bitrate.empty()) {
-        command += fmt::format(" -b:v {}", bitrate);
-    }
-
+    if (!codec.empty()) command += fmt::format(" -c:v {}", codec);
+    if (!bitrate.empty()) command += fmt::format(" -b:v {}", bitrate);
+    
     if (!extra_args.empty()) {
         command += fmt::format(" {}", extra_args);
-    }
-    else {
+    } else {
         command += " -pix_fmt yuv420p";
     }
     
-    if (!vf_args.empty())
-        command += fmt::format(" -vf {}", vf_args);
+    if (!vf_args.empty()) command += fmt::format(" -vf {}", vf_args);
 
-    command += fmt::format(" -an \"{}\\{}\"", folder, videoName);
+    command += fmt::format(" -an \"{}\\{}\"", folder.string(), videoName);
 }
 
 void Recorder::resize_resolution(geode::Function<void()> action) {
     auto view = cocos2d::CCEGLView::get();
-    auto director = cocos2d::CCDirector::get();
+
+    if (needRevertOld) {
+        if (oldDesignResolution.width != 0 && oldDesignResolution.height != 0 && view) {
+            cocos2d::CCDirector::get()->m_obWinSizeInPoints = oldDesignResolution;
+            view->setDesignResolutionSize(oldDesignResolution.width, oldDesignResolution.height, ResolutionPolicy::kResolutionExactFit);
+            view->m_fScaleX = originalScreenScale.width;
+            view->m_fScaleY = originalScreenScale.height;
+        }
+        needRevertOld = false;
+    }
 
     if (!is_recording || (PlayLayer::get() && PlayLayer::get()->m_isPaused)) {
         action();
         return;
     }
-
-    cocos2d::CCSize oldFrameSize = view->getFrameSize();
     
     if (newDesignResolution.width != 0 && newDesignResolution.height != 0) {    
         cocos2d::CCDirector::get()->m_obWinSizeInPoints = newDesignResolution;        
-        auto view = cocos2d::CCEGLView::get();
         view->setDesignResolutionSize(newDesignResolution.width, newDesignResolution.height, ResolutionPolicy::kResolutionExactFit);
         view->m_fScaleX = newScreenScale.width;
         view->m_fScaleY = newScreenScale.height;
@@ -159,7 +259,6 @@ void Recorder::resize_resolution(geode::Function<void()> action) {
 
     if (oldDesignResolution.width != 0 && oldDesignResolution.height != 0) {
         cocos2d::CCDirector::get()->m_obWinSizeInPoints = oldDesignResolution;
-        auto view = cocos2d::CCEGLView::get();
         view->setDesignResolutionSize(oldDesignResolution.width, oldDesignResolution.height, ResolutionPolicy::kResolutionExactFit);
         view->m_fScaleX = originalScreenScale.width;
         view->m_fScaleY = originalScreenScale.height;

@@ -127,6 +127,10 @@ void ReplayEngine::handle_commands(GJBaseGameLayer* self) {
             isPlayer1 = !isPlayer1;
         }
 
+        #ifdef GEODE_IS_ANDROID
+        self->m_allowedButtons.clear();
+        #endif
+
         self->handleButton(m_inputFrames[m_inputIndex].down, m_inputFrames[m_inputIndex].button, isPlayer1);
         m_inputIndex++;
     }

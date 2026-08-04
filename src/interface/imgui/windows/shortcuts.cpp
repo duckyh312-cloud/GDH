@@ -3,19 +3,78 @@
 #include <Geode/Geode.hpp>
 #include "../../../core/gui.hpp"
 #include "../layout.hpp"
+#include "../../../core/config.hpp"
 #include "../../../core/shortcuts.hpp"
+#include "../../../core/keybinds.hpp"
 #include "../widgetH.hpp"
 #include <imgui-cocos.hpp>
 #include "../../cocos/hacks_layer.hpp"
 
+static bool areShortcutsEnabled() {
+    return Config::get().get<bool>("shortcuts::enable", false);
+}
+
+static bool areFramerateEnabled() {
+    return Config::get().get<bool>("framerate::enable", false);
+}
+
 $execute {
+    auto& kb = GDH::Keybinds::get();
+
+    kb.addCallback("shortcut::options", geode::Keybind(), [](bool r) { if (!r && areShortcutsEnabled()) GDH::Shortcuts::openOptions(); });
+    kb.addCallback("shortcut::graphics", geode::Keybind(), [](bool r) { if (!r && areShortcutsEnabled()) GDH::Shortcuts::openGraphicsSettings(); });
+    kb.addCallback("shortcut::quests", geode::Keybind(), [](bool r) { if (!r && areShortcutsEnabled()) GDH::Shortcuts::openQuests(); });
+    kb.addCallback("shortcut::mobile_ui", geode::Keybind(), [](bool r) { 
+        if (!r && areShortcutsEnabled()) HacksLayer::isOpened() ? HacksLayer::get()->onClose(nullptr) : HacksLayer::get()->show(); 
+    });
+    kb.addCallback("shortcut::reset_level", geode::Keybind(), [](bool r) { if (!r && areShortcutsEnabled()) GDH::Shortcuts::resetLevel(); });
+    kb.addCallback("shortcut::practice_mode", geode::Keybind(), [](bool r) { if (!r && areShortcutsEnabled()) GDH::Shortcuts::togglePracticeMode(); });
+    kb.addCallback("shortcut::reset_volume", geode::Keybind(), [](bool r) { if (!r && areShortcutsEnabled()) GDH::Shortcuts::resetVolume(); });
+    kb.addCallback("shortcut::uncomplete_level", geode::Keybind(), [](bool r) { if (!r && areShortcutsEnabled()) GDH::Shortcuts::uncompleteLevel(); });
+    kb.addCallback("shortcut::resources", geode::Keybind(), [](bool r) { if (!r && areShortcutsEnabled()) GDH::Shortcuts::openResourcesFolder(); });
+    kb.addCallback("shortcut::appdata", geode::Keybind(), [](bool r) { if (!r && areShortcutsEnabled()) GDH::Shortcuts::openAppDataFolder(); });
+    kb.addCallback("shortcut::gdh_appdata", geode::Keybind(), [](bool r) { if (!r && areShortcutsEnabled()) GDH::Shortcuts::openGDHAppDataFolder(); });
+    kb.addCallback("shortcut::crash_game", geode::Keybind(), [](bool r) { if (!r && areShortcutsEnabled()) GDH::Shortcuts::triggerCrash(); });
+
+    kb.addCallback("keybinds::speedhack", geode::Keybind(), [](bool r) { if (!r && areFramerateEnabled()) {
+        if (r) return;
+        auto& gui = GDH::Gui::get();
+        auto& hack = gui.getWindow("Invisible").findHackByName("Speedhack");
+        hack.toggle();
+    } });
+
+    kb.addCallback("keybinds::speedhack_inc", geode::Keybind(), [](bool r) {
+        if (r || !areFramerateEnabled()) return;
+
+        auto& config = Config::get();
+        auto value = config.get<float>("invisible.speedhack::value", 1.f);
+
+        float newValue = std::max(0.05f, std::round((value + 0.05f) * 20.f) / 20.f);
+        config.set<float>("invisible.speedhack::value", newValue);
+
+        ImGuiH::AddPopup(fmt::format("Speedhack: {:.2f}x", newValue));
+    });
+
+    kb.addCallback("keybinds::speedhack_dec", geode::Keybind(), [](bool r) {
+        if (r || !areFramerateEnabled()) return;
+
+        auto& config = Config::get();
+        auto value = config.get<float>("invisible.speedhack::value", 1.f);
+
+        float newValue = std::max(0.05f, std::round((value - 0.05f) * 20.f) / 20.f);
+        config.set<float>("invisible.speedhack::value", newValue);
+
+        ImGuiH::AddPopup(fmt::format("Speedhack: {:.2f}x", newValue));
+    });
+
     auto& gui = GDH::Gui::get();
     auto& window = gui.getWindow("Shortcuts");
 
     window.setCustomWindowImGui([] {
         auto& layout = GDH::Layout::Manager::get();
+        auto& kb = GDH::Keybinds::get();
         float width = ImGui::GetContentRegionAvail().x;
-        
+
         if (ImGuiH::Button("Options", {width, 0.f}))
             GDH::Shortcuts::openOptions();
 
@@ -71,7 +130,6 @@ $execute {
 
             ImGui::EndPopup();
         }
-
     });
 }
 #endif

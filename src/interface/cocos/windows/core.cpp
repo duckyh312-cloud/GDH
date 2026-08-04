@@ -16,14 +16,14 @@ $execute {
         tab->prepareNewRow();
 
         tab->addConfigFloatInput("TPS Value", "invisible.tps::value", 240.f, 1.f, 50000.f);
-        tab->addConfigToggle("TPS Enabled", "invisible.tps");
+        tab->addHackToggle("TPS Enabled", "invisible.tps");
         
         tab->addSeparator();
         tab->prepareNewRow();
 
         tab->addConfigFloatInput("Speedhack Value", "invisible.speedhack::value", 1.f, 0.01f, 50.f);
-        tab->addConfigToggle("Speedhack Enabled", "invisible.speedhack");
-        tab->addConfigToggle("Speedhack Audio", "invisible.speedhack_audio");
+        tab->addHackToggle("Speedhack Enabled", "invisible.speedhack");
+        tab->addHackToggle("Speedhack Audio", "invisible.speedhack_audio");
 
         tab->addSeparator();
         tab->prepareNewRow();
@@ -33,6 +33,6 @@ $execute {
             GDH::Utils::setPitchShifter(enabled ? config.get<int>("invisible.pitch_shifter::value", 0) : 0);
             geode::log::debug("{}", value);
         });
-        tab->addConfigToggle("Pitch Shifter Enabled", "invisible.pitch_shifter");
+        tab->addHackToggle("Pitch Shifter Enabled", "invisible.pitch_shifter");
     });
 }

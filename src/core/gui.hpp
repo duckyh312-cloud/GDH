@@ -28,6 +28,8 @@ namespace GDH {
         bool avaibleCustomWindowCocos() { return m_handlerCocos != nullptr;  };
 
         std::string formatID(const std::string& windowName, const std::string& hackName);
+
+        void sortHacksAlphabetically();
     private:
         std::string m_name;
         std::vector<Hack> m_hacks;
@@ -53,6 +55,8 @@ namespace GDH {
 
         void rescanActiveCheats();
         std::unordered_set<std::string>& getActiveCheats() { return m_activeCheats; }
+
+        void sortAllHacksAlphabetically();
     private:
         Gui() = default;
 

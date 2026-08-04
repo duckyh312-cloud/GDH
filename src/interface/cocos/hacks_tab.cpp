@@ -143,7 +143,7 @@ void HacksTab::prepareNewRow() {
     m_scrollLayer->m_contentLayer->addChild(m_currentRow);
 }
 
-void HacksTab::addConfigToggle(const std::string& labelText, const std::string& key, bool defaultValue) {
+void HacksTab::addHackToggle(const std::string& labelText, const std::string& key, bool defaultValue) {
     auto& config = Config::get();
     float columnWidth = 175.f;
 
@@ -156,6 +156,32 @@ void HacksTab::addConfigToggle(const std::string& labelText, const std::string& 
         auto* hack = gui.findHackByIDGlobal(key);
         if (hack != nullptr)
             hack->toggle();
+    });
+    toggle->setPosition({25.f, 15.f});
+    toggle->toggle(config.get<bool>(key, defaultValue));
+    node->addChild(toggle);
+
+    auto label = CCLabelBMFont::create(labelText.c_str(), "GoogleSans.fnt"_spr);
+    label->setAnchorPoint({0.f, 0.5f});
+    label->setScale(0.65f); 
+    label->setPosition({toggle->getPositionX() + 22.f, 15.f});
+    node->addChild(label);
+
+    if (!m_currentRow || m_currentRow->getChildrenCount() >= 2) prepareNewRow();
+    m_currentRow->addChild(node);
+    updateRowAlignment(m_currentRow);
+}
+
+void HacksTab::addConfigToggle(const std::string& labelText, const std::string& key, bool defaultValue) {
+    auto& config = Config::get();
+    float columnWidth = 175.f;
+
+    auto node = CCMenu::create();
+    node->setContentSize({columnWidth, 30.f});
+    node->setAnchorPoint({0, 0.5f});
+    
+    auto toggle = CCMenuItemExt::createTogglerWithFilename("GDH_togglerOn.png"_spr, "GDH_togglerOff.png"_spr, 0.8f, [key, defaultValue, &config](CCMenuItemToggler* sender) {
+        config.set<bool>(key, !sender->isOn());
     });
     toggle->setPosition({25.f, 15.f});
     toggle->toggle(config.get<bool>(key, defaultValue));

@@ -56,7 +56,9 @@ class $modify(ReplayCCScheduler, cocos2d::CCScheduler) {
         });
     }
 };
-#elif defined(GEODE_IS_ANDROID) 
+#endif
+
+#ifdef GEODE_IS_ANDROID
 class $modify(ReplayCCScheduler, cocos2d::CCScheduler) {
     static void onModify(auto& self) {
         auto& gui = GDH::Gui::get();

@@ -307,6 +307,7 @@ namespace ImGuiH {
 
             if (ImGui::BeginTabBar("ExampleTabBar")) {
                 if (ImGui::BeginTabItem("Example 1")) {
+                    ImGui::Spacing();
                     ImGui::Text("Hello world! First tab");
                     ImGui::EndTabItem();
                 }

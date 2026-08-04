@@ -3,6 +3,7 @@
 #include "../../core/gui.hpp"
 #include "../../core/config.hpp"
 #include "../../core/keybinds.hpp"
+#include "../../core/recorder/recorder.hpp"
 #include "../../interface/imgui/widget_helper.hpp"
 #include "../../interface/cocos/hack_settings_popup.hpp"
 
@@ -83,6 +84,7 @@ class $modify(StartposSwitcherPlayLayer, PlayLayer) {
                 pl->togglePracticeMode(true);
             }
         }
+
     }
 
     void addObject(GameObject* obj) {
@@ -171,6 +173,19 @@ class $modify(StartposSwitcherPlayLayer, PlayLayer) {
                     right_arrowClick->activate();
             });
         }
+    }
+    
+    void resetLevel() {
+        PlayLayer::resetLevel();
+
+        auto fields = m_fields.self();
+        auto& recorder = GDH::Recorder::get();
+        if (!m_isPracticeMode && !fields->m_startPositions.empty()) {
+            recorder.delay = m_gameState.m_levelTime;
+        }
+        else if (fields->m_startPositions.empty()) {
+            recorder.delay = 0;
+        }      
     }
 
     // void togglePracticeMode(bool practiceMode) {

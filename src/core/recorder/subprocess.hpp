@@ -34,9 +34,10 @@ namespace subprocess {
             return { { read }, { write } };
         }
 
-        inline void write(const void* const data, size_t size) noexcept {
+        inline bool write(const void* const data, size_t size) noexcept {
             DWORD bytes_written;
-            WriteFile(m_write.handle, data, static_cast<DWORD>(size), &bytes_written, nullptr);
+            BOOL success = WriteFile(m_write.handle, data, static_cast<DWORD>(size), &bytes_written, nullptr);
+            return success && (bytes_written == size);
         }
 
         inline void close() noexcept {
@@ -52,7 +53,7 @@ namespace subprocess {
     public:
         Popen() noexcept = default;
         
-        Popen(const std::string& command) {
+        Popen(const std::string& command, bool hide_window = true) {
             STARTUPINFOW start_info = {};
             start_info.cb = sizeof(start_info);
             start_info.hStdOutput = GetStdHandle(STD_OUTPUT_HANDLE);
@@ -67,7 +68,9 @@ namespace subprocess {
             std::wstring wcommand(size, L'\0');
             MultiByteToWideChar(CP_UTF8, 0, command.c_str(), -1, &wcommand[0], size);
 
-            CreateProcessW(nullptr, &wcommand[0], nullptr, nullptr, true, 0, nullptr, nullptr, &start_info, &m_proc_info);
+            DWORD flags = hide_window ? CREATE_NO_WINDOW : 0;
+
+            CreateProcessW(nullptr, &wcommand[0], nullptr, nullptr, true, flags, nullptr, nullptr, &start_info, &m_proc_info);
 
             m_stdin.m_read.close();
         }

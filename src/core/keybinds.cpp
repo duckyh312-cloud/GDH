@@ -20,7 +20,7 @@ void Keybinds::init() {
             if (!m_recordingWindow.empty() || !m_recordingCustomId.empty()) {
                 if (event.action == geode::KeyboardInputData::Action::Repeat) return ListenerResult::Stop;
 
-                if (event.key == cocos2d::KEY_LeftControl || event.key == cocos2d::KEY_RightControl ||
+                if (event.key == cocos2d::KEY_LeftControl || event.key == cocos2d::KEY_RightControl || 
                     event.key == cocos2d::KEY_LeftShift || event.key == cocos2d::KEY_RightShift || event.key == cocos2d::KEY_Alt) {
                     return ListenerResult::Stop;
                 }
@@ -41,13 +41,15 @@ void Keybinds::init() {
             
             geode::Keybind pressedBind(event.key, event.modifiers);
             
+            bool handled = false;
             for (auto& [id, customPair] : m_customBinds) {
                 if (customPair.first == pressedBind && customPair.second) {
                     bool isRepeat = (event.action == geode::KeyboardInputData::Action::Repeat);
                     customPair.second(isRepeat);
-                    return ListenerResult::Stop;
+                    handled = true;
                 }
             }
+            if (handled) return ListenerResult::Stop;
 
             if (event.action == geode::KeyboardInputData::Action::Press && m_bindsMap.contains(pressedBind)) {
                 for (const auto& [windowName, hackName] : m_bindsMap[pressedBind]) {

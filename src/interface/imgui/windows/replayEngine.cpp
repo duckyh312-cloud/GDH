@@ -3,17 +3,102 @@
 #include "imgui.h"
 #include <imgui_stdlib.h>
 #include <imgui-cocos.hpp>
+#include "../../../core/config.hpp"
 #include "../../../core/gui.hpp"
 #include "../../../core/replayEngine.hpp"
 #include "../../../core/config.hpp"
 #include "../../../core/recorder/recorder.hpp"
+#include "../../../core/recorder/subprocess.hpp"
 #include "../widgetH.hpp"
 #include "../widget_helper.hpp"
 #include "../layout.hpp"
 
+std::string getFFmpegPath() {
+    static std::string cachedPath = "";
+    static bool checked = false;
+
+    if (checked) return cachedPath;
+    checked = true;
+
+    static geode::Mod* loader = geode::Loader::get()->getLoadedMod("geode.loader");
+    bool consoleEnabled = loader->getSettingValue<bool>("show-platform-console");
+    GDH::Recorder::get().console = consoleEnabled;
+
+    auto geodePath = geode::dirs::getGameDir() / "ffmpeg.exe";
+    if (std::filesystem::exists(geodePath)) {
+        cachedPath = geodePath.string();
+        return cachedPath;
+    }
+
+    subprocess::Popen process("where ffmpeg");
+    if (process.close(true) == 0) {
+        cachedPath = "ffmpeg";
+        return cachedPath;
+    }
+
+    cachedPath = "";
+    return cachedPath;
+}
+
+void savePreset(const std::filesystem::path& path, const GDH::Recorder& recorder) {
+    std::ofstream file(path);
+    if (!file.is_open()) return;
+
+    file << "width=" << recorder.width << "\n";
+    file << "height=" << recorder.height << "\n";
+    file << "fps=" << recorder.fps << "\n";
+    file << "bitrate=" << recorder.bitrate << "\n";
+    file << "codec=" << recorder.codec << "\n";
+    file << "extra_args=" << recorder.extra_args << "\n";
+    file << "vf_args=" << recorder.vf_args << "\n";
+    file << "audio_args=" << recorder.audio_args << "\n";
+    file << "record_audio=" << (recorder.record_audio ? 1 : 0) << "\n";
+}
+
+void loadPreset(const std::filesystem::path& path, GDH::Recorder& recorder) {
+    std::ifstream file(path);
+    if (!file.is_open()) return;
+
+    std::string line;
+    while (std::getline(file, line)) {
+        auto pos = line.find('=');
+        if (pos == std::string::npos) continue;
+
+        std::string key = line.substr(0, pos);
+        std::string val = line.substr(pos + 1);
+
+        if (key == "width") recorder.width = std::stoi(val);
+        else if (key == "height") recorder.height = std::stoi(val);
+        else if (key == "fps") recorder.fps = std::stoi(val);
+        else if (key == "bitrate") recorder.bitrate = val;
+        else if (key == "codec") recorder.codec = val;
+        else if (key == "extra_args") recorder.extra_args = val;
+        else if (key == "vf_args") recorder.vf_args = val;
+        else if (key == "audio_args") recorder.audio_args = val;
+        else if (key == "record_audio") recorder.record_audio = (val == "1");
+    }
+}
+
 void drawRecorderInterface() {
+    std::string ffmpegPath = getFFmpegPath();
+
+    if (ffmpegPath.empty()) {
+        ImGui::TextColored(ImColor(255, 128, 128).Value, "FFmpeg not found!");
+        ImGui::TextWrapped("Please place ffmpeg.exe in your Geometry Dash folder or add it to system PATH to use the recorder");
+        
+        if (ImGuiH::Button("Download")) {
+            geode::utils::web::openLinkInBrowser("https://github.com/AnimMouse/ffmpeg-autobuild/releases/latest");
+        } ImGui::SameLine();
+
+        if (ImGuiH::Button("Open GD Folder")) {
+            geode::utils::file::openFolder(geode::dirs::getGameDir());
+        }
+        return;
+    }
+
     auto& layout = GDH::Layout::Manager::get();
     auto& recorder = GDH::Recorder::get();
+    
     if (ImGuiH::Checkbox("Record##Recorder", &recorder.enabled)) {
         if (recorder.enabled) {
             recorder.compile_command();
@@ -24,13 +109,18 @@ void drawRecorderInterface() {
         }
     }
 
-    
     ImGui::SameLine();
-    
     ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
     ImGui::InputText("##videoname", &recorder.videoName);
     
-    ImGuiH::Checkbox("Native Mode", &recorder.native_mode);
+    ImGuiH::Checkbox("Include Audio", &recorder.record_audio);
+    ImGui::SameLine();
+
+    static geode::Mod* loader = geode::Loader::get()->getLoadedMod("geode.loader");
+    bool consoleEnabled = loader->getSettingValue<bool>("show-platform-console");
+    if (ImGuiH::Checkbox("Show Console (Requires Restart)", &consoleEnabled)) {
+        loader->setSettingValue("show-platform-console", consoleEnabled);
+    }
     
     ImGui::Text("Resolution:");
     ImGui::Separator();
@@ -59,11 +149,9 @@ void drawRecorderInterface() {
     ImGui::InputInt("##fps", &recorder.fps, 0);
 
     ImGui::SameLine(0, 5);
-
     ImGuiH::Checkbox("Lock Aspect Ratio (16:9)", &recorder.lock_aspect_ratio);
 
     ImGui::Spacing();
-
     ImGui::Text("Encoding Settings");
     ImGui::Separator(); 
 
@@ -71,8 +159,7 @@ void drawRecorderInterface() {
     ImGui::InputText("Bitrate", &recorder.bitrate); 
 
     ImGui::SameLine();
-
-    ImGui::PushItemWidth(layout.multipleScale(80.f));
+    ImGui::PushItemWidth(layout.multipleScale(120.f));
     ImGui::InputText("Codec", &recorder.codec);
 
     ImGui::PushItemWidth(layout.multipleScale(450.f));
@@ -81,8 +168,11 @@ void drawRecorderInterface() {
     ImGui::PushItemWidth(layout.multipleScale(450.f));
     ImGui::InputText("VF Args", &recorder.vf_args);
 
+    ImGui::PushItemWidth(layout.multipleScale(450.f));
+    ImGui::InputText("Audio Merge Args", &recorder.audio_args);
+
     ImGui::Spacing();
-    ImGui::Text("Presets");
+    ImGui::Text("Built-in Presets");
     ImGui::Separator();
 
     if (ImGuiH::Button("HD")) { recorder.width = 1280; recorder.height = 720; recorder.fps = 60; recorder.bitrate = "25M"; }   
@@ -93,7 +183,7 @@ void drawRecorderInterface() {
     ImGui::SameLine();  
     if (ImGuiH::Button("4K")) { recorder.width = 3840; recorder.height = 2160; recorder.fps = 60; recorder.bitrate = "80M"; }   
     ImGui::SameLine();  
-    if (ImGuiH::Button("8K")) { recorder.width = 7680; recorder.height = 4320; recorder.fps = 60; recorder.bitrate = "250M";}
+    if (ImGuiH::Button("8K")) { recorder.width = 7680; recorder.height = 4320; recorder.fps = 60; recorder.bitrate = "250M"; }
 
     if (ImGuiH::Button("CPU x264")) {
         recorder.codec = "libx264";
@@ -118,11 +208,92 @@ void drawRecorderInterface() {
     if (ImGuiH::Button("NVIDIA H265")) {
         recorder.codec = "hevc_nvenc";
         recorder.extra_args = "-pix_fmt yuv420p -preset p7";
-    } ImGui::SameLine();
+    } ImGui::SameLine();  
     
     if (ImGuiH::Button("NVIDIA AV1 (Only RTX40 Series)")) {
         recorder.codec = "av1_nvenc";
         recorder.extra_args = "-pix_fmt yuv420p -preset p7";
+    }
+
+    if (ImGuiH::Button("AMD H264")) {
+        recorder.codec = "h264_amf";
+        recorder.extra_args = "-pix_fmt yuv420p -quality quality";
+    } ImGui::SameLine();
+
+    if (ImGuiH::Button("AMD H265")) {
+        recorder.codec = "hevc_amf";
+        recorder.extra_args = "-pix_fmt yuv420p -quality quality";
+    } ImGui::SameLine();
+
+    if (ImGuiH::Button("AMD AV1 (Only RX 7000 Series)")) {
+        recorder.codec = "av1_amf";
+        recorder.extra_args = "-pix_fmt yuv420p -quality quality";
+    }
+
+    ImGui::Spacing();
+    ImGui::Text("Custom Presets");
+    ImGui::Separator();
+
+    static std::string customPresetName = "";
+    static std::vector<std::filesystem::path> presetFiles;
+    static bool presetsNeedRefresh = true;
+
+    if (presetsNeedRefresh) {
+        presetFiles.clear();
+        if (std::filesystem::exists(folderPresetsPath)) {
+            for (const auto& entry : std::filesystem::directory_iterator(folderPresetsPath)) {
+                if (entry.is_regular_file() && entry.path().extension() == ".preset") {
+                    presetFiles.push_back(entry.path());
+                }
+            }
+        }
+        presetsNeedRefresh = false;
+    }
+
+    ImGui::SetNextItemWidth(layout.multipleScale(220.f));
+    ImGui::InputTextWithHint("##custom_preset_name", "Enter preset name", &customPresetName);
+    
+    ImGui::SameLine();
+    
+    if (ImGuiH::Button("Save Preset") && !customPresetName.empty()) {
+        std::filesystem::create_directories(folderPresetsPath);
+        auto path = folderPresetsPath / (customPresetName + ".preset");
+        savePreset(path, recorder);
+        presetsNeedRefresh = true;
+    }
+
+    ImGui::SameLine();
+
+    if (ImGuiH::Button("Load Preset") && !customPresetName.empty()) {
+        auto path = folderPresetsPath / (customPresetName + ".preset");
+        if (std::filesystem::exists(path)) {
+            loadPreset(path, recorder);
+        }
+    }
+
+    ImGui::SameLine();
+
+    if (ImGuiH::Button("Delete Preset") && !customPresetName.empty()) {
+        auto path = folderPresetsPath / (customPresetName + ".preset");
+        if (std::filesystem::exists(path)) {
+            std::filesystem::remove(path);
+            presetsNeedRefresh = true;
+        }
+    }
+
+    ImGui::Spacing();
+
+    if (!presetFiles.empty()) {
+        for (const auto& path : presetFiles) {
+            std::string name = path.stem().string();
+
+            if (ImGuiH::Button(name.c_str())) {
+                customPresetName = name;
+                loadPreset(path, recorder);
+            }
+            ImGui::SameLine();
+        }
+        ImGui::NewLine();
     }
 
     ImGui::Spacing();
@@ -132,6 +303,11 @@ void drawRecorderInterface() {
     if (ImGuiH::Button("Open Showcase Folder")) {
         geode::utils::file::openFolder(recorder.folder);
     }
+    ImGui::SameLine();
+    if (ImGuiH::Button("Open Presets Folder")) {
+        geode::utils::file::openFolder(folderPresetsPath);
+    }
+
     ImGui::Text("Showcase Folder: %s", recorder.folder.string().c_str());
 }
 
@@ -328,7 +504,7 @@ $execute {
         static bool onceResize = false;
         if (!onceResize && ImGui::IsPopupOpen("Pro Settings")) {
             onceResize = true;
-            ImGui::SetNextWindowSize({layout.multipleScale(800.f), layout.multipleScale(540.f)});
+            ImGui::SetNextWindowSize({layout.multipleScale(800.f), layout.multipleScale(620.f)});
         }
         
         if (ImGui::BeginPopupModal("Pro Settings", &isProSettingsOpen)) {

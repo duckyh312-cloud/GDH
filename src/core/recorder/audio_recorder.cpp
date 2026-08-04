@@ -1,127 +1,115 @@
 #include "audio_recorder.hpp"
 #include "recorder.hpp"
-#include <fstream>
+#include <Geode/modify/PlayLayer.hpp>
 
-void RecorderAudio::init() {
-    auto fmod_engine = FMODAudioEngine::get();
-    auto system = fmod_engine->m_system;
+using namespace GDH;
+using namespace geode::prelude;
 
-    system->getMasterChannelGroup(&m_masterGroup);
+void AudioRecorder::init() {
+    auto system = FMODAudioEngine::sharedEngine()->m_system;
+    system->getSoftwareFormat((int*)&m_sampleRate, nullptr, nullptr);
 
     FMOD_DSP_DESCRIPTION desc = {};
-    strcpy(desc.name, "GDH DSP Recorder");
+    strcpy(desc.name, "DSP Recorder");
     desc.numinputbuffers = 1;
     desc.numoutputbuffers = 1;
-    desc.read = [](FMOD_DSP_STATE* dspState, float* inBuffer, float* outBuffer, unsigned int length, int inChannels, int* outChannels) {
-        auto& recorder = RecorderAudio::get();
-        auto pl = PlayLayer::get();
+    
+    desc.read = [](FMOD_DSP_STATE* dsp, float* inbuffer, float* outbuffer, unsigned int length, int inchannels, int* outchannels) -> FMOD_RESULT {
+        auto recorder = &AudioRecorder::get();
+        auto channels = *outchannels;
         
-        std::memcpy(outBuffer, inBuffer, length * (*outChannels) * sizeof(float));
+        std::memcpy(outbuffer, inbuffer, length * channels * sizeof(float));
 
-        if (!recorder.is_recording || !pl || !pl->m_started) return FMOD_OK;
+        if (!recorder->is_recording) return FMOD_OK;
 
-        int sampleRate = 0, channels = 0;
-        FMODAudioEngine::get()->m_system->getSoftwareFormat(&sampleRate, nullptr, &channels);
+        auto pl = PlayLayer::get();
+        bool should_record = pl && pl->m_started && !pl->m_isPaused;
 
-        size_t current_size = 0;
         {
-            std::lock_guard<std::mutex> lock(recorder.m_data_mutex);
-            recorder.m_data.insert(recorder.m_data.end(), inBuffer, inBuffer + length * (*outChannels));
-            current_size = recorder.m_data.size();
-            
-            recorder.m_current_audio_time = static_cast<double>(current_size) / (static_cast<double>(sampleRate) * static_cast<double>(*outChannels));
-        }
-
-        double recorded_audio_time = recorder.m_current_audio_time;
-
-        if (recorded_audio_time >= recorder.target_audio_time) {
-            if (recorder.m_masterGroup) {
-                recorder.m_masterGroup->setPaused(true);
-                recorder.m_master_paused = true;
+            std::lock_guard<std::mutex> lock(recorder->m_lock);
+            if (should_record) {
+                recorder->m_data.insert(recorder->m_data.end(), inbuffer, inbuffer + length * channels);
+                recorder->m_current_audio_time += static_cast<double>(length) / recorder->m_sampleRate;
             }
         }
+        recorder->m_cv.notify_all();
+
+        FMOD::ChannelGroup* master;
+        FMODAudioEngine::sharedEngine()->m_system->getMasterChannelGroup(&master);
+        master->setPaused(true);
 
         return FMOD_OK;
     };
 
     system->createDSP(&desc, &m_dsp);
+    system->getMasterChannelGroup(&m_masterGroup);
 }
 
-void RecorderAudio::start() {
+void AudioRecorder::start() {
     if (is_recording) return;
+    if (!m_dsp) init();
 
-    init();
+    m_masterGroup->addDSP(0, m_dsp);
     
-    is_recording = true;
-    m_master_paused = false;
-    after_end_extra_time = 0;
-    target_audio_time = 0.0;
-    m_current_audio_time = 0.0;
-
-    auto fmod_engine = FMODAudioEngine::get();
-    old_volume_music = fmod_engine->getBackgroundMusicVolume();
-    old_volume_sfx = fmod_engine->getEffectsVolume();
-
-    fmod_engine->setBackgroundMusicVolume(volume_music);
-    fmod_engine->setEffectsVolume(volume_sfx);
-
-    if (m_masterGroup && m_dsp) {
-        m_masterGroup->addDSP(0, m_dsp);
-    }
-
     {
-        std::lock_guard<std::mutex> lock(m_data_mutex);
+        std::lock_guard<std::mutex> lock(m_lock);
         m_data.clear();
-        m_data.reserve(44100 * 2 * 10);
+        m_current_audio_time = 0.0;
+        m_target_audio_time = 0.0;
+        is_recording = true;
     }
 }
 
-void RecorderAudio::stop() {
+void AudioRecorder::stop() {
     if (!is_recording) return;
 
-    enabled = false;
-    is_recording = false;
-
-    if (m_masterGroup) {
-        if (m_dsp) {
-            m_masterGroup->removeDSP(m_dsp);
-        }
-        m_masterGroup->setPaused(false); 
+    m_masterGroup->removeDSP(m_dsp);
+    
+    {
+        std::lock_guard<std::mutex> lock(m_lock);
+        is_recording = false;
     }
-    m_master_paused = false;
+    
+    m_masterGroup->setPaused(false);
 
-    auto fmod_engine = FMODAudioEngine::get();
-    fmod_engine->setBackgroundMusicVolume(old_volume_music);
-    fmod_engine->setEffectsVolume(old_volume_sfx);
-
+    #ifdef GEODE_IS_WINDOWS
     save_to_wav(GDH::Recorder::get().folder / audio_name);
+    #endif
 }
 
-std::vector<float> RecorderAudio::get_data() {
-    std::lock_guard<std::mutex> lock(m_data_mutex);
-    auto data = std::move(m_data);
+std::vector<float> AudioRecorder::get_data() {
+    std::lock_guard<std::mutex> lock(m_lock);
+    auto data = m_data;
     m_data.clear();
     return data;
 }
 
-void RecorderAudio::advance_target_time(double frame_dt) {
-    if (!is_recording || !m_masterGroup) return;
+void AudioRecorder::wait_for_audio(double dt) {
+    if (!is_recording) return;
 
-    target_audio_time += frame_dt;
-
-    if (m_master_paused) {
+    std::unique_lock<std::mutex> lock(m_lock);
+    m_target_audio_time += dt;
+    
+    while (m_current_audio_time < m_target_audio_time) {
         m_masterGroup->setPaused(false);
-        m_master_paused = false;
+        if (m_cv.wait_for(lock, std::chrono::milliseconds(100)) == std::cv_status::timeout) {
+            geode::log::warn("timeout waiting for audio! current: {}; target: {}", m_current_audio_time, m_target_audio_time);
+            break; 
+        }
     }
+    
+    m_masterGroup->setPaused(true);
 }
 
-void RecorderAudio::save_to_wav(const std::filesystem::path& filename) {
-    std::lock_guard<std::mutex> lock(m_data_mutex);
+void AudioRecorder::save_to_wav(const std::filesystem::path& filename) {
+    std::lock_guard<std::mutex> lock(m_lock);
     if (m_data.empty()) return;
 
     int sampleRate = 0, channels = 0;
-    FMODAudioEngine::get()->m_system->getSoftwareFormat(&sampleRate, nullptr, &channels);
+    FMODAudioEngine::sharedEngine()->m_system->getSoftwareFormat(&sampleRate, nullptr, &channels);
     if (sampleRate == 0 || channels == 0) return;
+
+    std::filesystem::create_directories(filename.parent_path());
 
     std::ofstream outFile(filename, std::ios::binary);
     if (!outFile.is_open()) return;
@@ -152,24 +140,4 @@ void RecorderAudio::save_to_wav(const std::filesystem::path& filename) {
 
     outFile.write(reinterpret_cast<const char*>(&header), sizeof(header));
     outFile.write(reinterpret_cast<const char*>(m_data.data()), m_data.size() * sizeof(float));
-}
-
-double RecorderAudio::get_recorded_time() {
-    std::lock_guard<std::mutex> lock(m_data_mutex);
-    return m_current_audio_time;
-}
-
-std::string RecorderAudio::get_data_size() {
-    std::lock_guard<std::mutex> lock(m_data_mutex);
-    size_t size_in_bytes = m_data.size() * sizeof(float);
-
-    if (size_in_bytes < 1024) {
-        return fmt::format("{} B", size_in_bytes);
-    } else if (size_in_bytes < 1024 * 1024) {
-        return fmt::format("{:.2f} KB", size_in_bytes / 1024.0);
-    } else if (size_in_bytes < 1024 * 1024 * 1024) {
-        return fmt::format("{:.2f} MB", size_in_bytes / (1024.0 * 1024.0));
-    } else {
-        return fmt::format("{:.2f} GB", size_in_bytes / (1024.0 * 1024.0 * 1024.0));
-    }
 }

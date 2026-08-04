@@ -47,7 +47,6 @@ bool HacksLayer::init() {
     m_mainLayer->addChild(panel);
 
     int i = 0;
-    float tabPositionY = 235.f;
     for (auto& win : windows) {
         auto winName = win.getName();
         if (winName == "Framerate" || winName == "Invisible")
@@ -60,7 +59,6 @@ bool HacksLayer::init() {
         auto buttonClick = CCMenuItemExt::createSpriteExtra(button, [this, i](CCMenuItemSpriteExtra* sender) {
             switchTab(i);
         });
-        buttonClick->setPosition({55.f, tabPositionY});
         m_buttonTabs.push_back(buttonClick);
         m_buttonMenu->addChild(buttonClick);
 
@@ -84,11 +82,87 @@ bool HacksLayer::init() {
 
         m_tabs.push_back(tab);
 
-        tabPositionY -= 29;
         i++;
     }
 
+    auto upSpr = cocos2d::CCSprite::create("GDH_arrow.png"_spr);
+    upSpr->setRotation(90.f);
+    upSpr->setScale(0.6f);
+    m_upArrow = CCMenuItemExt::createSpriteExtra(upSpr, [this](auto) {
+        if (m_tabOffset > 0) {
+            m_tabOffset--;
+            updateTabPositions();
+        }
+    });
+    m_upArrow->setPosition({55.f, 260.f});
+    m_buttonMenu->addChild(m_upArrow);
+
+    auto downSpr = cocos2d::CCSprite::create("GDH_arrow.png"_spr);
+    downSpr->setRotation(-90.f);
+    downSpr->setScale(0.6f);
+    m_downArrow = CCMenuItemExt::createSpriteExtra(downSpr, [this](auto) {
+        if (m_tabOffset + 8 < static_cast<int>(m_buttonTabs.size())) {
+            m_tabOffset++;
+            updateTabPositions();
+        }
+    });
+    m_downArrow->setPosition({55.f, 5.f});
+    m_buttonMenu->addChild(m_downArrow);
+
+    if (m_index >= 8) {
+        m_tabOffset = std::clamp(m_index - 7, 0, std::max(0, static_cast<int>(m_buttonTabs.size()) - 8));
+    } else {
+        m_tabOffset = 0;
+    }
+
+    updateTabPositions();
+
     return true;
+}
+
+void HacksLayer::updateTabPositions() {
+    int totalTabs = static_cast<int>(m_buttonTabs.size());
+
+    if (totalTabs <= 8) {
+        if (m_upArrow) m_upArrow->setVisible(false);
+        if (m_downArrow) m_downArrow->setVisible(false);
+
+        for (int i = 0; i < totalTabs; i++) {
+            auto* button = m_buttonTabs[i];
+            if (button) {
+                button->setVisible(true);
+                button->setPosition({55.f, 235.f - i * 29.f});
+            }
+        }
+        return;
+    }
+
+    m_tabOffset = std::clamp(m_tabOffset, 0, std::max(0, totalTabs - 8));
+
+    if (m_upArrow) {
+        m_upArrow->setVisible(true);
+        m_upArrow->setEnabled(m_tabOffset > 0);
+        m_upArrow->setOpacity(m_tabOffset > 0 ? 255 : 100);
+    }
+
+    if (m_downArrow) {
+        m_downArrow->setVisible(true);
+        m_downArrow->setEnabled(m_tabOffset + 8 < totalTabs);
+        m_downArrow->setOpacity(m_tabOffset + 8 < totalTabs ? 255 : 100);
+    }
+
+    for (int i = 0; i < totalTabs; i++) {
+        auto* button = m_buttonTabs[i];
+        if (!button) continue;
+
+        if (i >= m_tabOffset && i < m_tabOffset + 8) {
+            button->setVisible(true);
+            int slot = i - m_tabOffset;
+            button->setPosition({55.f, 235.f - slot * 29.f});
+        } else {
+            button->setVisible(false);
+        }
+    }
 }
 
 void HacksLayer::switchTab(int newIndex) {
@@ -97,6 +171,14 @@ void HacksLayer::switchTab(int newIndex) {
     auto& config = Config::get();
     m_index = newIndex;
     config.set<int>("gui_mobile.index", m_index);
+
+    if (m_index < m_tabOffset) {
+        m_tabOffset = m_index;
+    } else if (m_index >= m_tabOffset + 8) {
+        m_tabOffset = m_index - 7;
+    }
+
+    updateTabPositions();
 
     for (int i = 0; i < m_tabs.size(); i++) {
         m_tabs[i]->setVisible(i == m_index);

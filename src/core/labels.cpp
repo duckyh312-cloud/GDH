@@ -125,6 +125,7 @@ private:
 
 bool renderVariable(geode::utils::StringBuffer<> &stream, std::string_view var_name) {
     auto pl = PlayLayer::get();
+
     if (var_name == "time_24") { stream.append(fmt::format("{:%T}", geode::localtime(std::time(nullptr)), var_name)); }
     else if (var_name == "time_12") { stream.append(fmt::format("{:%I:%M:%S %p}", geode::localtime(std::time(nullptr)), var_name)); }
     else if (var_name == "date") { stream.append(fmt::format("{:%F}", geode::localtime(std::time(nullptr)), var_name)); }
@@ -357,6 +358,7 @@ class $modify(LabelsPlayLayer, PlayLayer) {
 
         auto& config = Config::get();
         bool disable_all = config.get<bool>("labels::disable_all", false);
+        bool noclip_enabled = config.get<bool>("core.noclip", false);
 
         static bool was_disabled = false;
 
@@ -380,6 +382,8 @@ class $modify(LabelsPlayLayer, PlayLayer) {
             float y = 0.0f, labelsHeight = 0.0f; int i = 0;
             for (const auto &labelObj : manager.labels[corner]) {
                 if (!labelObj.enabled) continue;
+                if (labelObj.noclip && !noclip_enabled) continue;
+
                 if (labelObj.type == LabelType::Text) {
                     std::string renderedText = labelObj.render();
                     if (renderedText.empty()) continue; 
@@ -438,6 +442,8 @@ class $modify(LabelsPlayLayer, PlayLayer) {
             labelsHeight = y - manager.midPadding; y = 0.0f; i = 0;
             for (const auto &labelObj : manager.labels[corner]) {
                 if (!labelObj.enabled) continue;
+                if (labelObj.noclip && !noclip_enabled) continue;
+                
                 if (labelObj.type == LabelType::Text) {
                     if (labelObj.render().empty()) continue; 
 
