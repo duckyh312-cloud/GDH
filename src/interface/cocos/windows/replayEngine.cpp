@@ -56,25 +56,42 @@ protected:
         };
 
         auto recordToggle = CCMenuItemExt::createTogglerWithFilename("GDH_togglerOn.png"_spr, "GDH_togglerOff.png"_spr, 0.8f,
-            [&recorder](CCMenuItemToggler* sender) {
-                auto pl = PlayLayer::get();
-                recorder.enabled = !sender->isOn();
+            [this, &recorder](CCMenuItemToggler* sender) {
+            auto pl = PlayLayer::get();
+            recorder.enabled = !sender->isOn();
 
-                if (pl && pl->m_hasCompletedLevel) {
-                    GDH::MaterialLayer(FLAlertLayer::create("Recorder", "Restart level to start recording", "OK"))->show();
-                    recorder.enabled = false;
-                    sender->toggle(true);
-                    return;
-                }
+            if (pl && pl->m_hasCompletedLevel) {
+                GDH::MaterialLayer(FLAlertLayer::create("Recorder", "Restart level to start recording", "OK"))->show();
+                recorder.enabled = false;
+                sender->toggle(true);
+                return;
+            }
 
-                if (recorder.enabled) {
-                    recorder.start();
-                    GDH::MaterialLayer(FLAlertLayer::create("Info", "Recorder started", "OK"))->show();
-                } else {
-                    recorder.stop();
-                    GDH::MaterialLayer(FLAlertLayer::create("Info", "Recorder stopped", "OK"))->show();
-                }
-            });
+            if (recorder.enabled) {
+                geode::async::spawn(
+                    geode::utils::file::pick(
+                        geode::utils::file::PickMode::OpenFolder,
+                        {}
+                    ),
+                    [&recorder](geode::utils::file::PickResult res) {
+                        if (!res) return;
+                        auto pathOpt = std::move(res).unwrapOr(std::nullopt);
+                        if (!pathOpt.has_value()) return;
+
+                        auto folderPath = std::move(pathOpt).value();
+                        recorder.folder = folderPath;
+
+                        recorder.start();
+                        GDH::MaterialLayer(FLAlertLayer::create("Info", 
+                            fmt::format("Recording started: {}", recorder.folder / recorder.videoName), "OK")
+                        )->show();
+                    }
+                );
+            } else {
+                recorder.stop();
+                GDH::MaterialLayer(FLAlertLayer::create("Info", "Recorder stopped", "OK"))->show();
+            }
+        });
         
         recordToggle->toggle(recorder.enabled);
         recordToggle->setPosition({45.f, 145.f});
@@ -231,8 +248,9 @@ $execute {
     auto& gui = GDH::Gui::get();
     auto& window = gui.getWindow("Replay Engine");
     auto& engine = GDH::ReplayEngine::get();
+    auto& config = Config::get();
 
-    window.setCustomWindowCocos([&gui, &engine](cocos2d::CCNode* node) {
+    window.setCustomWindowCocos([&gui, &engine, &config](cocos2d::CCNode* node) {
         auto tab = static_cast<HacksTab*>(node);
         auto engineTab = CCMenu::create();
         engineTab->setContentSize({500.f, 250.f});
@@ -343,6 +361,22 @@ $execute {
         });
         recorderButtonClick->setPosition({300.f, 20.f});
         engineTab->addChild(recorderButtonClick);
+
+        auto accuracy_fix_toggle = CCMenuItemExt::createTogglerWithFilename("GDH_togglerOn.png"_spr, "GDH_togglerOff.png"_spr, 0.8f, [&config](CCMenuItemToggler* sender) {
+            config.set<bool>("engine::accuracy_fix", !sender->isOn());
+        });
+        accuracy_fix_toggle->toggle(config.get<bool>("engine::accuracy_fix", true));
+        accuracy_fix_toggle->setPosition({25.f, 130.f});
+        engineTab->addChild(accuracy_fix_toggle);
+        engineTab->addChild(tab->AddTextToToggle("Accuracy Fix", accuracy_fix_toggle));
+
+        auto y_velocity_toggle = CCMenuItemExt::createTogglerWithFilename("GDH_togglerOn.png"_spr, "GDH_togglerOff.png"_spr, 0.8f, [&config](CCMenuItemToggler* sender) {
+            config.set<bool>("engine::velocity_fix", !sender->isOn());
+        });
+        y_velocity_toggle->toggle(config.get<bool>("engine::velocity_fix", false));
+        y_velocity_toggle->setPosition({145.f, 130.f});
+        engineTab->addChild(y_velocity_toggle);
+        engineTab->addChild(tab->AddTextToToggle("Y Velocity Fix", y_velocity_toggle));
 
         tab->m_scrollLayer->m_contentLayer->addChild(engineTab);
     });

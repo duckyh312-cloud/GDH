@@ -31,7 +31,6 @@ $execute {
         tab->addConfigIntInput("Pitch Shifter (-24 to 24)", "invisible.pitch_shifter::value", 1.f, -12, 12, [&config](int value) {
             bool enabled = config.get<bool>("invisible.pitch_shifter", false);
             GDH::Utils::setPitchShifter(enabled ? config.get<int>("invisible.pitch_shifter::value", 0) : 0);
-            geode::log::debug("{}", value);
         });
         tab->addHackToggle("Pitch Shifter Enabled", "invisible.pitch_shifter");
     });

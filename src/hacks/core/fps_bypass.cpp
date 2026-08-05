@@ -1,6 +1,7 @@
 #ifdef GEODE_IS_WINDOWS
 #include <Geode/Geode.hpp>
-#include <Geode/binding/AppDelegate.hpp>
+#include <Geode/modify/GameManager.hpp>
+#include <Geode/modify/MoreVideoOptionsLayer.hpp>
 #include "../../core/gui.hpp"
 #include "../../core/config.hpp"
 
@@ -30,4 +31,31 @@ $execute {
         CCDirector::get()->setAnimationInterval(dt);
     });
 }
+
+class $modify(FPSBypassGameManager, GameManager) {
+    void updateCustomFPS() {
+        geode::queueInMainThread([this] {
+            auto& config = Config::get();
+            if (m_customFPSTarget != 0) config.set<float>("invisible.fps::value", m_customFPSTarget); 
+            auto enabled = getGameVariable(GameVar::UnlockFPS);
+            
+            auto& gui = GDH::Gui::get();
+            auto& hack = gui.getWindow("Invisible").findHackByName("FPS");   
+            hack.setEnabled(enabled);
+        });
+    }
+};
+
+class $modify(FPSBypassMoreVideoOptionsLayer, MoreVideoOptionsLayer) {
+    void onToggle(cocos2d::CCObject* sender) {
+        MoreVideoOptionsLayer::onToggle(sender);
+
+        auto& gui = GDH::Gui::get();
+        auto gm = GameManager::get();
+        
+        auto enabled = gm->getGameVariable(GameVar::UnlockFPS);
+        auto& hack = gui.getWindow("Invisible").findHackByName("FPS");   
+        hack.setEnabled(enabled);
+    }
+};
 #endif

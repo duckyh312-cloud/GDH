@@ -16,13 +16,22 @@ bool Hack::getEnabled() const {
     return Config::get().get<bool>(m_ID, false);
 }
 
+void Hack::setDisabled(bool value) { 
+    if (value) disable();
+    m_disabled = value;
+}
+
+bool Hack::getDisabled() const {
+    return m_disabled;
+}
+
 void Hack::setGameVariableID(const std::string& key) {
     auto& config = Config::get();
     this->m_key = key;
 
     std::string id = this->m_ID;
-    geode::queueInMainThread([id = std::move(id), &config]() {     
-        bool enabled = GameManager::get()->getGameVariable(id.c_str());
+    geode::queueInMainThread([id = std::move(id), key = std::move(key), &config]() {     
+        bool enabled = GameManager::get()->getGameVariable(key.c_str());
         config.set<bool>(id, enabled);
     });
 }
@@ -35,10 +44,10 @@ bool Hack::getEarlyInit() const {
     return m_earlyInit;
 }
 
-void Hack::toggle() {
-    auto& config = Config::get();
-    bool state = !getEnabled();
+void Hack::setEnabled(bool state) {
+    if (getEnabled() == state) return;
 
+    auto& config = Config::get();
     config.set(m_ID, state);
     enableHooks(state);
 
@@ -55,6 +64,18 @@ void Hack::toggle() {
             activeCheats.erase(m_name);
         }
     }
+}
+
+void Hack::enable() {
+    setEnabled(true);
+}
+
+void Hack::disable() {
+    setEnabled(false);
+}
+
+void Hack::toggle() {
+    setEnabled(!getEnabled());
 }
 
 void Hack::setHandler(geode::Function<void(bool)> func) {

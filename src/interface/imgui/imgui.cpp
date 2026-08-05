@@ -42,9 +42,10 @@ static std::string g_search_text = "";
 static std::vector<std::vector<std::string>> g_layout = {
     {"Core", "Bypass", "Variables"},
     {"Cosmetic"},
-    {"Level", "Framerate"},
+    {"Level"},
     {"Creator", "Labels"},
     {"Replay Engine", "Keybinds"},
+    {"Framerate"},
     {"Shortcuts"},
     {"GDH Settings"}
 };
@@ -394,9 +395,11 @@ void RenderMain() {
             PushAnimateFoundColor(hackName);
             if (hack.isCheating() && g_search_text.empty()) ImGui::PushStyleColor(ImGuiCol_Text, ImColor(255, 128, 128).Value);
 
+            ImGui::BeginDisabled(hack.getDisabled());
             if (ImGuiH::Checkbox(hackName.c_str(), &state)) {
                 hack.toggle();
             }
+            ImGui::EndDisabled();
 
             if (hack.isCheating() && g_search_text.empty()) ImGui::PopStyleColor();
             ImGui::PopStyleColor();

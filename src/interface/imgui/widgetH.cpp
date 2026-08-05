@@ -4,6 +4,7 @@
 #include <imgui_stdlib.h>
 #include "layout.hpp"
 #include <json.hpp>
+#include "../../core/gui.hpp"
 
 #define COLOR_F32(x) ImVec4 { (((x) >> 24) & 0xFF) / 255.0f, (((x) >> 16) & 0xFF) / 255.0f, (((x) >> 8) & 0xFF) / 255.0f, ((x) & 0xFF) / 255.0f }
 static const auto themeFilePath = geode::Mod::get()->getSaveDir() / "theme.json";
@@ -1195,6 +1196,7 @@ namespace ImGuiH {
 
     void AddPopup(const std::string& caption)
     {
+        #ifdef GEODE_IS_WINDOWS
         s_popups.insert(s_popups.begin(), {
             caption,
             static_cast<float>(ImGui::GetTime()) + 5.0f,
@@ -1202,6 +1204,11 @@ namespace ImGuiH {
             0.0f,
             false
         });
+        #endif
+
+        #ifdef GEODE_IS_ANDROID
+        GDH::MaterialLayer(FLAlertLayer::create("Info", caption.c_str(), "OK"))->show();
+        #endif
     }
 
     void RenderPopups()

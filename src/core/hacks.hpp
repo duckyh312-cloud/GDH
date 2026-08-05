@@ -20,6 +20,7 @@ namespace GDH {
         void setName(const std::string& n) { m_name = n; }
         void setDesc(const std::string& d) { m_desc = d; }
         void setCheating(bool value) { m_cheating = value; }
+        void setDisabled(bool value);
         void setHandler(geode::Function<void(bool)> func);
         void setEarlyInit(bool value);
         void addHookPtr(geode::Hook* ptr);     
@@ -29,7 +30,11 @@ namespace GDH {
         void setCustomWindowCocos(geode::Function<void(cocos2d::CCNode*)> func) { m_handlerCocos = std::move(func); };
 
         bool getEnabled() const;
+        bool getDisabled() const;
         bool getEarlyInit() const;
+        void setEnabled(bool state);
+        void enable();
+        void disable();
         void toggle();
 
         const std::string& getID() const { return m_ID; }
@@ -65,6 +70,8 @@ namespace GDH {
 
         std::string m_key = "";
 
+        bool m_disabled = false;
+
         geode::Function<void(bool)> m_handlerFunc = nullptr;
         std::unordered_set<geode::Hook*> m_hooksPtr;
         geode::Keybind m_keybind;
@@ -75,4 +82,4 @@ namespace GDH {
         bool m_earlyInit = true;
         geode::Function<bool()> m_customCheatingCheck = nullptr;
     };
-} // namespace GDH
+}

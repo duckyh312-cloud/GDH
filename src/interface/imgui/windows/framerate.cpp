@@ -22,20 +22,30 @@ $execute {
         if (ImGuiWidgetConfig::DragFloat("##FPS_Value", "invisible.fps::value", 1, 1, FLT_MAX, 60.f, "%.0f FPS")) {
             auto& hack = gui.getWindow("Invisible").findHackByName("FPS");  
             if (hack.getEnabled()) {
-                hack.toggle(); // off
-                hack.toggle(); // on again
+                hack.disable();
+                hack.enable();
             }
         }
         ImGui::SameLine();
         ImGuiWidgetConfig::HackCheckbox("##FPS_Enabled", "invisible.fps", false);
 
         ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x - layout.multipleScale(52.f));
-        ImGuiWidgetConfig::DragFloat("##TPS_Value", "invisible.tps::value", 1, 1, FLT_MAX, 240.f, "%.0f TPS");
+        if (ImGuiWidgetConfig::DragFloat("##TPS_Value", "invisible.tps::value", 1, 1, FLT_MAX, 240.f, "%.0f TPS")) {
+            if (config.get<bool>("invisible.lock_delta::sync_tps", true)) {
+                auto value = config.get<float>("invisible.tps::value", 240.f);
+                config.set<float>("invisible.lock_delta::value", value);
+            }
+        }
         ImGui::SameLine();
         ImGuiWidgetConfig::HackCheckbox("##TPS_Enabled", "invisible.tps", false);
 
         ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x - layout.multipleScale(52.f));
-        ImGuiWidgetConfig::DragFloat("##LockDelta_Value", "invisible.lock_delta::value", 1, 1, FLT_MAX, 240.f, "Lock DT: %.0f FPS");
+        if (ImGuiWidgetConfig::DragFloat("##LockDelta_Value", "invisible.lock_delta::value", 1, 1, FLT_MAX, 240.f, "Lock DT: %.0f FPS")) {
+            if (config.get<bool>("invisible.lock_delta::sync_tps", true)) {
+                auto value = config.get<float>("invisible.lock_delta::value", 240.f);
+                config.set<float>("invisible.tps::value", value);
+            }
+        }
         ImGui::SameLine();
         ImGuiWidgetConfig::HackCheckbox("##LockDelta_Enabled", "invisible.lock_delta", false);
         
@@ -58,6 +68,12 @@ $execute {
         ImGuiWidgetConfig::HackCheckbox("Vertical Sync", "invisible.vertical_sync", false);
 
         ImGuiWidgetConfig::Checkbox("Real Time (Lock Delta)", "invisible.lock_delta::real_time", true);
+        if (ImGuiWidgetConfig::Checkbox("Sync TPS with Lock DT", "invisible.lock_delta::sync_tps", true)) {
+            if (config.get<bool>("invisible.lock_delta::sync_tps", true)) {
+                auto value = config.get<float>("invisible.tps::value", 240.f);
+                config.set<float>("invisible.lock_delta::value", value);
+            }
+        }
     });
 }
 #endif

@@ -30,6 +30,7 @@ void HacksTab::addToggle(GDH::Hack& hck) {
     const std::string ID = hck.getID();
     
     float columnWidth = 175.f; 
+    bool disabled = hck.getDisabled();
 
     auto hackNode = CCMenu::create();
     hackNode->setContentSize({columnWidth, 30.f});
@@ -41,6 +42,12 @@ void HacksTab::addToggle(GDH::Hack& hck) {
     });
     toggle->setPosition({25.f, 15.f});
     toggle->toggle(hck.getEnabled());
+    
+    if (disabled) {
+        toggle->setEnabled(false);
+        toggle->setOpacity(100);
+    }
+
     hackNode->addChild(toggle);
 
     std::string name = hck.getName();
@@ -48,6 +55,7 @@ void HacksTab::addToggle(GDH::Hack& hck) {
     label->setAnchorPoint({0.f, 0.5f});
     label->setScale(0.65f); 
     label->setPosition({toggle->getPositionX() + 22.f, 15.f});
+    if (disabled) label->setOpacity(100);
     if (hck.isCheating()) label->setColor({255, 128, 128});
 
     float maxLabelWidth = columnWidth - label->getPositionX() - 45.f; 

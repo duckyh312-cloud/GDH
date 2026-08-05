@@ -59,6 +59,10 @@ void Gui::sortAllHacksAlphabetically() {
     for (auto& window : m_windows) {
         window.sortHacksAlphabetically();
     }
+
+    std::sort(m_windows.begin(), m_windows.end(), [](const Window& a, const Window& b) {
+        return a.getName() < b.getName();
+    });
 }
 
 std::string Window::formatID(const std::string& windowName, const std::string& hackName) {
@@ -162,12 +166,12 @@ class $modify(LateHacksInitMenuLayer, MenuLayer) {
         if (!inited) {
             inited = true;
             auto& gui = Gui::get();
-            auto& windows = gui.getWindows();
 
+            gui.sortAllHacksAlphabetically();
+            
+            auto& windows = gui.getWindows();
             size_t totalHacks = 0;
-            for (auto& window : windows) {
-                window.sortHacksAlphabetically();
-                
+            for (auto& window : windows) {                
                 for (auto& hack : window.getHacks()) {
                     if (hack.getEnabled() && !hack.getEarlyInit()) {
                         hack.callHandler(true);

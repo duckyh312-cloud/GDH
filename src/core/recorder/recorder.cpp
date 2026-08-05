@@ -20,14 +20,6 @@ void Recorder::start() {
     compile_command();
     #endif
 
-    #ifdef GEODE_IS_MOBILE
-    auto pl = PlayLayer::get();
-    if (pl && pl->m_isPlatformer) {
-        needReturnPlatformButtons = true;
-        pl->m_uiLayer->togglePlatformerMode(false);
-    }
-    #endif
-
     last_frame_time = 0;
     extra_time = 0;
     after_end_extra_time = 0;
@@ -58,6 +50,26 @@ void Recorder::setupResolution() {
         static_cast<float>(width) / newDesignResolution.width, 
         static_cast<float>(height) / newDesignResolution.height
     );
+
+    auto resetUIElements = []() {
+        if (auto pl = PlayLayer::get()) {
+            const auto& savedPositions = pl->m_uiObjectPositions;
+
+            std::for_each(
+                geode::cocos::CCArrayExt<GameObject*>(pl->m_objects).begin(),
+                geode::cocos::CCArrayExt<GameObject*>(pl->m_objects).end(),
+                [&savedPositions](GameObject* obj) {
+                    if (!obj) return;
+                    auto posIt = savedPositions.find(obj->m_uniqueID);
+                    if (posIt != savedPositions.end()) obj->setStartPos(posIt->second);
+                }
+            );
+
+            pl->positionUIObjects();
+        }
+    };
+
+    resetUIElements();
 }
 
 #ifdef GEODE_IS_WINDOWS
@@ -173,14 +185,6 @@ void Recorder::startAndroidEncoder() {
 
 void Recorder::stop() {
     if (!is_recording) return;
-
-    #ifdef GEODE_IS_MOBILE
-    if (needReturnPlatformButtons) {
-        needReturnPlatformButtons = false;
-        if (auto pl = PlayLayer::get())
-            pl->m_uiLayer->togglePlatformerMode(true);
-    }
-    #endif
 
     texture.cleanup();
 
