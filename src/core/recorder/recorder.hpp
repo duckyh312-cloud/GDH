@@ -57,6 +57,7 @@ namespace GDH {
         float after_end_extra_time = 0.f;
         double last_frame_time = 0.0;
         double extra_time = 0.0;
+        bool needReturnPlatformButtons = false;
         
         std::string command;
         RenderTexture texture;
@@ -78,7 +79,7 @@ namespace GDH {
         void startWindowsEncoder();
         #endif
 
-        #ifdef GEODE_IS_ANDROID64
+        #ifdef GEODE_IS_ANDROID
         void startAndroidEncoder();
         #endif
     };

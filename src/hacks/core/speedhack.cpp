@@ -12,6 +12,10 @@ class $modify(SpeedhackCCScheduler, cocos2d::CCScheduler) {
         auto& gui = GDH::Gui::get();
         auto& hack = gui.getWindow("Invisible").findHackByName("Speedhack");        
         hack.addHookPtr(self.getHook("cocos2d::CCScheduler::update").unwrap());
+        hack.setCustomCheatingCheck([] {
+            auto& config = Config::get();
+            return config.get<bool>("invisible.speedhack", false) && (config.get<float>("invisible.speedhack::value", 1.f) != 1.f);
+        });
         
         auto &config = Config::get();
         float value = config.get<float>("invisible.speedhack::value", 1.f); 

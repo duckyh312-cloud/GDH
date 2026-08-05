@@ -3,10 +3,9 @@
 
 #ifdef GEODE_IS_WINDOWS
 #include "subprocess.hpp"
-#include "../windowsUtils.hpp"
 #endif
 
-#ifdef GEODE_IS_ANDROID64
+#ifdef GEODE_IS_ANDROID
 #include "h264_encoder.hpp"
 #endif
 
@@ -21,6 +20,14 @@ void Recorder::start() {
     compile_command();
     #endif
 
+    #ifdef GEODE_IS_MOBILE
+    auto pl = PlayLayer::get();
+    if (pl && pl->m_isPlatformer) {
+        needReturnPlatformButtons = true;
+        pl->m_uiLayer->togglePlatformerMode(false);
+    }
+    #endif
+
     last_frame_time = 0;
     extra_time = 0;
     after_end_extra_time = 0;
@@ -33,7 +40,7 @@ void Recorder::start() {
 
     #ifdef GEODE_IS_WINDOWS
     startWindowsEncoder();
-    #elif defined(GEODE_IS_ANDROID64)
+    #elif defined(GEODE_IS_ANDROID)
     startAndroidEncoder();
     #endif
 }
@@ -126,7 +133,7 @@ void Recorder::startWindowsEncoder() {
 }
 #endif
 
-#ifdef GEODE_IS_ANDROID64
+#ifdef GEODE_IS_ANDROID
 void Recorder::startAndroidEncoder() {
     std::thread([this]() {
         auto encoder = new H264Encoder(width, height, fps, bitrate);
@@ -166,6 +173,14 @@ void Recorder::startAndroidEncoder() {
 
 void Recorder::stop() {
     if (!is_recording) return;
+
+    #ifdef GEODE_IS_MOBILE
+    if (needReturnPlatformButtons) {
+        needReturnPlatformButtons = false;
+        if (auto pl = PlayLayer::get())
+            pl->m_uiLayer->togglePlatformerMode(true);
+    }
+    #endif
 
     texture.cleanup();
 

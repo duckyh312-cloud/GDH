@@ -40,7 +40,9 @@ $execute {
         ImGuiWidgetConfig::HackCheckbox("##LockDelta_Enabled", "invisible.lock_delta", false);
         
         ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x - layout.multipleScale(52.f));
-        ImGuiWidgetConfig::DragFloat("##Speedhack_Value", "invisible.speedhack::value", 0.01f, 0, 500.f, 1.f, "Speed: %.2fx");
+        if (ImGuiWidgetConfig::DragFloat("##Speedhack_Value", "invisible.speedhack::value", 0.01f, 0, 500.f, 1.f, "Speed: %.2fx"))
+            gui.rescanActiveCheats();
+
         ImGui::SameLine();
         ImGuiWidgetConfig::HackCheckbox("##Speedhack_Enabled", "invisible.speedhack", false);
 

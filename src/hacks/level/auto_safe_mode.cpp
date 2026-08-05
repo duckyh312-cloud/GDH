@@ -3,6 +3,7 @@
 #include <Geode/modify/EndLevelLayer.hpp>
 #include <Geode/modify/PlayerObject.hpp>
 #include "../../core/gui.hpp"
+#include "../../core/config.hpp"
 
 using namespace geode::prelude;
 
@@ -64,6 +65,8 @@ class $modify(AutoSafeModePlayLayer, PlayLayer) {
     void checkCheats() {
         if (!m_cheatedInCurrentAttempt) {
             auto& activeCheats = GDH::Gui::get().getActiveCheats();
+            auto& config = Config::get();
+
             if (!activeCheats.empty()) {
                 m_cheatedInCurrentAttempt = true;
             }

@@ -242,18 +242,25 @@ void KeybindsRender() {
     }
 
     if (ImGui::BeginPopup("Framerate Keys")) {
+        ImGui::Text("Speedhack:");
         ImGuiWidgetConfig::DrawCustomKeybindButton("keybinds::speedhack", "Sppedhack");
         ImGuiWidgetConfig::DrawCustomKeybindButton("keybinds::speedhack_inc", "Speedhack +0.05x");
         ImGuiWidgetConfig::DrawCustomKeybindButton("keybinds::speedhack_dec", "Speedhack -0.05x");
         ImGui::EndPopup();
     }
 
+    ImGuiWidgetConfig::Checkbox("Replay Engine", "keybinds::engine", false);
+    ImGui::SameLine();
+    if (ImGuiH::ArrowButton("##Engine Keys", ImGuiDir_Right)) {
+        ImGui::OpenPopup("Engine Keys");
+    }
+
+    if (ImGui::BeginPopup("Engine Keys")) {
+        ImGuiWidgetConfig::DrawCustomKeybindButton("re::playback", "Disable/Playback");
+        ImGui::EndPopup();
+    }
 
     ImGuiWidgetConfig::DrawCustomKeybindButton("gui::toggle_ui", "Toggle UI");
-
-    auto& gui = GDH::Gui::get();
-    auto& hack = gui.getWindow("Invisible").findHackByName("Speedhack");     
-    ImGuiWidgetConfig::DrawKeybindButton("Invisible", hack);
 
     if (layoutManager.isCollecting()) {
         auto size = ImGui::GetWindowSize();

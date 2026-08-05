@@ -6,6 +6,7 @@
 #include "../../../core/config.hpp"
 #include "../../../core/shortcuts.hpp"
 #include "../../../core/keybinds.hpp"
+#include "../../../core/replayEngine.hpp"
 #include "../widgetH.hpp"
 #include <imgui-cocos.hpp>
 #include "../../cocos/hacks_layer.hpp"
@@ -16,6 +17,10 @@ static bool areShortcutsEnabled() {
 
 static bool areFramerateEnabled() {
     return Config::get().get<bool>("framerate::enable", false);
+}
+
+static bool areReplayEngineEnabled() {
+    return Config::get().get<bool>("keybinds::engine", false);
 }
 
 $execute {
@@ -65,6 +70,13 @@ $execute {
         config.set<float>("invisible.speedhack::value", newValue);
 
         ImGuiH::AddPopup(fmt::format("Speedhack: {:.2f}x", newValue));
+    });
+
+    kb.addCallback("re::playback", geode::Keybind(), [](bool r) {
+        if (r || !areReplayEngineEnabled()) return;
+
+        auto& engine = GDH::ReplayEngine::get();
+        engine.mode = (engine.mode == state::play) ? state::disable : state::play;
     });
 
     auto& gui = GDH::Gui::get();
