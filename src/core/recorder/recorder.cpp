@@ -166,10 +166,10 @@ void Recorder::startAndroidEncoder() {
             return;
         }
 
-        geode::queueInMainThread([] {
+        geode::queueInMainThread([folder = std::move(folder)] {
             auto& recorder = Recorder::get();
             GDH::MaterialLayer(FLAlertLayer::create("Recorder", 
-                fmt::format("Recording started: {}", recorder.folder / recorder.videoName), "OK")
+                fmt::format("Recording started: {}", folder / recorder.videoName), "OK")
             )->show();
         });
 

@@ -5,6 +5,10 @@
 #include "layout.hpp"
 #include <json.hpp>
 
+#ifdef GEODE_IS_ANDROID
+#include "../../core/gui.hpp"
+#endif
+
 #define COLOR_F32(x) ImVec4 { (((x) >> 24) & 0xFF) / 255.0f, (((x) >> 16) & 0xFF) / 255.0f, (((x) >> 8) & 0xFF) / 255.0f, ((x) & 0xFF) / 255.0f }
 static const auto themeFilePath = geode::Mod::get()->getSaveDir() / "theme.json";
 

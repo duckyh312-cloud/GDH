@@ -288,7 +288,7 @@ public:
             return;
         }
 
-        size_size_t sample_idx = 0;
+        size_t sample_idx = 0;
         int frame_size = audio_enc_ctx_->frame_size;
 
         while (sample_idx + frame_size * channels <= samples.size()) {
