@@ -1,12 +1,10 @@
 #pragma once
 #include <Geode/Geode.hpp>
 #include "render_textute.hpp"
-#include "../config.hpp"
 #include <condition_variable>
 #include <mutex>
 #include <string>
 #include <vector>
-#include <filesystem>
 
 namespace GDH {
     class Recorder {
@@ -19,7 +17,6 @@ namespace GDH {
         Recorder(const Recorder&) = delete;
         Recorder& operator=(const Recorder&) = delete;
     
-        std::filesystem::path folder = folderPath / "Showcases";
         std::string videoName = "video.mp4";
         
         bool enabled = false;
@@ -40,6 +37,8 @@ namespace GDH {
         
         float after_end_duration = 3.f;
         double delay = 0.0;
+
+        bool ultrafast = true;
 
         void start();
         void stop();

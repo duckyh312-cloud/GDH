@@ -7,6 +7,7 @@
 #include "../../../core/gui.hpp"
 #include "../../../core/replayEngine.hpp"
 #include "../../../core/config.hpp"
+#include "../../../core/utils.hpp"
 #include "../../../core/recorder/recorder.hpp"
 #include "../../../core/recorder/subprocess.hpp"
 #include "../widgetH.hpp"
@@ -81,6 +82,7 @@ void loadPreset(const std::filesystem::path& path, GDH::Recorder& recorder) {
 
 void drawRecorderInterface() {
     std::string ffmpegPath = getFFmpegPath();
+    std::filesystem::path folder = Config::get().get<std::string>("recorder::path", (folderPath / "Showcases").string());
 
     if (ffmpegPath.empty()) {
         ImGui::TextColored(ImColor(255, 128, 128).Value, "FFmpeg not found!");
@@ -98,11 +100,16 @@ void drawRecorderInterface() {
 
     auto& layout = GDH::Layout::Manager::get();
     auto& recorder = GDH::Recorder::get();
-    
     if (ImGuiH::Checkbox("Record##Recorder", &recorder.enabled)) {
         if (recorder.enabled) {
-            recorder.compile_command();
-            recorder.start();
+            if (GDH::Utils::isOnlyAsciiPath(folder)) {
+                recorder.compile_command();
+                recorder.start();
+            }
+            else {
+                recorder.enabled = false;
+                ImGuiH::AddPopup("Invalid path to the showcase folder. Please remove any Cyrillic characters");
+            }
         }
         else {
             recorder.stop();
@@ -301,14 +308,301 @@ void drawRecorderInterface() {
     ImGui::Separator();
 
     if (ImGuiH::Button("Open Showcase Folder")) {
-        geode::utils::file::openFolder(recorder.folder);
+        geode::utils::file::openFolder(folder);
     }
     ImGui::SameLine();
+    if (ImGuiH::Button("Change Showcase Folder")) {
+        geode::async::spawn(
+            geode::utils::file::pick(
+                geode::utils::file::PickMode::OpenFolder,
+                {}
+            ),
+            [&recorder](geode::utils::file::PickResult res) {
+                if (!res) return;
+                auto pathOpt = std::move(res).unwrapOr(std::nullopt);
+                if (!pathOpt.has_value()) return;
+
+                auto folderPath = std::move(pathOpt).value();
+                Config::get().set<std::string>("recorder::path", (folderPath).string());
+            }
+        );
+    } ImGui::SameLine();
+
+    if (ImGuiH::Button("Reset Showcase Folder")) {
+        Config::get().set<std::string>("recorder::path", (folderPath / "Showcases").string());
+    }
+
     if (ImGuiH::Button("Open Presets Folder")) {
         geode::utils::file::openFolder(folderPresetsPath);
     }
 
-    ImGui::Text("Showcase Folder: %s", recorder.folder.string().c_str());
+    ImGui::Text("Showcase Folder: %s", folder.string().c_str());
+}
+
+void drawMacroEditor() {
+    static int selected_frame_type = 1;
+    static int selected_index = -1;
+    static int prev_frame_type = selected_frame_type;
+    static int target_frame_input = 0;
+    static bool request_scroll = false;
+    const char* frame_types[] = { "Physic Frames", "Input Frames" };
+    if (prev_frame_type != selected_frame_type) {
+        selected_index = -1;
+        prev_frame_type = selected_frame_type;
+        request_scroll = true;
+    }
+    auto& engine = GDH::ReplayEngine::get();
+    if (selected_frame_type == 0) {
+        auto& frames = engine.get_physic_frames();
+        if (frames.empty()) {
+            selected_index = -1;
+        } else if (selected_index < 0) {
+            selected_index = 0;
+        } else if (selected_index >= (int)frames.size()) {
+            selected_index = (int)frames.size() - 1;
+        }
+        if (ImGui::BeginTable("PhysicTable", 5, ImGuiTableFlags_RowBg | ImGuiTableFlags_Borders | ImGuiTableFlags_ScrollY,
+            ImVec2(ImGui::GetContentRegionAvail().x - 200, 0))) {
+            ImGui::TableSetupColumn("Frame");
+            ImGui::TableSetupColumn("Player");
+            ImGui::TableSetupColumn("X");
+            ImGui::TableSetupColumn("Y");
+            ImGui::TableSetupColumn("Y Accel");
+            ImGui::TableHeadersRow();
+
+            ImGuiListClipper clipper;
+            clipper.Begin((int)frames.size());
+            if (request_scroll && selected_index >= 0 && selected_index < (int)frames.size())
+                clipper.IncludeItemByIndex(selected_index);
+
+            while (clipper.Step()) {
+                for (int i = clipper.DisplayStart; i < clipper.DisplayEnd; i++) {
+                    const auto& frame = frames[i];
+                    ImGui::TableNextRow();
+                    bool is_selected = (selected_index == i);
+                    ImGui::TableSetColumnIndex(0);
+                    std::string frame_str = std::to_string(frame.frame) + "##pf" + std::to_string(i);
+                    if (ImGui::Selectable(frame_str.c_str(), is_selected, ImGuiSelectableFlags_SpanAllColumns)) {
+                        selected_index = i;
+                    }
+                    if (is_selected && request_scroll) {
+                        ImGui::SetScrollHereY(0.5f);
+                        request_scroll = false;
+                    }
+                    ImGui::TableSetColumnIndex(1); ImGui::TextUnformatted(frame.isPlayer2 ? "P2" : "P1");
+                    ImGui::TableSetColumnIndex(2); ImGui::Text("%f", frame.x);
+                    ImGui::TableSetColumnIndex(3); ImGui::Text("%f", frame.y);
+                    ImGui::TableSetColumnIndex(4); ImGui::Text("%f", frame.y_accel);
+                }
+            }
+            ImGui::EndTable();
+        }
+    } else {
+        auto& frames = engine.get_input_frames();
+        if (frames.empty()) {
+            selected_index = -1;
+        } else if (selected_index < 0) {
+            selected_index = 0;
+        } else if (selected_index >= (int)frames.size()) {
+            selected_index = (int)frames.size() - 1;
+        }
+        if (ImGui::BeginTable("InputTable", 4, ImGuiTableFlags_RowBg | ImGuiTableFlags_Borders | ImGuiTableFlags_ScrollY,
+            ImVec2(ImGui::GetContentRegionAvail().x - 200, 0))) {
+            ImGui::TableSetupColumn("Frame");
+            ImGui::TableSetupColumn("Player");
+            ImGui::TableSetupColumn("Button");
+            ImGui::TableSetupColumn("Action");
+            ImGui::TableHeadersRow();
+
+            ImGuiListClipper clipper;
+            clipper.Begin((int)frames.size());
+            if (request_scroll && selected_index >= 0 && selected_index < (int)frames.size())
+                clipper.IncludeItemByIndex(selected_index);
+
+            while (clipper.Step()) {
+                for (int i = clipper.DisplayStart; i < clipper.DisplayEnd; i++) {
+                    const auto& frame = frames[i];
+                    ImGui::TableNextRow();
+                    bool is_selected = (selected_index == i);
+                    ImGui::TableSetColumnIndex(0);
+                    std::string frame_str = std::to_string(frame.frame) + "##if" + std::to_string(i);
+                    if (ImGui::Selectable(frame_str.c_str(), is_selected, ImGuiSelectableFlags_SpanAllColumns)) {
+                        selected_index = i;
+                    }
+                    if (is_selected && request_scroll) {
+                        ImGui::SetScrollHereY(0.5f);
+                        request_scroll = false;
+                    }
+                    ImGui::TableSetColumnIndex(1); ImGui::TextUnformatted(frame.isPlayer2 ? "P2" : "P1");
+                    ImGui::TableSetColumnIndex(2);
+                    ImGui::TextUnformatted(
+                        frame.button == 1 ? "Jump" :
+                        frame.button == 2 ? "Left" :
+                        frame.button == 3 ? "Right" : "Unknown");
+                    ImGui::TableSetColumnIndex(3);
+                    ImGui::TextUnformatted(frame.down ? "Push" : "Release");
+                }
+            }
+            ImGui::EndTable();
+        }
+    }
+    ImGui::SameLine();
+    if (ImGui::BeginChild("##EditorSettings", { 0, ImGui::GetContentRegionAvail().y })) {
+        ImGui::Text("Frame Type:");
+        ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
+        ImGui::Combo("##FrameType", &selected_frame_type, frame_types, IM_ARRAYSIZE(frame_types));
+        ImGui::Separator();
+        ImGui::Text("Go to Frame:");
+        ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x - 70.0f);
+        ImGui::InputInt("##TargetFrame", &target_frame_input, 0, 0);
+        ImGui::SameLine();
+        if (ImGuiH::Button("Go##FindFrame", ImVec2(62.0f, 0))) {
+            if (selected_frame_type == 0) {
+                auto& frames = engine.get_physic_frames();
+                for (size_t i = 0; i < frames.size(); i++) {
+                    if (frames[i].frame >= static_cast<uint64_t>(target_frame_input)) {
+                        selected_index = static_cast<int>(i);
+                        request_scroll = true;
+                        break;
+                    }
+                }
+            } else {
+                auto& frames = engine.get_input_frames();
+                for (size_t i = 0; i < frames.size(); i++) {
+                    if (frames[i].frame >= static_cast<uint64_t>(target_frame_input)) {
+                        selected_index = static_cast<int>(i);
+                        request_scroll = true;
+                        break;
+                    }
+                }
+            }
+        }
+        ImGui::Separator();
+        ImGui::Text("Actions:");
+        if (selected_frame_type == 0) {
+            auto& frames = engine.get_physic_frames();
+            bool hasSel = !frames.empty() && selected_index >= 0 && selected_index < (int)frames.size();
+            if (ImGuiH::Button("Add Action", ImVec2(ImGui::GetContentRegionAvail().x, 0))) {
+                physic_data new_frame{};
+                new_frame.x = 0.0f;
+                new_frame.y = 0.0f;
+                new_frame.y_accel = 0.0;
+                if (hasSel) {
+                    new_frame.frame = frames[selected_index].frame + 1;
+                    new_frame.isPlayer2 = frames[selected_index].isPlayer2;
+                    frames.insert(frames.begin() + selected_index + 1, new_frame);
+                    selected_index++;
+                } else {
+                    new_frame.frame = 0;
+                    new_frame.isPlayer2 = false;
+                    frames.push_back(new_frame);
+                    selected_index = (int)frames.size() - 1;
+                }
+                request_scroll = true;
+            }
+            if (hasSel) {
+                if (ImGuiH::Button("Remove Action", ImVec2(ImGui::GetContentRegionAvail().x, 0))) {
+                    frames.erase(frames.begin() + selected_index);
+                    if (frames.empty()) selected_index = -1;
+                    else if (selected_index >= (int)frames.size()) selected_index = (int)frames.size() - 1;
+                    request_scroll = true;
+                }
+                ImGui::BeginDisabled(selected_index <= 0);
+                if (ImGuiH::Button("Move Up", ImVec2((ImGui::GetContentRegionAvail().x / 2.0f) - 2.0f, 0))) {
+                    std::swap(frames[selected_index], frames[selected_index - 1]);
+                    selected_index--;
+                    request_scroll = true;
+                }
+                ImGui::EndDisabled();
+                ImGui::SameLine();
+                ImGui::BeginDisabled(selected_index >= (int)frames.size() - 1);
+                if (ImGuiH::Button("Move Down", ImVec2(ImGui::GetContentRegionAvail().x, 0))) {
+                    std::swap(frames[selected_index], frames[selected_index + 1]);
+                    selected_index++;
+                    request_scroll = true;
+                }
+                ImGui::EndDisabled();
+                ImGui::Separator();
+            }
+            if (hasSel) {
+                auto& selected_frame = frames[selected_index];
+                ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
+                int frame_cast = static_cast<int>(selected_frame.frame);
+                if (ImGuiH::DragInt("Frame##Drag", &frame_cast, 1.f, 0, INT_MAX, "Frame: %i"))
+                    selected_frame.frame = static_cast<uint64_t>(frame_cast);
+                ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
+                ImGuiH::DragFloat("X##Drag", &selected_frame.x, 0.001f, -FLT_MAX, FLT_MAX, "X Position: %f");
+                ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
+                ImGuiH::DragFloat("Y##Drag", &selected_frame.y, 0.001f, -FLT_MAX, FLT_MAX, "Y Position: %f");
+                ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
+                float yAccel_cast = static_cast<float>(selected_frame.y_accel);
+                if (ImGuiH::DragFloat("YAccel##Drag", &yAccel_cast, 0.001f, -FLT_MAX, FLT_MAX, "Y Accel: %f"))
+                    selected_frame.y_accel = static_cast<double>(yAccel_cast);
+                ImGuiH::Checkbox("Player 2", &selected_frame.isPlayer2);
+            } else {
+                ImGui::TextColored(ImColor(255, 128, 128).Value, "No physic frames");
+            }
+        } else {
+            auto& frames = engine.get_input_frames();
+            bool hasSel = !frames.empty() && selected_index >= 0 && selected_index < (int)frames.size();
+            if (ImGuiH::Button("Add Action", ImVec2(ImGui::GetContentRegionAvail().x, 0))) {
+                input_data new_frame{};
+                new_frame.button = 1;
+                new_frame.down = false;
+                if (hasSel) {
+                    new_frame.frame = frames[selected_index].frame + 1;
+                    new_frame.isPlayer2 = frames[selected_index].isPlayer2;
+                    frames.insert(frames.begin() + selected_index + 1, new_frame);
+                    selected_index++;
+                } else {
+                    new_frame.frame = 0;
+                    new_frame.isPlayer2 = false;
+                    frames.push_back(new_frame);
+                    selected_index = (int)frames.size() - 1;
+                }
+                request_scroll = true;
+            }
+            if (hasSel) {
+                if (ImGuiH::Button("Remove Action", ImVec2(ImGui::GetContentRegionAvail().x, 0))) {
+                    frames.erase(frames.begin() + selected_index);
+                    if (frames.empty()) selected_index = -1;
+                    else if (selected_index >= (int)frames.size()) selected_index = (int)frames.size() - 1;
+                    request_scroll = true;
+                }
+                ImGui::BeginDisabled(selected_index <= 0);
+                if (ImGuiH::Button("Move Up", ImVec2((ImGui::GetContentRegionAvail().x / 2.0f) - 2.0f, 0))) {
+                    std::swap(frames[selected_index], frames[selected_index - 1]);
+                    selected_index--;
+                    request_scroll = true;
+                }
+                ImGui::EndDisabled();
+                ImGui::SameLine();
+                ImGui::BeginDisabled(selected_index >= (int)frames.size() - 1);
+                if (ImGuiH::Button("Move Down", ImVec2(ImGui::GetContentRegionAvail().x, 0))) {
+                    std::swap(frames[selected_index], frames[selected_index + 1]);
+                    selected_index++;
+                    request_scroll = true;
+                }
+                ImGui::EndDisabled();
+                ImGui::Separator();
+            }
+            if (hasSel) {
+                auto& selected_frame = frames[selected_index];
+                ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
+                int frame_cast = static_cast<int>(selected_frame.frame);
+                if (ImGuiH::DragInt("Frame##Drag", &frame_cast, 1, 0, INT_MAX, "Frame: %i"))
+                    selected_frame.frame = static_cast<uint64_t>(frame_cast);
+                ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
+                ImGuiH::DragInt("Button##Drag", &selected_frame.button, 1, 1, 3, "Button: %i");
+                ImGuiH::Checkbox("Push", &selected_frame.down);
+                ImGui::SameLine();
+                ImGuiH::Checkbox("Player 2", &selected_frame.isPlayer2);
+            } else {
+                ImGui::TextColored(ImColor(255, 128, 128).Value, "No input frames");
+            }
+        }
+        ImGui::EndChild();
+    }
 }
 
 $execute {
@@ -335,7 +629,7 @@ $execute {
             engine.mode = state::disable;
         }
         ImGui::SameLine();
-                
+        
         if (ImGuiH::RadioButton("Record", engine.mode == state::record)) {
             if (engine.mode != state::record) {
                 if (engine.get_actions_size() > 0) {
@@ -373,7 +667,7 @@ $execute {
             }
             ImGui::OpenPopup("Select Replay");
         }
-                
+        
         if (ImGuiH::Button("Save", {ImGui::GetContentRegionAvail().x / 3, NULL})) {
             std::filesystem::path savePath = folderMacroPath / (engine.replay_name + ".re4");
             if (std::filesystem::exists(savePath)) {
@@ -518,13 +812,19 @@ $execute {
                     ImGui::SameLine();
                     ImGuiWidgetConfig::Checkbox("Y Velocity Fix", "engine::velocity_fix", false);
                     ImGuiH::SpaceSeparator();
-
+                    
                     ImGui::EndTabItem();
                 }
 
                 if (ImGui::BeginTabItem("Recorder")) {
                     ImGui::Spacing();
                     drawRecorderInterface();
+                    ImGui::EndTabItem();
+                }
+
+                if (ImGui::BeginTabItem("Editor (Beta)")) {
+                    ImGui::Spacing();
+                    drawMacroEditor();
                     ImGui::EndTabItem();
                 }
                 ImGui::EndTabBar();

@@ -4,7 +4,6 @@
 #include <imgui_stdlib.h>
 #include "layout.hpp"
 #include <json.hpp>
-#include "../../core/gui.hpp"
 
 #define COLOR_F32(x) ImVec4 { (((x) >> 24) & 0xFF) / 255.0f, (((x) >> 16) & 0xFF) / 255.0f, (((x) >> 8) & 0xFF) / 255.0f, ((x) & 0xFF) / 255.0f }
 static const auto themeFilePath = geode::Mod::get()->getSaveDir() / "theme.json";
@@ -369,7 +368,7 @@ namespace ImGuiH {
         style.ItemSpacing = ImVec2(8.f * scale, 4.f * scale);
         style.ItemInnerSpacing = ImVec2(4.f * scale, 4.f * scale);
         style.IndentSpacing = 21.f * scale;
-        style.ScrollbarSize = 6.f * scale;
+        style.ScrollbarSize = 12.f * scale;
         style.GrabMinSize = 12.f * scale;
 
         style.WindowRounding = 12.0f * scale;
@@ -1162,7 +1161,8 @@ namespace ImGuiH {
         {
             ImGuiStyle& style = ImGui::GetStyle();
 
-            const float scrollbar_size = style.ScrollbarSize;
+            auto& layout = GDH::Layout::Manager::get();
+            const float scrollbar_size = layout.multipleScale(8.f);
             const float rounding = style.ScrollbarRounding;
 
             const float padding = style.WindowPadding.x * 0.35f;

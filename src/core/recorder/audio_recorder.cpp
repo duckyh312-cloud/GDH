@@ -1,5 +1,5 @@
 #include "audio_recorder.hpp"
-#include "recorder.hpp"
+#include "../config.hpp"
 #include <Geode/modify/PlayLayer.hpp>
 
 using namespace GDH;
@@ -73,7 +73,8 @@ void AudioRecorder::stop() {
     m_masterGroup->setPaused(false);
 
     #ifdef GEODE_IS_WINDOWS
-    save_to_wav(GDH::Recorder::get().folder / audio_name);
+    std::filesystem::path folder = Config::get().get<std::string>("recorder::path", (folderPath / "Showcases").string());
+    save_to_wav(folder / audio_name);
     #endif
 }
 

@@ -172,6 +172,9 @@ size_t ReplayEngine::get_current_index() {
 }
 
 std::string ReplayEngine::save(const std::string& replay_name) {
+    if (replay_name.empty())
+        return "Empty macro name is not allowed";
+
     if (m_inputFrames.empty())
         return "Replay doesn't have actions";
 
@@ -217,6 +220,7 @@ std::string ReplayEngine::save(const std::string& replay_name) {
 }
 
 std::string ReplayEngine::load(const std::string& replay_name) {
+
     std::ifstream in(folderMacroPath / std::string(replay_name + ".re4"), std::ios::binary);
     if (!in.is_open()) return "Failed to open Replay";
 
@@ -229,10 +233,9 @@ std::string ReplayEngine::load(const std::string& replay_name) {
         return "Invalid Replay format";
     }
 
-    float fps;
-    in.read(reinterpret_cast<char*>(&fps), sizeof(fps));
-    auto& config = Config::get();
-    config.set<float>("invisible.tps::value", fps);
+    float tps;
+    in.read(reinterpret_cast<char*>(&tps), sizeof(tps));
+    Config::get().set<float>("invisible.tps::value", tps);
 
     uint64_t physicSize = 0;
     in.read(reinterpret_cast<char*>(&physicSize), sizeof(physicSize));

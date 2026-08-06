@@ -56,7 +56,7 @@ struct checkpoint_data {
     float m_rotateSpeed;
     bool m_isRotating;
     bool m_isBallRotating2;
-    bool m_hasGlow;
+    // bool m_hasGlow;
     bool m_isHidden;
     // GhostType m_ghostType;
     // GhostTrailEffect* m_ghostTrail;
@@ -152,8 +152,8 @@ struct checkpoint_data {
     bool m_canPlaceCheckpoint;
     cocos2d::ccColor3B m_originalMainColor;
     cocos2d::ccColor3B m_originalSecondColor;
-    bool m_hasCustomGlowColor;
-    cocos2d::ccColor3B m_glowColor;
+    // bool m_hasCustomGlowColor;
+    // cocos2d::ccColor3B m_glowColor;
     bool m_maybeIsColliding;
     bool m_jumpBuffered;
     bool m_stateRingJump;
@@ -372,7 +372,7 @@ namespace GDH { namespace PracticeFix {
         state.m_rotateSpeed = player->m_rotateSpeed;
         state.m_isRotating = player->m_isRotating;
         state.m_isBallRotating2 = player->m_isBallRotating2;
-        state.m_hasGlow = player->m_hasGlow;
+        // state.m_hasGlow = player->m_hasGlow;
         state.m_isHidden = player->m_isHidden;
         // state.m_ghostType = player->m_ghostType;
         // state.m_ghostTrail = player->m_ghostTrail;
@@ -476,8 +476,8 @@ namespace GDH { namespace PracticeFix {
         state.m_canPlaceCheckpoint = player->m_canPlaceCheckpoint;
         state.m_originalMainColor = player->m_originalMainColor;
         state.m_originalSecondColor = player->m_originalSecondColor;
-        state.m_hasCustomGlowColor = player->m_hasCustomGlowColor;
-        state.m_glowColor = player->m_glowColor;
+        // state.m_hasCustomGlowColor = player->m_hasCustomGlowColor;
+        // state.m_glowColor = player->m_glowColor;
         state.m_maybeIsColliding = player->m_maybeIsColliding;
         state.m_jumpBuffered = player->m_jumpBuffered;
         state.m_stateRingJump = player->m_stateRingJump;
@@ -698,7 +698,7 @@ namespace GDH { namespace PracticeFix {
         player->m_rotateSpeed = state.m_rotateSpeed;
         player->m_isRotating = state.m_isRotating;
         player->m_isBallRotating2 = state.m_isBallRotating2;
-        player->m_hasGlow = state.m_hasGlow;
+        // player->m_hasGlow = state.m_hasGlow;
         player->m_isHidden = state.m_isHidden;
         // player->m_ghostType = state.m_ghostType;
         // player->m_ghostTrail = state.m_ghostTrail;
@@ -806,8 +806,8 @@ namespace GDH { namespace PracticeFix {
         player->m_canPlaceCheckpoint = state.m_canPlaceCheckpoint;
         player->m_originalMainColor = state.m_originalMainColor;
         player->m_originalSecondColor = state.m_originalSecondColor;
-        player->m_hasCustomGlowColor = state.m_hasCustomGlowColor;
-        player->m_glowColor = state.m_glowColor;
+        // player->m_hasCustomGlowColor = state.m_hasCustomGlowColor;
+        // player->m_glowColor = state.m_glowColor;
         player->m_maybeIsColliding = state.m_maybeIsColliding;
         player->m_jumpBuffered = state.m_jumpBuffered;
         player->m_stateRingJump = state.m_stateRingJump;

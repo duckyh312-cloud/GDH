@@ -262,8 +262,8 @@ void Manager::save() {
 }
 
 void Manager::load() {
-    std::ifstream ifs(labelsDataPath);
-    if (!ifs.is_open()) return;
+    std::ifstream inFile(labelsDataPath);
+    if (!inFile.is_open()) return;
 
     labels[Corner::Top_Left] = std::vector<Label> {};
     labels[Corner::Top_Center] = std::vector<Label> {};
@@ -275,9 +275,14 @@ void Manager::load() {
     labels[Corner::Bottom_Center] = std::vector<Label> {};
     labels[Corner::Bottom_Right] = std::vector<Label> {};
     
-    nlohmann::json obj = nlohmann::json::parse(ifs);
-    ifs.close();
-
+    std::string file_contents((std::istreambuf_iterator<char>(inFile)), std::istreambuf_iterator<char>());
+    inFile.close();
+    
+    nlohmann::json obj = nlohmann::json::parse(file_contents, nullptr, false);
+    if (obj.is_discarded()) {
+        return;
+    }
+    
     cornerPadding = obj["cornerPadding"];
     midPadding = obj["midPadding"];
 

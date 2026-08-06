@@ -2,6 +2,8 @@
 #include <Geode/modify/PlayLayer.hpp>
 #include <Geode/modify/FMODAudioEngine.hpp>
 #include <Geode/modify/GJBaseGameLayer.hpp>
+#include <Geode/modify/EditLevelLayer.hpp>
+#include <Geode/modify/LevelInfoLayer.hpp>
 #include <Geode/modify/UILayer.hpp>
 #include "../../core/recorder/recorder.hpp"
 #include "../../core/recorder/audio_recorder.hpp"
@@ -22,7 +24,7 @@ class $modify(PlayLayer) {
 
         if (!recorder.isRecording()) {
             auto time = geode::localtime(std::time(nullptr));
-            recorder.videoName = fmt::format("{}_{:%Y-%m-%d_%H-%M-%S}.mp4", m_level->m_levelName, time);
+            recorder.videoName = fmt::format("{} {:%Y-%m-%d_%H-%M-%S}.mp4", m_level->m_levelName, time);
         }
 
         return true;
@@ -35,6 +37,36 @@ class $modify(PlayLayer) {
         if (recorder.isRecording() && recorder.record_audio) {
             GDH::AudioRecorder::get().start();
         }
+    }
+};
+
+class $modify(LevelInfoLayer) {
+    bool init(GJGameLevel* level, bool challenge) {
+        if (!LevelInfoLayer::init(level, challenge)) return false;
+
+        auto& recorder = GDH::Recorder::get();
+        
+        if (!recorder.isRecording()) {
+            auto time = geode::localtime(std::time(nullptr));
+            recorder.videoName = fmt::format("{} {:%Y-%m-%d_%H-%M-%S}.mp4", m_level->m_levelName, time);
+        }
+
+        return true;
+    }
+};
+
+class $modify(EditLevelLayer) {
+    bool init(GJGameLevel *level) {
+        if (!EditLevelLayer::init(level)) return false;
+
+        auto& recorder = GDH::Recorder::get();
+        
+        if (!recorder.isRecording()) {
+            auto time = geode::localtime(std::time(nullptr));
+            recorder.videoName = fmt::format("{} {:%Y-%m-%d_%H-%M-%S}.mp4", m_level->m_levelName, time);
+        }
+
+        return true;
     }
 };
 

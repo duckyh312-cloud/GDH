@@ -99,7 +99,7 @@ public:
     void save(const std::filesystem::path& filepath) const {
         std::ofstream outFile(filepath);
         if (outFile.is_open()) {
-            outFile << constructJson().dump(4);
+            outFile << constructJson().dump(4, ' ', false, nlohmann::json::error_handler_t::replace);
             outFile.close();
         }
     }

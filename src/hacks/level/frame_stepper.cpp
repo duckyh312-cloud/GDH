@@ -9,6 +9,7 @@
 #include "../../core/ringBuffer.hpp"
 #include <imgui-cocos.hpp>
 #include "frame_stepper.hpp"
+#include "../../interface/cocos/hack_settings_popup.hpp"
 
 GUI_HACK_CREATE("Level", "Frame Stepper", "Allows forwards and backwards stepping frame-by-frame", true);
 
@@ -51,6 +52,12 @@ class $modify(FrameStepperCCScheduler, cocos2d::CCScheduler) {
 
             ImGuiWidgetConfig::Checkbox("Backward Stepping", "frame_stepper::backward", false);
             ImGuiWidgetConfig::DragInt("##BackFrameLength", "frame_stepper::back_frames_length", 1, 1, 1000, 240, "Back Frames Length: %d");
+        });
+
+        hack.setCustomWindowCocos([](cocos2d::CCNode* popupNode) {
+            auto* popup = static_cast<HackSettingsPopup*>(popupNode);
+            popup->addConfigToggle("Backward Stepping", "frame_stepper::backward", false);
+            popup->addConfigIntInput("Back Frames Length", "frame_stepper::back_frames_length", 1, 1000, 240);
         });
     }
 
@@ -128,7 +135,9 @@ class $modify(FrameStepperPlayLayer, PlayLayer) {
         
         hack.addHookPtr(self.getHook("PlayLayer::updateAttempts").unwrap());
         hack.addHookPtr(self.getHook("PlayLayer::resetLevel").unwrap());
+        #ifdef GEODE_IS_ANDROID
         hack.addHookPtr(self.getHook("PlayLayer::createObjectsFromSetupFinished").unwrap());
+        #endif
     }
 
     bool init(GJGameLevel* level, bool useReplay, bool dontCreateObjects) {
@@ -159,7 +168,8 @@ class $modify(FrameStepperPlayLayer, PlayLayer) {
             removeCheckpoint(false);
         }
     }
-
+    
+    #ifdef GEODE_IS_ANDROID
     void createObjectsFromSetupFinished() {
         PlayLayer::createObjectsFromSetupFinished();
 
@@ -169,6 +179,7 @@ class $modify(FrameStepperPlayLayer, PlayLayer) {
         next_arrow->setFlipX(true);
 
         auto next_step_click = geode::cocos::CCMenuItemExt::createSpriteExtra(next_arrow, [](CCMenuItemSpriteExtra* sender) {
+            g_pause = true;
             g_nextFrame = true;
         });       
         
@@ -176,14 +187,31 @@ class $modify(FrameStepperPlayLayer, PlayLayer) {
         next_step_click->setOpacity(200);
         next_step_click->setID("frame_stepper_next_btn"_spr);
 
+        auto back_arrow = cocos2d::CCSprite::create("GDH_arrow.png"_spr);  
+        back_arrow->setScale(1.f);
+
+        
+        auto back_arrow_click = geode::cocos::CCMenuItemExt::createSpriteExtra(back_arrow, [](CCMenuItemSpriteExtra* sender) {
+            g_pause = true;
+            g_prevFrame = true;
+        });  
+
+        back_arrow_click->setPosition({120.f, director->getScreenTop() - back_arrow_click->getScaledContentHeight() * 2 - 10.f});
+        back_arrow_click->setOpacity(200);
+        back_arrow_click->setID("frame_stepper_back_btn"_spr);
+
         auto m_stepperMenu = cocos2d::CCMenu::create();
         m_stepperMenu->setID("frame_stepper_menu"_spr);
         m_stepperMenu->setPosition(0, 0);
         m_stepperMenu->setZOrder(999);
 
         m_stepperMenu->addChild(next_step_click);
+        if (Config::get().get<bool>("frame_stepper::backward", false)) {
+            m_stepperMenu->addChild(back_arrow_click);
+        }
         m_uiLayer->addChild(m_stepperMenu);
     }
+    #endif
 };
 
 #ifdef GEODE_IS_WINDOWS

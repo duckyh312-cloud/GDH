@@ -359,3 +359,10 @@ uintptr_t GDH::Utils::PatternScan(uintptr_t base, uintptr_t scanSize, const std:
 
     return 0;
 }
+
+bool GDH::Utils::isOnlyAsciiPath(const std::filesystem::path& p) {
+    auto u8str = p.u8string();
+    return std::all_of(u8str.begin(), u8str.end(), [](char8_t c) {
+        return static_cast<unsigned char>(c) <= 127;
+    });
+}

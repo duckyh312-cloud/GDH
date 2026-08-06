@@ -49,6 +49,9 @@ namespace GDH {
         void handle_reset();
 
         void handle_button(bool down, int button, bool isPlayer2);
+
+        std::vector<physic_data>& get_physic_frames() { return m_physicFrames; }
+        std::vector<input_data>& get_input_frames() { return m_inputFrames; }
     private:
         ReplayEngine() = default;
 

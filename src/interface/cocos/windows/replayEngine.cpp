@@ -2,6 +2,7 @@
 #include "../hacks_tab.hpp"
 #include "../../../core/config.hpp"
 #include "../../../core/gui.hpp"
+#include "../../../core/utils.hpp"
 #include "../../../core/replayEngine.hpp"
 #include "../../../core/recorder/recorder.hpp"
 
@@ -28,7 +29,7 @@ protected:
     geode::TextInput* bitrateInput;
 
     bool init() {
-        if (!geode::Popup::init(360.f, 200.f, "GDH_square.png"_spr)) return false;
+        if (!geode::Popup::init(360.f, 230.f, "GDH_square.png"_spr)) return false;
 
         auto& recorder = GDH::Recorder::get();
         auto winSize = m_mainLayer->getContentSize();
@@ -79,37 +80,61 @@ protected:
                         if (!pathOpt.has_value()) return;
 
                         auto folderPath = std::move(pathOpt).value();
-                        recorder.folder = folderPath;
 
-                        recorder.start();
-                        GDH::MaterialLayer(FLAlertLayer::create("Info", 
-                            fmt::format("Recording started: {}", recorder.folder / recorder.videoName), "OK")
-                        )->show();
+                        if (GDH::Utils::isOnlyAsciiPath(folderPath)) {
+                            Config::get().set<std::string>("recorder::path", (folderPath).string());
+                            recorder.start();
+                        }
+                        else {
+                            recorder.enabled = false;
+                            GDH::MaterialLayer(FLAlertLayer::create("Recorder", "Invalid path to the showcase folder. Please remove any Cyrillic characters", "OK"))->show();
+                        }
                     }
                 );
             } else {
                 recorder.stop();
-                GDH::MaterialLayer(FLAlertLayer::create("Info", "Recorder stopped", "OK"))->show();
             }
         });
         
         recordToggle->toggle(recorder.enabled);
-        recordToggle->setPosition({45.f, 145.f});
+        recordToggle->setPosition({45.f, 175.f});
         menu->addChild(recordToggle);
         
         createLabel("Record", {recordToggle->getPositionX() - 10.f + recordToggle->getScaledContentWidth(), recordToggle->getPositionY()}, 0.7f);
 
-        createLabel("Video Name:", {30.f, 110.f});
+        auto includeAudioToggle = CCMenuItemExt::createTogglerWithFilename("GDH_togglerOn.png"_spr, "GDH_togglerOff.png"_spr, 0.8f,
+            [this, &recorder](CCMenuItemToggler* sender) {
+            recorder.record_audio = !sender->isOn();
+        });
+        
+        includeAudioToggle->toggle(recorder.record_audio);
+        includeAudioToggle->setPosition({153.f, 175.f});
+        menu->addChild(includeAudioToggle);
+        
+        createLabel("Audio", {includeAudioToggle->getPositionX() - 10.f + includeAudioToggle->getScaledContentWidth(), includeAudioToggle->getPositionY()}, 0.7f);
+
+        auto ultraFastToggle = CCMenuItemExt::createTogglerWithFilename("GDH_togglerOn.png"_spr, "GDH_togglerOff.png"_spr, 0.8f,
+            [this, &recorder](CCMenuItemToggler* sender) {
+            recorder.ultrafast = !sender->isOn();
+        });
+        
+        ultraFastToggle->toggle(recorder.ultrafast);
+        ultraFastToggle->setPosition({260.f, 175.f});
+        menu->addChild(ultraFastToggle);
+        
+        createLabel("Ultrafast", {ultraFastToggle->getPositionX() - 10.f + ultraFastToggle->getScaledContentWidth(), ultraFastToggle->getPositionY()}, 0.7f);
+
+        createLabel("Video Name:", {30.f, 140.f});
         nameInput = geode::TextInput::create(170.f, "video_name", "GoogleSans.fnt"_spr);
-        nameInput->setPosition({245.f, 110.f});
+        nameInput->setPosition({245.f, 140.f});
         nameInput->setString(recorder.videoName);
         nameInput->setCallback([&recorder](const std::string& text) { recorder.videoName = text; });
         menu->addChild(nameInput);
 
-        createLabel("Resolution / FPS:", {30.f, 75.f});
+        createLabel("Resolution / FPS:", {30.f, 105.f});
 
         widthInput = geode::TextInput::create(45.f, "W", "GoogleSans.fnt"_spr);
-        widthInput->setPosition({182.f, 75.f}); 
+        widthInput->setPosition({182.f, 105.f}); 
         widthInput->setString(std::to_string(recorder.width));
         widthInput->setFilter("1234567890");
         widthInput->setCallback([&recorder](const std::string& text) { 
@@ -118,10 +143,10 @@ protected:
         });
         menu->addChild(widthInput);
 
-        createLabel("x", {210.f, 75.f}, 0.5f);
+        createLabel("x", {210.f, 105.f}, 0.5f);
 
         heightInput = geode::TextInput::create(45.f, "H", "GoogleSans.fnt"_spr);
-        heightInput->setPosition({240.f, 75.f});
+        heightInput->setPosition({240.f, 105.f});
         heightInput->setString(std::to_string(recorder.height));
         heightInput->setFilter("1234567890");
         heightInput->setCallback([&recorder](const std::string& text) { 
@@ -130,10 +155,10 @@ protected:
         });
         menu->addChild(heightInput);
 
-        createLabel("@", {267.f, 75.f}, 0.5f);
+        createLabel("@", {267.f, 105.f}, 0.5f);
 
         fpsInput = geode::TextInput::create(40.f, "FPS", "GoogleSans.fnt"_spr);
-        fpsInput->setPosition({300.f, 75.f});
+        fpsInput->setPosition({300.f, 105.f});
         fpsInput->setString(std::to_string(recorder.fps));
         fpsInput->setFilter("1234567890");
         fpsInput->setCallback([&recorder](const std::string& text) { 
@@ -142,13 +167,35 @@ protected:
         });
         menu->addChild(fpsInput);
 
-        createLabel("Bitrate:", {30.f, 40.f});
+        createLabel("Bitrate:", {30.f, 70.f});
         bitrateInput = geode::TextInput::create(80.f, "e.g. 50M", "GoogleSans.fnt"_spr);
-        bitrateInput->setPosition({200.f, 40.f});
+        bitrateInput->setPosition({200.f, 70.f});
         bitrateInput->setFilter("0123456789MKmk");
         bitrateInput->setString(recorder.bitrate);
         bitrateInput->setCallback([&recorder](const std::string& text) { recorder.bitrate = text; });
         menu->addChild(bitrateInput);
+
+        auto createPresetBtn = [this, &recorder](const std::string& text, float x, int w, int h, int fps, const std::string& bitrate) {
+            auto spr = ButtonSprite::create(text.c_str(), 45, true, "GoogleSans.fnt"_spr, "GDH_button_01.png"_spr, 25.f, 0.4f);
+            auto btn = CCMenuItemExt::createSpriteExtra(spr, [this, &recorder, w, h, fps, bitrate](auto) {
+                recorder.width = w;
+                recorder.height = h;
+                recorder.fps = fps;
+                recorder.bitrate = bitrate;
+
+                widthInput->setString(std::to_string(w));
+                heightInput->setString(std::to_string(h));
+                fpsInput->setString(std::to_string(fps));
+                bitrateInput->setString(bitrate);
+            });
+            btn->setPosition({x, 30.f});
+            return btn;
+        };
+
+        menu->addChild(createPresetBtn("HD", 60.f, 1280, 720, 60, "25M"));
+        menu->addChild(createPresetBtn("FULL HD", 140.f, 1920, 1080, 60, "50M"));
+        menu->addChild(createPresetBtn("2K", 220.f, 2560, 1440, 60, "70M"));
+        menu->addChild(createPresetBtn("4K", 300.f, 3840, 2160, 60, "80M"));
 
         auto applyStyle = [](geode::TextInput* input) {
             if (auto* bg = input->getChildByType<geode::NineSlice>(0)) { 

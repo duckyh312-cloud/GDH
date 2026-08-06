@@ -1,5 +1,6 @@
 #include "recorder.hpp"
 #include "audio_recorder.hpp"
+#include "../config.hpp"
 
 #ifdef GEODE_IS_WINDOWS
 #include "subprocess.hpp"
@@ -7,6 +8,8 @@
 
 #ifdef GEODE_IS_ANDROID
 #include "h264_encoder.hpp"
+#include "log_overlay.hpp"
+#include "../gui.hpp"
 #endif
 
 using namespace GDH;
@@ -33,6 +36,7 @@ void Recorder::start() {
     #ifdef GEODE_IS_WINDOWS
     startWindowsEncoder();
     #elif defined(GEODE_IS_ANDROID)
+    LogOverlay::get().create();
     startAndroidEncoder();
     #endif
 }
@@ -106,6 +110,7 @@ void Recorder::startWindowsEncoder() {
         }
 
         if (record_audio) {
+            std::filesystem::path folder = Config::get().get<std::string>("recorder::path", (folderPath / "Showcases").string());
             std::filesystem::path video_path = folder / videoName;
             std::filesystem::path audio_path = folder / AudioRecorder::get().audio_name;
             std::filesystem::path temp_video_path = folder / ("temp_" + videoName);
@@ -148,11 +153,25 @@ void Recorder::startWindowsEncoder() {
 #ifdef GEODE_IS_ANDROID
 void Recorder::startAndroidEncoder() {
     std::thread([this]() {
-        auto encoder = new H264Encoder(width, height, fps, bitrate);
-        if (!encoder->start((folder / videoName).string())) {
+        std::filesystem::path folder = Config::get().get<std::string>("recorder::path", (folderPath / "Showcases").string());
+        auto encoder = new H264Encoder(width, height, fps, bitrate, ultrafast ? "ultrafast" : "medium");
+
+        if (!encoder->is_valid() || !encoder->start((folder / videoName).string())) {
             delete encoder;
+            geode::queueInMainThread([] {
+                Recorder::get().force_stop = true;
+                GDH::MaterialLayer(FLAlertLayer::create("Encoder Error", "Recorder failure during startup, check the logs", "OK")
+                )->show();
+            });
             return;
         }
+
+        geode::queueInMainThread([] {
+            auto& recorder = Recorder::get();
+            GDH::MaterialLayer(FLAlertLayer::create("Recorder", 
+                fmt::format("Recording started: {}", recorder.folder / recorder.videoName), "OK")
+            )->show();
+        });
 
         std::vector<uint8_t> local_frame(width * height * 3, 0);
 
@@ -178,6 +197,12 @@ void Recorder::startAndroidEncoder() {
         }
 
         encoder->stop();
+
+        geode::queueInMainThread([] {
+            LogOverlay::get().destroy();
+            GDH::MaterialLayer(FLAlertLayer::create("Encoder", "Recorder has finished working", "OK")
+            )->show();
+        });
         delete encoder;
     }).detach();
 }
@@ -246,6 +271,7 @@ void Recorder::compile_command() {
     
     if (!vf_args.empty()) command += fmt::format(" -vf {}", vf_args);
 
+    std::filesystem::path folder = Config::get().get<std::string>("recorder::path", (folderPath / "Showcases").string());
     command += fmt::format(" -an \"{}\\{}\"", folder.string(), videoName);
 }
 

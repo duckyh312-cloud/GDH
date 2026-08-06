@@ -3,6 +3,8 @@
 #include <Geode/modify/GJBaseGameLayer.hpp>
 #include <Geode/modify/CCScheduler.hpp>
 #include <Geode/modify/LevelEditorLayer.hpp>
+#include <Geode/modify/LevelInfoLayer.hpp>
+#include <Geode/modify/EditLevelLayer.hpp>
 #include "../../core/config.hpp"
 #include "../../core/replayEngine.hpp"
 #include "../../core/gui.hpp"
@@ -59,6 +61,8 @@ class $modify(ReplayCCScheduler, cocos2d::CCScheduler) {
 #endif
 
 #ifdef GEODE_IS_ANDROID
+#include "../../core/recorder/recorder.hpp"
+
 class $modify(ReplayCCScheduler, cocos2d::CCScheduler) {
     static void onModify(auto& self) {
         auto& gui = GDH::Gui::get();
@@ -70,6 +74,7 @@ class $modify(ReplayCCScheduler, cocos2d::CCScheduler) {
     void update(float dt) {
         auto &engine = GDH::ReplayEngine::get();
         auto &config = Config::get();
+        auto& recorder = GDH::Recorder::get();
 
         float tps_value = config.get<float>("invisible.tps::value", 240.f);
         float new_dt = 1.f / tps_value;
@@ -90,7 +95,7 @@ class $modify(ReplayCCScheduler, cocos2d::CCScheduler) {
             }
         }
 
-        left_over = std::max(0.f, left_over + dt - new_dt * times);
+        left_over = recorder.isRecording() ? 0 : std::max(0.f, left_over + dt - new_dt * times);
     }
 };
 
@@ -103,14 +108,6 @@ class $modify(ReplayGJBaseGameLayer, GJBaseGameLayer) {
         hack.setCheating(true); 
         hack.addHookPtr(self.getHook("GJBaseGameLayer::getModifiedDelta").unwrap());
     }
-
-    // void update(float dt) {
-    //     auto &config = Config::get();
-    //     auto &engine = GDH::ReplayEngine::get();
-
-    //     GJBaseGameLayer::update(dt);
-    //     engine.handle_update(this);
-    // }
 
     double getModifiedDelta(float dt) {
         if (m_resumeTimer > 0)
@@ -153,12 +150,38 @@ class $modify(ReplayGJBaseGameLayer, GJBaseGameLayer) {
         
     void processQueuedButtons(float dt, bool clearInputQueue) {
         GJBaseGameLayer::processQueuedButtons(dt, clearInputQueue);
-        
+
         if (!m_levelEndAnimationStarted) {
             auto &engine = GDH::ReplayEngine::get();
             engine.handle_commands(this);
             engine.handle_update(this);
         }
+    }
+};
+
+class $modify(LevelInfoLayer) {
+    bool init(GJGameLevel* level, bool challenge) {
+        if (!LevelInfoLayer::init(level, challenge)) return false;
+
+        auto& engine = GDH::ReplayEngine::get();
+        if (engine.get_actions_size() == 0) {
+            engine.replay_name = fmt::format("{}", level->m_levelName);
+        }
+
+        return true;
+    }
+};
+
+class $modify(EditLevelLayer) {
+    bool init(GJGameLevel* level) {
+        if (!EditLevelLayer::init(level)) return false;
+
+        auto& engine = GDH::ReplayEngine::get();
+        if (engine.get_actions_size() == 0) {
+            engine.replay_name = fmt::format("{}", level->m_levelName);
+        }
+
+        return true;
     }
 };
 
