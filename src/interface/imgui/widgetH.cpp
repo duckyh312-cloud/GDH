@@ -105,12 +105,12 @@ namespace ImGuiH {
         {ImGuiCol_TabHovered,            COLOR_F32(0x474783FF)},
         {ImGuiCol_TabActive,             COLOR_F32(0x4e4e9cFF)},
 
-        {ImGuiCol_TableHeaderBg,         COLOR_F32(0x3C3C3CFF)},
-        {ImGuiCol_TableBorderStrong,     COLOR_F32(0x505050FF)},
-        {ImGuiCol_TableBorderLight,      COLOR_F32(0x3C3C3CFF)},
+        {ImGuiCol_TableHeaderBg,         COLOR_F32(0x2E2E63FF)},
+        {ImGuiCol_TableBorderStrong,     COLOR_F32(0x474783FF)},
+        {ImGuiCol_TableBorderLight,      COLOR_F32(0x37376EFF)},
 
-        {ImGuiCol_TableRowBg,            COLOR_F32(0x1E1E1EFF)},
-        {ImGuiCol_TableRowBgAlt,         COLOR_F32(0x232323FF)},
+        {ImGuiCol_TableRowBg,            COLOR_F32(0x1A1A49FA)},
+        {ImGuiCol_TableRowBgAlt,         COLOR_F32(0x22225AFF)},
 
         {ImGuiCol_Separator,             COLOR_F32(0x6868BFFF)}
     };

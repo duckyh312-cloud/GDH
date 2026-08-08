@@ -770,7 +770,7 @@ $execute {
             ImGui::EndPopup();
         }
 
-        if (ImGui::BeginPopupModal("Select Replay", 0, ImGuiWindowFlags_NoResize)) {
+        if (ImGui::BeginPopupModal("Select Replay", 0, ImGuiWindowFlags_AlwaysAutoResize)) {
             ImGuiH::GlowWindow(IM_COL32(120, 100, 240, 100), IM_COL32(120, 100, 240, 0), layout.multipleScale(250.f));
             ImGui::BeginChild("Replay List", {layout.multipleScale(400.f), layout.multipleScale(500.f)});
             for (const auto& replay : replay_list)

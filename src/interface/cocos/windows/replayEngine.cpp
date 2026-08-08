@@ -259,7 +259,7 @@ protected:
                 auto menu = CCMenu::create();
                 menu->setContentSize({600.f, 25.f});
 
-                auto btnSprite = ButtonSprite::create(macroName.c_str(), 220, true, "GoogleSans.fnt"_spr, "GDH_button_01.png"_spr, 26.f, 0.5f);
+                auto btnSprite = ButtonSprite::create(macroName.c_str(), 180, true, "GoogleSans.fnt"_spr, "GDH_button_01.png"_spr, 26.f, 0.5f);
                 auto btn = CCMenuItemExt::createSpriteExtra(btnSprite, [this, macroPath](auto) {
                     auto& engine = GDH::ReplayEngine::get();
 
@@ -286,6 +286,418 @@ public:
     static ReplaySelectLayer* create(geode::TextInput* textInput) {
         auto ret = new ReplaySelectLayer();
         if (ret->init()) { ret->autorelease(); ret->input = textInput; return ret; }
+        delete ret;
+        return nullptr;
+    }
+};
+
+class MacroEditorLayer : public geode::Popup {
+protected:
+    static const int page_size = 6;
+    
+    int m_frameType = 0;
+    int m_selectedIndex = -1;
+    int m_page = 0;
+    std::string m_goToValue = "";
+    cocos2d::CCNode* m_contentLayer = nullptr;
+
+    bool init() {
+        if (!geode::Popup::init(410.f, 300.f, "GDH_square.png"_spr)) return false;
+
+        auto closeBtn = CCSprite::create("GDH_closeBtn.png"_spr);
+        closeBtn->setScale(0.75f);
+        m_closeBtn->setSprite(closeBtn);
+
+        m_contentLayer = cocos2d::CCNode::create();
+        m_contentLayer->setContentSize(m_mainLayer->getContentSize());
+        m_mainLayer->addChild(m_contentLayer);
+
+        refresh();
+        return true;
+    }
+
+    template <typename Frames>
+    static int pageCount(const Frames& frames) {
+        return std::max(1, (int)((frames.size() + page_size - 1) / page_size));
+    }
+
+    void refresh() {
+        m_contentLayer->removeAllChildren();
+
+        auto& engine = GDH::ReplayEngine::get();
+
+        auto menu = CCMenu::create();
+        menu->setPosition({0, 0});
+        m_contentLayer->addChild(menu);
+
+        const char* typeNames[] = { "Physic Frames", "Input Frames" };
+
+        auto typeLeftArrow = CCSprite::create("GDH_arrow.png"_spr);
+        typeLeftArrow->setScale(0.55f);
+        auto typeLeftBtn = CCMenuItemExt::createSpriteExtra(typeLeftArrow, [this](auto) {
+            m_frameType = m_frameType == 0 ? 1 : 0;
+            m_selectedIndex = -1;
+            m_page = 0;
+            refresh();
+        });
+        typeLeftBtn->setPosition({25.f, 275.f});
+        menu->addChild(typeLeftBtn);
+
+        auto typeLabel = CCLabelBMFont::create(typeNames[m_frameType], "GoogleSans.fnt"_spr);
+        typeLabel->setScale(0.5f);
+        typeLabel->setPosition({100.f, 275.f});
+        menu->addChild(typeLabel);
+
+        auto typeRightArrow = CCSprite::create("GDH_arrow.png"_spr);
+        typeRightArrow->setScale(0.55f);
+        typeRightArrow->setFlipX(true);
+        auto typeRightBtn = CCMenuItemExt::createSpriteExtra(typeRightArrow, [this](auto) {
+            m_frameType = m_frameType == 0 ? 1 : 0;
+            m_selectedIndex = -1;
+            m_page = 0;
+            refresh();
+        });
+        typeRightBtn->setPosition({175.f, 275.f});
+        menu->addChild(typeRightBtn);
+
+        if (m_frameType == 0) {
+            buildPhysicPage(menu, engine);
+        } else {
+            buildInputPage(menu, engine);
+        }
+    }
+
+    geode::TextInput* createStyledInput(float width, const std::string& placeholder, const std::string& value, const std::string& filter, float x, float y, std::function<void(const std::string&)> cb) {
+        auto input = geode::TextInput::create(width, placeholder.c_str(), "GoogleSans.fnt"_spr);
+        if (auto* bg = input->getChildByType<geode::NineSlice>(0)) {
+            bg->setColor({71, 71, 131});
+            bg->setOpacity(255);
+        }
+        input->setPosition({x, y});
+        input->setString(value);
+        if (!filter.empty()) input->setFilter(filter);
+        input->setCallback(cb);
+        m_contentLayer->addChild(input);
+        return input;
+    }
+
+    void buildPhysicPage(CCMenu* menu, GDH::ReplayEngine& engine) {
+        auto& frames = engine.get_physic_frames();
+
+        if (frames.empty()) m_selectedIndex = -1;
+        else if (m_selectedIndex >= (int)frames.size()) m_selectedIndex = (int)frames.size() - 1;
+
+        int totalPages = pageCount(frames);
+        m_page = std::clamp(m_page, 0, totalPages - 1);
+
+        if (!frames.empty()) {
+            auto headerLabel = CCLabelBMFont::create("Sel                    Frame                    Player                          X                                          Y                                   YAccel", "GoogleSans.fnt"_spr);
+            headerLabel->setAnchorPoint({0.f, 0.5f});
+            headerLabel->setScale(0.4f);
+            headerLabel->setPosition({25.f, 253.f});
+            headerLabel->setColor({180, 180, 220});
+            menu->addChild(headerLabel);
+        }
+
+        int base = m_page * page_size;
+
+        for (int row = 0; row < page_size; row++) {
+            int idx = base + row;
+            if (idx >= (int)frames.size()) break;
+            auto& frame = frames[idx];
+            bool isSel = (idx == m_selectedIndex);
+
+            float rowY = 230.f - (row * 35.f);
+
+            auto rowMenu = CCMenu::create();
+            rowMenu->setContentSize({430.f, 30.f});
+            rowMenu->setPosition({15.f, rowY});
+            rowMenu->setAnchorPoint({0.f, 0.5f});
+            rowMenu->setLayout(
+                RowLayout::create()
+                    ->setAxisAlignment(AxisAlignment::Start)
+                    ->setCrossAxisAlignment(AxisAlignment::Center)
+                    ->setGap(8.f)
+            );
+
+            auto selSpr = ButtonSprite::create(">", 18, true, "GoogleSans.fnt"_spr, isSel ? "GDH_button_02.png"_spr : "GDH_button_01.png"_spr, 22.f, 0.4f);
+            selSpr->m_label->setColor(isSel ? ccColor3B({33, 33, 78}) : ccColor3B({255, 255, 255}));
+            auto selBtn = CCMenuItemExt::createSpriteExtra(selSpr, [this, idx](auto) {
+                m_selectedIndex = idx;
+                refresh();
+            });
+            rowMenu->addChild(selBtn);
+
+            auto frameInput = createStyledInput(55.f, "Frame", std::to_string(frame.frame), "0123456789", 0, 0, [&frame](const std::string& text) {
+                if (auto val = geode::utils::numFromString<int>(text)) frame.frame = static_cast<uint64_t>(val.unwrap());
+            });
+
+            frameInput->removeFromParent();
+            rowMenu->addChild(frameInput);
+
+            auto pBtnSpr = ButtonSprite::create(frame.isPlayer2 ? "P2" : "P1", 24, true, "GoogleSans.fnt"_spr, "GDH_button_01.png"_spr, 22.f, 0.4f);
+            auto pBtn = CCMenuItemExt::createSpriteExtra(pBtnSpr, [this, &frame](auto) {
+                frame.isPlayer2 = !frame.isPlayer2;
+                refresh();
+            });
+            rowMenu->addChild(pBtn);
+
+            auto xInput = createStyledInput(70.f, "X", fmt::format("{:.6f}", frame.x), "-0123456789.", 0, 0, [&frame](const std::string& text) {
+                if (auto val = geode::utils::numFromString<float>(text)) frame.x = val.unwrap();
+            });
+            xInput->removeFromParent();
+            rowMenu->addChild(xInput);
+
+            auto yInput = createStyledInput(70.f, "Y", fmt::format("{:.6f}", frame.y), "-0123456789.", 0, 0, [&frame](const std::string& text) {
+                if (auto val = geode::utils::numFromString<float>(text)) frame.y = val.unwrap();
+            });
+            yInput->removeFromParent();
+            rowMenu->addChild(yInput);
+
+            auto yAccelInput = createStyledInput(70.f, "YAccel", fmt::format("{:.6f}", frame.y_accel), "-0123456789.", 0, 0, [&frame](const std::string& text) {
+                if (auto val = geode::utils::numFromString<double>(text)) frame.y_accel = static_cast<double>(val.unwrap());
+            });
+            yAccelInput->removeFromParent();
+            rowMenu->addChild(yAccelInput);
+
+            rowMenu->updateLayout();
+            m_contentLayer->addChild(rowMenu);
+        }
+
+        if (frames.empty()) {
+            auto emptyLabel = CCLabelBMFont::create("No physic frames", "GoogleSans.fnt"_spr);
+            emptyLabel->setScale(0.45f);
+            emptyLabel->setOpacity(120);
+            emptyLabel->setPosition({205.f, 150.f});
+            menu->addChild(emptyLabel);
+        }
+
+        buildBottomControls(menu, frames, [this, &frames]() {
+            physic_data newFrame{};
+            if (!frames.empty() && m_selectedIndex >= 0 && m_selectedIndex < (int)frames.size()) {
+                newFrame.frame = frames[m_selectedIndex].frame + 1;
+                newFrame.isPlayer2 = frames[m_selectedIndex].isPlayer2;
+                frames.insert(frames.begin() + m_selectedIndex + 1, newFrame);
+                m_selectedIndex++;
+            } else {
+                newFrame.frame = 0;
+                frames.push_back(newFrame);
+                m_selectedIndex = (int)frames.size() - 1;
+            }
+            m_page = m_selectedIndex / page_size;
+        });
+    }
+
+    void buildInputPage(CCMenu* menu, GDH::ReplayEngine& engine) {
+        auto& frames = engine.get_input_frames();
+
+        if (frames.empty()) m_selectedIndex = -1;
+        else if (m_selectedIndex >= (int)frames.size()) m_selectedIndex = (int)frames.size() - 1;
+
+        int totalPages = pageCount(frames);
+        m_page = std::clamp(m_page, 0, totalPages - 1);
+
+        if (!frames.empty()) {
+            auto headerLabel = CCLabelBMFont::create("Sel                         Frame                         Player                            Button                                    Action", "GoogleSans.fnt"_spr);
+            headerLabel->setAnchorPoint({0.f, 0.5f});
+            headerLabel->setScale(0.4f);
+            headerLabel->setPosition({25.f, 253.f});
+            headerLabel->setColor({180, 180, 220});
+            menu->addChild(headerLabel);
+        }
+
+        int base = m_page * page_size;
+
+        for (int row = 0; row < page_size; row++) {
+            int idx = base + row;
+            if (idx >= (int)frames.size()) break;
+            auto& frame = frames[idx];
+            bool isSel = (idx == m_selectedIndex);
+
+            float rowY = 230.f - (row * 35.f);
+
+            auto rowMenu = CCMenu::create();
+            rowMenu->setContentSize({400.f, 30.f});
+            rowMenu->setPosition({15.f, rowY});
+            rowMenu->setAnchorPoint({0.f, 0.5f});
+            rowMenu->setLayout(
+                RowLayout::create()
+                    ->setAxisAlignment(AxisAlignment::Start)
+                    ->setCrossAxisAlignment(AxisAlignment::Center)
+                    ->setGap(12.f)
+            );
+
+            auto selSpr = ButtonSprite::create(">", 18, true, "GoogleSans.fnt"_spr, isSel ? "GDH_button_02.png"_spr : "GDH_button_01.png"_spr, 22.f, 0.4f);
+            selSpr->m_label->setColor(isSel ? ccColor3B({33, 33, 78}) : ccColor3B({255, 255, 255}));
+            auto selBtn = CCMenuItemExt::createSpriteExtra(selSpr, [this, idx](auto) {
+                m_selectedIndex = idx;
+                refresh();
+            });
+            rowMenu->addChild(selBtn);
+
+            auto frameInput = createStyledInput(65.f, "Frame", std::to_string(frame.frame), "0123456789", 0, 0, [&frame](const std::string& text) {
+                if (auto val = geode::utils::numFromString<int>(text)) frame.frame = static_cast<uint64_t>(val.unwrap());
+            });
+            frameInput->removeFromParent();
+            rowMenu->addChild(frameInput);
+
+            auto pBtnSpr = ButtonSprite::create(frame.isPlayer2 ? "P2" : "P1", 28, true, "GoogleSans.fnt"_spr, "GDH_button_01.png"_spr, 22.f, 0.4f);
+            auto pBtn = CCMenuItemExt::createSpriteExtra(pBtnSpr, [this, &frame](auto) {
+                frame.isPlayer2 = !frame.isPlayer2;
+                refresh();
+            });
+            rowMenu->addChild(pBtn);
+
+            const char* btnName = frame.button == 1 ? "Jump" : frame.button == 2 ? "Left" : frame.button == 3 ? "Right" : "Unknown";
+            auto btnSpr = ButtonSprite::create(btnName, 60, true, "GoogleSans.fnt"_spr, "GDH_button_01.png"_spr, 22.f, 0.4f);
+            auto btnItem = CCMenuItemExt::createSpriteExtra(btnSpr, [this, &frame](auto) {
+                frame.button = frame.button < 3 ? frame.button + 1 : 1;
+                refresh();
+            });
+            rowMenu->addChild(btnItem);
+
+            auto actSpr = ButtonSprite::create(frame.down ? "Push" : "Release", 60, true, "GoogleSans.fnt"_spr, "GDH_button_01.png"_spr, 22.f, 0.4f);
+            auto actBtn = CCMenuItemExt::createSpriteExtra(actSpr, [this, &frame](auto) {
+                frame.down = !frame.down;
+                refresh();
+            });
+            rowMenu->addChild(actBtn);
+
+            rowMenu->updateLayout();
+            m_contentLayer->addChild(rowMenu);
+        }
+
+        if (frames.empty()) {
+            auto emptyLabel = CCLabelBMFont::create("No input frames", "GoogleSans.fnt"_spr);
+            emptyLabel->setScale(0.45f);
+            emptyLabel->setOpacity(120);
+            emptyLabel->setPosition({205.f, 150.f});
+            menu->addChild(emptyLabel);
+        }
+
+        buildBottomControls(menu, frames, [this, &frames]() {
+            input_data newFrame{};
+            newFrame.button = 1;
+            if (!frames.empty() && m_selectedIndex >= 0 && m_selectedIndex < (int)frames.size()) {
+                newFrame.frame = frames[m_selectedIndex].frame + 1;
+                newFrame.isPlayer2 = frames[m_selectedIndex].isPlayer2;
+                frames.insert(frames.begin() + m_selectedIndex + 1, newFrame);
+                m_selectedIndex++;
+            } else {
+                newFrame.frame = 0;
+                frames.push_back(newFrame);
+                m_selectedIndex = (int)frames.size() - 1;
+            }
+            m_page = m_selectedIndex / page_size;
+        });
+    }
+
+    template <typename Frames>
+    void buildBottomControls(CCMenu* menu, Frames& frames, std::function<void()> makeNew) {
+        int totalPages = pageCount(frames);
+
+        auto prevArrow = CCSprite::create("GDH_arrow.png"_spr);
+        prevArrow->setScale(0.45f);
+        auto prevBtn = CCMenuItemExt::createSpriteExtra(prevArrow, [this](auto) {
+            if (m_page > 0) { m_page--; refresh(); }
+        });
+        prevBtn->setPosition({20.f, 18.f});
+        prevBtn->setEnabled(m_page > 0);
+        if (m_page <= 0) prevBtn->setOpacity(100);
+        menu->addChild(prevBtn);
+
+        auto pageLabel = CCLabelBMFont::create(fmt::format("{}/{}", m_page + 1, totalPages).c_str(), "GoogleSans.fnt"_spr);
+        pageLabel->setScale(0.4f);
+        pageLabel->setPosition({50.f, 18.f});
+        menu->addChild(pageLabel);
+
+        auto nextArrow = CCSprite::create("GDH_arrow.png"_spr);
+        nextArrow->setScale(0.45f);
+        nextArrow->setFlipX(true);
+        auto nextBtn = CCMenuItemExt::createSpriteExtra(nextArrow, [this, totalPages](auto) {
+            if (m_page < totalPages - 1) { m_page++; refresh(); }
+        });
+        nextBtn->setPosition({80.f, 18.f});
+        nextBtn->setEnabled(m_page < totalPages - 1);
+        if (m_page >= totalPages - 1) nextBtn->setOpacity(100);
+        menu->addChild(nextBtn);
+
+        createStyledInput(60.f, "Go Frame", m_goToValue, "0123456789", 315.f, 275.f, [this](const std::string& text) {
+            m_goToValue = text;
+        });
+
+        auto goBtnSpr = ButtonSprite::create("Go", 35, true, "GoogleSans.fnt"_spr, "GDH_button_01.png"_spr, 22.f, 0.4f);
+        auto goBtn = CCMenuItemExt::createSpriteExtra(goBtnSpr, [this, &frames](auto) {
+            if (auto val = geode::utils::numFromString<uint64_t>(m_goToValue)) {
+                uint64_t target = val.unwrap();
+                for (size_t i = 0; i < frames.size(); i++) {
+                    if (frames[i].frame >= target) {
+                        m_selectedIndex = (int)i;
+                        m_page = (int)(i / page_size);
+                        refresh();
+                        break;
+                    }
+                }
+            }
+        });
+        goBtn->setPosition({375.f, 275.f});
+        menu->addChild(goBtn);
+
+        auto addSpr = ButtonSprite::create("Add", 55, true, "GoogleSans.fnt"_spr, "GDH_button_01.png"_spr, 22.f, 0.4f);
+        auto addBtn = CCMenuItemExt::createSpriteExtra(addSpr, [this, makeNew](auto) {
+            makeNew();
+            refresh();
+        });
+        addBtn->setPosition({140.f, 18.f});
+        menu->addChild(addBtn);
+
+        bool hasSel = !frames.empty() && m_selectedIndex >= 0 && m_selectedIndex < (int)frames.size();
+
+        auto remSpr = ButtonSprite::create("Remove", 65, true, "GoogleSans.fnt"_spr, "GDH_button_01.png"_spr, 22.f, 0.4f);
+        if (!hasSel) remSpr->setColor({150, 150, 150});
+        auto remBtn = CCMenuItemExt::createSpriteExtra(remSpr, [this, &frames](auto) {
+            frames.erase(frames.begin() + m_selectedIndex);
+            if (frames.empty()) m_selectedIndex = -1;
+            else if (m_selectedIndex >= (int)frames.size()) m_selectedIndex = (int)frames.size() - 1;
+            refresh();
+        });
+        remBtn->setPosition({220.f, 18.f});
+        remBtn->setEnabled(hasSel);
+        menu->addChild(remBtn);
+
+        auto upSpr = ButtonSprite::create("Up", 45, true, "GoogleSans.fnt"_spr, "GDH_button_01.png"_spr, 22.f, 0.4f);
+        if (!hasSel || m_selectedIndex <= 0) upSpr->setColor({150, 150, 150});
+        auto upBtn = CCMenuItemExt::createSpriteExtra(upSpr, [this, &frames](auto) {
+            if (m_selectedIndex > 0) {
+                std::swap(frames[m_selectedIndex], frames[m_selectedIndex - 1]);
+                m_selectedIndex--;
+                m_page = m_selectedIndex / page_size;
+                refresh();
+            }
+        });
+        upBtn->setPosition({295.f, 18.f});
+        upBtn->setEnabled(hasSel && m_selectedIndex > 0);
+        menu->addChild(upBtn);
+
+        auto downSpr = ButtonSprite::create("Down", 55, true, "GoogleSans.fnt"_spr, "GDH_button_01.png"_spr, 22.f, 0.4f);
+        if (!hasSel || m_selectedIndex >= (int)frames.size() - 1) downSpr->setColor({150, 150, 150});
+        auto downBtn = CCMenuItemExt::createSpriteExtra(downSpr, [this, &frames](auto) {
+            if (m_selectedIndex < (int)frames.size() - 1) {
+                std::swap(frames[m_selectedIndex], frames[m_selectedIndex + 1]);
+                m_selectedIndex++;
+                m_page = m_selectedIndex / page_size;
+                refresh();
+            }
+        });
+        downBtn->setPosition({365.f, 18.f});
+        downBtn->setEnabled(hasSel && m_selectedIndex < (int)frames.size() - 1);
+        menu->addChild(downBtn);
+    }
+
+public:
+    static MacroEditorLayer* create() {
+        auto ret = new MacroEditorLayer();
+        if (ret->init()) { ret->autorelease(); return ret; }
         delete ret;
         return nullptr;
     }
@@ -408,6 +820,13 @@ $execute {
         });
         recorderButtonClick->setPosition({300.f, 20.f});
         engineTab->addChild(recorderButtonClick);
+
+        auto editorButton = ButtonSprite::create("Editor", 65, true, "GoogleSans.fnt"_spr, "GDH_button_01.png"_spr, 30.f, 0.7f);
+        auto editorButtonClick = CCMenuItemExt::createSpriteExtra(editorButton, [](CCMenuItemSpriteExtra* sender) {
+            MacroEditorLayer::create()->show();
+        });
+        editorButtonClick->setPosition({300.f, 55.f});
+        engineTab->addChild(editorButtonClick);
 
         auto accuracy_fix_toggle = CCMenuItemExt::createTogglerWithFilename("GDH_togglerOn.png"_spr, "GDH_togglerOff.png"_spr, 0.8f, [&config](CCMenuItemToggler* sender) {
             config.set<bool>("engine::accuracy_fix", !sender->isOn());

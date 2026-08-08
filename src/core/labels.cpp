@@ -185,6 +185,24 @@ bool renderVariable(geode::utils::StringBuffer<> &stream, std::string_view var_n
         stream.append(fmt::format("{:.{}f}", GDH::Utils::getFps(true), decimal_points));
     } else if (var_name == "is_dual_mode") {      
         stream.append(fmt::format("{}", pl ? pl->m_gameState.m_isDualMode : false));
+    } else if (var_name == "p1::x") {      
+        stream.append(fmt::format("P1X: {}", pl ? pl->m_player1->m_position.x : 0.f));
+    } else if (var_name == "p1::y") {      
+        stream.append(fmt::format("P1Y: {}", pl ? pl->m_player1->m_position.y : 0.f));
+    } else if (var_name == "p1::y_vel") {      
+        stream.append(fmt::format("P1YVEL: {}", pl ? pl->m_player1->m_yVelocity : 0.0));
+    } else if (var_name == "p2::x") {      
+        if (!pl || !pl->m_gameState.m_isDualMode || !pl->m_player2) return false;
+        stream.append(fmt::format("P2X: {}", pl->m_player2->m_position.x));
+    } else if (var_name == "p2::y") {      
+        if (!pl || !pl->m_gameState.m_isDualMode || !pl->m_player2) return false;
+        stream.append(fmt::format("P2Y: {}", pl->m_player2->m_position.y));
+    } else if (var_name == "p2::y_vel") {      
+        if (!pl || !pl->m_gameState.m_isDualMode || !pl->m_player2) return false;
+        stream.append(fmt::format("P2YVEL: {}", pl->m_player2->m_yVelocity));
+    }
+    else if (var_name == "\\n") {      
+        stream.append("\n");
     } else {
         return false;
     }
@@ -207,9 +225,7 @@ std::string GDH::Labels::Label::render() const {
             std::string_view var = raw.substr(1, ccurly - 1);
             
             if (!renderVariable(stream, var)) {
-                stream.append('{');
-                stream.append(var);
-                stream.append('}');
+                return "";
             }
             
             raw.remove_prefix(ccurly + 1);

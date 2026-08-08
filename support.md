@@ -1,1 +1,1 @@
-Edit this file to change your mod's support info, or delete it if you don't need it.
+If you'd like to support me, you can buy a sponsorship subscription on Patreon: https://www.patreon.com/c/tobyadd/membership

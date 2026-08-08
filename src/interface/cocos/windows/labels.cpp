@@ -46,6 +46,8 @@ protected:
             {"Noclip Accuracy (%)", "{noclip_accuracy}%"},
             {"Normal Percent", "{normal_percent}%"},
             {"Practice Percent", "{practice_percent}%"},
+            {"Player 1 Information", "{p1::x}{\\n}{p1::y}{\\n}{p1::y_vel}"},
+            {"Player 2 Information", "{p2::x}{\\n}{p2::y}{\\n}{p2::y_vel}"},
             {"Rainbow Text", "Rainbow Text!!"},
             {"Replay Engine State", "{re_state}"},
             {"Session time", "{session_time}"},
@@ -114,6 +116,19 @@ public:
     }
 };
 
+class CompatibleColorPopup : public geode::ColorPickPopup {
+public:
+    static CompatibleColorPopup* create(cocos2d::ccColor4B const& color, bool isRGBA) {
+        auto ret = new CompatibleColorPopup();
+        if (ret->init(color, isRGBA)) {
+            ret->autorelease();
+            return ret;
+        }
+        delete ret;
+        return nullptr;
+    }
+};
+
 class EditLabelPopup : public geode::Popup {
 protected:
     GDH::Labels::Corner m_corner;
@@ -148,17 +163,17 @@ protected:
 
         float y = winSize.height - 50.f;
 
-        auto toggle = CCMenuItemExt::createTogglerWithFilename("GDH_togglerOn.png"_spr, "GDH_togglerOff.png"_spr, 0.6f, [&label](CCMenuItemToggler* sender) {
+        auto toggle = CCMenuItemExt::createTogglerWithFilename("GDH_togglerOn.png"_spr, "GDH_togglerOff.png"_spr, 0.75f, [&label](CCMenuItemToggler* sender) {
             label.enabled = !sender->isToggled();
         });
-        toggle->setPosition({30.f, y});
+        toggle->setPosition({35.f, y});
         toggle->toggle(label.enabled);
         menu->addChild(toggle);
 
         auto enabledLabel = CCLabelBMFont::create("Enabled", "GoogleSans.fnt"_spr);
-        enabledLabel->setScale(0.4f);
+        enabledLabel->setScale(0.6f);
         enabledLabel->setAnchorPoint({0.f, 0.5f});
-        enabledLabel->setPosition({50.f, y});
+        enabledLabel->setPosition({60.f, y});
         menu->addChild(enabledLabel);
 
         y -= 35.f;
@@ -179,16 +194,16 @@ protected:
             y -= 35.f;
 
             auto sizeLabel = CCLabelBMFont::create("Size:", "GoogleSans.fnt"_spr);
-            sizeLabel->setScale(0.4f);
-            sizeLabel->setPosition({40.f, y});
+            sizeLabel->setScale(0.6f);
+            sizeLabel->setPosition({35.f, y});
             menu->addChild(sizeLabel);
 
-            auto sizeInput = TextInput::create(60.f, "Size", "chatFont.fnt");
+            auto sizeInput = TextInput::create(50.f, "Size", "chatFont.fnt");
             if (auto* bg = sizeInput->getChildByType<geode::NineSlice>(0)) { 
                 bg->setColor({71, 71, 131}); 
                 bg->setOpacity(255); 
             }
-            sizeInput->setPosition({95.f, y});
+            sizeInput->setPosition({85.f, y});
             sizeInput->setString(fmt::format("{:.2f}", label.size));
             sizeInput->setFilter("0123456789.");
             sizeInput->setCallback([&label](const std::string& str) {
@@ -197,6 +212,56 @@ protected:
                 }
             });
             m_mainLayer->addChild(sizeInput);
+
+            auto colorLabel = CCLabelBMFont::create("Color:", "GoogleSans.fnt"_spr);
+            colorLabel->setScale(0.6f);
+            colorLabel->setPosition({145.f, y});
+            menu->addChild(colorLabel);
+
+            cocos2d::ccColor3B curColor3B = {
+                static_cast<GLubyte>(label.color[0] * 255.f),
+                static_cast<GLubyte>(label.color[1] * 255.f),
+                static_cast<GLubyte>(label.color[2] * 255.f)
+            };
+            GLubyte curAlpha = static_cast<GLubyte>(label.color[3] * 255.f);
+
+            auto colorSprite = ColorChannelSprite::create();
+            colorSprite->setScale(0.7f);
+            colorSprite->setColor(curColor3B);
+            colorSprite->setOpacity(curAlpha);
+
+            auto colorBtn = CCMenuItemExt::createSpriteExtra(colorSprite, [this, corner = m_corner, index = m_index, colorSprite](auto) {
+                auto& manager = GDH::Labels::Manager::get();
+                if (index >= manager.labels[corner].size()) return;
+                
+                auto& targetLabel = manager.labels[corner][index];
+                cocos2d::ccColor4B popupColor = {
+                    static_cast<GLubyte>(targetLabel.color[0] * 255.f),
+                    static_cast<GLubyte>(targetLabel.color[1] * 255.f),
+                    static_cast<GLubyte>(targetLabel.color[2] * 255.f),
+                    static_cast<GLubyte>(targetLabel.color[3] * 255.f)
+                };
+
+                auto popup = CompatibleColorPopup::create(popupColor, true);
+                popup->setCallback([weakSelf = geode::WeakRef(this), corner, index, colorSprite](cocos2d::ccColor4B const& formatColor) {
+                    if (!weakSelf.lock()) return;
+
+                    auto& mgr = GDH::Labels::Manager::get();
+                    if (index < mgr.labels[corner].size()) {
+                        auto& l = mgr.labels[corner][index];
+                        l.color[0] = formatColor.r / 255.f;
+                        l.color[1] = formatColor.g / 255.f;
+                        l.color[2] = formatColor.b / 255.f;
+                        l.color[3] = formatColor.a / 255.f;
+                    }
+
+                    colorSprite->setColor(geode::cocos::to3B(formatColor));
+                    colorSprite->setOpacity(formatColor.a);
+                });
+                popup->show();
+            });
+            colorBtn->setPosition({190.f, y});
+            menu->addChild(colorBtn);
 
             y -= 30.f;
             
@@ -395,7 +460,7 @@ void refreshLabelsTab(HacksTab* tab) {
 
     auto selectorRow = CCMenu::create();
     selectorRow->setContentSize({340.f, 32.f});
-    selectorRow->setLayout(RowLayout::create()->setAxisAlignment(AxisAlignment::Start)->setCrossAxisAlignment(AxisAlignment::Center)->setGap(6.f));
+    selectorRow->setLayout(RowLayout::create()->setAxisAlignment(AxisAlignment::Start)->setCrossAxisAlignment(AxisAlignment::Center)->setGap(6.f)->setPadding({-10.f,0,0,0}));
 
     auto leftSpacer = CCNode::create();
     leftSpacer->setContentSize({5.f, 0.f});
@@ -459,7 +524,7 @@ void refreshLabelsTab(HacksTab* tab) {
 
             auto itemRow = CCMenu::create();
             itemRow->setContentSize({340.f, 20.f}); 
-            itemRow->setLayout(RowLayout::create()->setAxisAlignment(AxisAlignment::Start)->setCrossAxisAlignment(AxisAlignment::Center)->setGap(6.f));
+            itemRow->setLayout(RowLayout::create()->setAxisAlignment(AxisAlignment::Start)->setCrossAxisAlignment(AxisAlignment::Center)->setGap(6.f)->setPadding({-10.f,0,0,0}));
 
             auto itemSpacer = CCNode::create();
             itemSpacer->setContentSize({5.f, 0.f});
@@ -495,6 +560,9 @@ $execute {
 
     window.setCustomWindowCocos([](cocos2d::CCNode* node) {
         auto tab = static_cast<HacksTab*>(node);
-        refreshLabelsTab(tab);
+
+        geode::queueInMainThread([tab]() {
+            refreshLabelsTab(tab);
+        });
     });
 }
