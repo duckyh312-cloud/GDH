@@ -2,6 +2,7 @@
 #include "../hacks_tab.hpp"
 #include "../../../core/gui.hpp"
 #include "../../../core/labels.hpp"
+#include "../hack_settings_popup.hpp"
 
 using namespace geode::prelude;
 
@@ -111,19 +112,6 @@ public:
     static AddLabelPopup* create(GDH::Labels::Corner corner, HacksTab* tab) {
         auto ret = new AddLabelPopup();
         if (ret->init(corner, tab)) { ret->autorelease(); return ret; }
-        delete ret;
-        return nullptr;
-    }
-};
-
-class CompatibleColorPopup : public geode::ColorPickPopup {
-public:
-    static CompatibleColorPopup* create(cocos2d::ccColor4B const& color, bool isRGBA) {
-        auto ret = new CompatibleColorPopup();
-        if (ret->init(color, isRGBA)) {
-            ret->autorelease();
-            return ret;
-        }
         delete ret;
         return nullptr;
     }

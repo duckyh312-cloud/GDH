@@ -253,25 +253,27 @@ protected:
 
         for (const auto& entry : std::filesystem::directory_iterator(folderMacroPath)) {
             if (entry.is_regular_file() && entry.path().extension() == ".re4") {
-                std::string macroName = entry.path().stem().string();
-                std::filesystem::path macroPath = entry.path();
-
-                auto menu = CCMenu::create();
-                menu->setContentSize({600.f, 25.f});
-
-                auto btnSprite = ButtonSprite::create(macroName.c_str(), 180, true, "GoogleSans.fnt"_spr, "GDH_button_01.png"_spr, 26.f, 0.5f);
-                auto btn = CCMenuItemExt::createSpriteExtra(btnSprite, [this, macroPath](auto) {
-                    auto& engine = GDH::ReplayEngine::get();
-
-                    engine.replay_name = macroPath.stem().string();
-                    input->setString(engine.replay_name);
-
-                    this->m_closeBtn->activate();
-                });
-
-                btn->setPosition({300.f, 12.5f});
-                menu->addChild(btn);
-                scroll->m_contentLayer->addChild(menu);
+                if (GDH::Utils::isOnlyAsciiPath(entry)) {
+                    std::string macroName = entry.path().stem().string();
+                    std::filesystem::path macroPath = entry.path();
+    
+                    auto menu = CCMenu::create();
+                    menu->setContentSize({600.f, 25.f});
+    
+                    auto btnSprite = ButtonSprite::create(macroName.c_str(), 180, true, "GoogleSans.fnt"_spr, "GDH_button_01.png"_spr, 26.f, 0.5f);
+                    auto btn = CCMenuItemExt::createSpriteExtra(btnSprite, [this, macroPath](auto) {
+                        auto& engine = GDH::ReplayEngine::get();
+    
+                        engine.replay_name = macroPath.stem().string();
+                        input->setString(engine.replay_name);
+    
+                        this->m_closeBtn->activate();
+                    });
+    
+                    btn->setPosition({300.f, 12.5f});
+                    menu->addChild(btn);
+                    scroll->m_contentLayer->addChild(menu);
+                }
             }
         }
 

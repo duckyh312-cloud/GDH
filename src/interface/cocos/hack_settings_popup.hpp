@@ -21,3 +21,16 @@ public:
     void addConfigColor4Hex(const std::string& labelText, const std::string& key, const std::string& defaultHex);
     void addSeparator(float height = 1.f);
 };
+
+class CompatibleColorPopup : public geode::ColorPickPopup {
+public:
+    static CompatibleColorPopup* create(cocos2d::ccColor4B const& color, bool isRGBA) {
+        auto ret = new CompatibleColorPopup();
+        if (ret->init(color, isRGBA)) {
+            ret->autorelease();
+            return ret;
+        }
+        delete ret;
+        return nullptr;
+    }
+};

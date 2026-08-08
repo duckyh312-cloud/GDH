@@ -661,7 +661,8 @@ $execute {
             for (const auto& entry : std::filesystem::directory_iterator(folderMacroPath)) {
                 if (entry.is_regular_file()) {
                     if (entry.path().extension() == ".re4") {
-                        replay_list.push_back(entry);
+                        if (GDH::Utils::isOnlyAsciiPath(entry)) 
+                            replay_list.push_back(entry);
                     }
                 }
             }
