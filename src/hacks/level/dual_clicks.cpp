@@ -31,8 +31,10 @@ class $modify(DualClicksGJBaseGameLayer, GJBaseGameLayer) {
         GJBaseGameLayer::handleButton(down, button, isPlayer1);
         
         if (GDH::ReplayEngine::get().mode == state::play) return;
+        
         if (m_level->m_twoPlayerMode && m_gameState.m_isDualMode) {
-            bool invert = Config::get().get<bool>("level.dual_clicks::invert_click", false);
+            auto& config = Config::get();
+            bool invert = config.get<bool>("level.dual_clicks::invert_click", false);
             GJBaseGameLayer::handleButton(invert ? !down : down, button, !isPlayer1);
         }
     }

@@ -1,6 +1,6 @@
 #include "replayEngine.hpp"
+#include "Geode/loader/Loader.hpp"
 #include "config.hpp"
-#include <Geode/binding/GJBaseGameLayer.hpp>
 
 using namespace GDH;
 
@@ -13,7 +13,7 @@ uint64_t ReplayEngine::get_frame() {
     return 0;
 }
 
-void ReplayEngine::remove_actions(uint64_t currentFrame) {
+void ReplayEngine::remove_actions(uint64_t currentFrame, bool pause) {
     // clearing physic frames
     std::erase_if(m_physicFrames, [currentFrame](const physic_data &action) {
         return action.frame >= currentFrame;
@@ -52,20 +52,22 @@ void ReplayEngine::remove_actions(uint64_t currentFrame) {
             }
         }
         
-        auto isJumpButtonPressedForPlayer = [](UILayer* ui, bool player1) -> bool {
-            if (player1) {
-                return (ui->m_p1TouchId != -1 || ui->m_p1Jumping);
-            } else {
-                return (ui->m_p2TouchId != -1 || ui->m_p2Jumping);
+        if (!pause) {
+            auto isJumpButtonPressedForPlayer = [](UILayer* ui, bool player1) -> bool {
+                if (player1) {
+                    return (ui->m_p1TouchId != -1 || ui->m_p1Jumping);
+                } else {
+                    return (ui->m_p2TouchId != -1 || ui->m_p2Jumping);
+                }
+            };
+
+            if (isJumpButtonPressedForPlayer(gjbgl->m_uiLayer, true)) {
+                gjbgl->queueButton(1, true, false, 0.0);
             }
-        };
-
-        if (isJumpButtonPressedForPlayer(gjbgl->m_uiLayer, true)) {
-            gjbgl->queueButton(1, true, false, 0.0);
-        }
-
-        if (isJumpButtonPressedForPlayer(gjbgl->m_uiLayer, false)) {
-            gjbgl->queueButton(1, true, true, 0.0);
+    
+            if (isJumpButtonPressedForPlayer(gjbgl->m_uiLayer, false)) {
+                gjbgl->queueButton(1, true, true, 0.0);
+            }
         }
     }
 }
@@ -136,10 +138,10 @@ void ReplayEngine::handle_commands(GJBaseGameLayer* self) {
     }
 }
 
-void ReplayEngine::handle_reset() {
+void ReplayEngine::handle_reset(bool pause) {
     if (mode == state::record) {
         int lastCheckpointFrame = get_frame();
-        remove_actions(lastCheckpointFrame);
+        remove_actions(lastCheckpointFrame, pause);
     }
     else if (mode == state::play) {
         m_physicIndex = 0;

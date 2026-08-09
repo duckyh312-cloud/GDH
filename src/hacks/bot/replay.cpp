@@ -1,4 +1,5 @@
 #include <Geode/Geode.hpp>
+#include <Geode/modify/PauseLayer.hpp>
 #include <Geode/modify/PlayLayer.hpp>
 #include <Geode/modify/GJBaseGameLayer.hpp>
 #include <Geode/modify/CCScheduler.hpp>
@@ -8,6 +9,7 @@
 #include "../../core/config.hpp"
 #include "../../core/replayEngine.hpp"
 #include "../../core/gui.hpp"
+#include "../../core/keybinds.hpp"
 #include "../../core/utils.hpp"
 
 static float left_over = 0.f;
@@ -185,6 +187,26 @@ class $modify(EditLevelLayer) {
     }
 };
 
+class $modify(ReplayPauseLayer, PauseLayer) {
+    void keyDown(cocos2d::enumKeyCodes key, double timestamp) {
+        auto& engine = GDH::ReplayEngine::get();
+        if (engine.mode == state::record && key == cocos2d::KEY_Space) {
+            this->schedule(schedule_selector(ReplayPauseLayer::checkSpaceUp));
+            return;
+        }
+        PauseLayer::keyDown(key, timestamp);
+    }
+
+    void checkSpaceUp(float dt) {
+        auto& kb = GDH::Keybinds::get();
+        
+        if (!kb.isKeyDown(cocos2d::KEY_Space)) {
+            this->unschedule(schedule_selector(ReplayPauseLayer::checkSpaceUp));
+            this->onResume(nullptr);
+        }
+    }
+};
+
 class $modify(ReplayPlayLayer, PlayLayer) {
     bool init(GJGameLevel* level, bool useReplay, bool dontCreateObjects) {
         if (!PlayLayer::init(level, useReplay, dontCreateObjects)) return false;
@@ -223,6 +245,14 @@ class $modify(ReplayPlayLayer, PlayLayer) {
             if (engine.mode == state::record)
                 engine.mode = state::disable;
         });
+    }
+
+    void pauseGame(bool unfocused) {
+        if (!this->canPauseGame() || AppDelegate::get()->m_gamePaused) return;
+
+        auto& engine = GDH::ReplayEngine::get();
+        if (engine.mode == state::record) engine.handle_reset(true);
+        PlayLayer::pauseGame(unfocused);
     }
 };
 

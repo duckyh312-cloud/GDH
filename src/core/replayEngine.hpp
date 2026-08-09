@@ -35,7 +35,7 @@ namespace GDH {
         std::string replay_name;
 
         uint64_t get_frame();
-        void remove_actions(uint64_t currentFrame);
+        void remove_actions(uint64_t currentFrame, bool pause = false);
 
         size_t get_actions_size();
         size_t get_current_index();
@@ -46,7 +46,8 @@ namespace GDH {
 
         void handle_update(GJBaseGameLayer* self);
         void handle_commands(GJBaseGameLayer* self);
-        void handle_reset();
+
+        void handle_reset(bool pause = false);
 
         void handle_button(bool down, int button, bool isPlayer2);
 
