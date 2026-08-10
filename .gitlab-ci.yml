@@ -30,6 +30,7 @@ stages:
     - echo "FFmpeg extracted to libs/"
 
   script:
+    - geode sdk update && geode sdk install-binaries -p "$GEODE_PLATFORM"
     - geode build -p "$GEODE_PLATFORM" --config Release -- -G Ninja
     - mkdir -p artifacts/$GEODE_PLATFORM
     - find build* -type f -name "*.geode" -exec mv {} artifacts/$GEODE_PLATFORM/ \; || true

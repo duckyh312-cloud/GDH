@@ -6,14 +6,15 @@
 	},
 	"id": "tobyadd.gdh",
 	"name": "GDH",
-	"version": "v5.1.0-beta.1",
+	"version": "v5.1.0-beta.2",
 	"developer": "TobyAdd",
 	"description": "Mod menu for Geometry Dash",
 	"early-load": true,
 	"tags": ["cheat", "gameplay", "utility", "customization", "interface", "universal", "offline", "enhancement"],
 	"links": {
 		"source": "https://gitlab.com/tobyadd/GDH",
-		"community": "https://discord.gg/ahYEz4MAwP"
+		"community": "https://discord.gg/ahYEz4MAwP",
+		"homepage": "https://tobyadd.pages.dev/GDH/"
 	},
 	"resources": {
 		"sprites": [

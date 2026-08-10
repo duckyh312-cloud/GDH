@@ -12,5 +12,5 @@ GDH is a mod menu for Geometry Dash featuring gameplay enhancements and a beauti
 - Something else coming soon...
 ---
 
-Thanks to the aciddev for the logo<br/>
+Thanks to the aciddev for the logo  
 Thanks to everyone who helped grow this project with me

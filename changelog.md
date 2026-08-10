@@ -1,3 +1,41 @@
+# v5.1.0-beta.2
+Major Changes:
+- Added Frame Stepper (Backward Support)
+- Added Recorder (onepass, PC and Mobile Support)
+- TPS Optimization (PC Only)
+- Fixed UI Scaling on big monitors (up to 4K)
+- Improved Keybind System (More functions for binding)
+- Label Improvements and Optimization (geode::Label, runs faster)
+- Added Variables
+- Fixed Ctrl+C not working
+- REv3 to REv4 Converter: https://tobyadd.pages.dev/GDH/re3_to_re4
+
+Hacks Changes:
+- Added No Exit Dual Effect
+- Optimized Hitbox Trail (Ringbuffer)
+- Fixed label reading when the file is corrupted
+- Fixed Rainbow Color
+- Added Noclip 2P, Noclip Limit
+- Added Hitbox Multiplier
+- Added CBF/COS/CBS Toggles
+- Fixed Practice Fix
+- Added Dual Clicks
+- Added Straight Fly Bot
+- Added more Label Variables
+
+Replay Engine Changes:
+- Fixed "Allow Buttons" limitation
+- Added Macro Editor (PC and Mobile)
+- Added Accuracy Fix and Velocity Fix
+- Added Ignore Inputs on Playback
+
+I might've added some other stuff too, but there are definitely tons of changes!  
+
+Special thanks to Prevter for helping stuff
+
+I created a Patreon so you can support my work: https://www.patreon.com/cw/TobyAdd/membership  
+It'll really help motivate me to keep developing new versions of GDH! I will be grateful to every single supporter :D
+
 # v5.1.0-beta.1
 This probably isn't what you were expecting, since a lot of features might be missing, but Introducing the new version of GDH v5.1 Beta!
 
