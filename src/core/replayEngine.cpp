@@ -1,5 +1,4 @@
 #include "replayEngine.hpp"
-#include "Geode/loader/Loader.hpp"
 #include "config.hpp"
 
 using namespace GDH;
@@ -41,14 +40,16 @@ void ReplayEngine::remove_actions(uint64_t currentFrame, bool pause) {
     if (auto gjbgl = GJBaseGameLayer::get()) {
         gjbgl->m_queuedButtons.clear();
         
-        bool swapControls = GameManager::get()->getGameVariable("0010");
+        bool swapControls = GameManager::get()->getGameVariable(GameVar::Flip2PlayerControls);
         
         for (int i = 0; i < 3; ++i) {
             if (!released[i]) {
-                gjbgl->queueButton(i + 1, false, swapControls, 0.0);
+                customHandleButton(gjbgl, false, static_cast<PlayerButton>(i + 1), !swapControls);
+                handle_button(false, i + 1, !swapControls);
             }
             if (!released[i + 3]) {
-                gjbgl->queueButton(i + 1, false, !swapControls, 0.0);
+                customHandleButton(gjbgl, false, static_cast<PlayerButton>(i + 1), swapControls);
+                handle_button(false, i + 1, swapControls);
             }
         }
         
@@ -123,7 +124,7 @@ void ReplayEngine::handle_commands(GJBaseGameLayer* self) {
         bool isPlayer2 = m_inputFrames[m_inputIndex].isPlayer2;
         bool isPlayer1 = !isPlayer2;
 
-        bool swapControls = GameManager::get()->getGameVariable("0010");
+        bool swapControls = GameManager::get()->getGameVariable(GameVar::Flip2PlayerControls);
 
         if (swapControls) {
             isPlayer1 = !isPlayer1;
@@ -133,7 +134,7 @@ void ReplayEngine::handle_commands(GJBaseGameLayer* self) {
         self->m_allowedButtons.clear();
         #endif
 
-        self->handleButton(m_inputFrames[m_inputIndex].down, m_inputFrames[m_inputIndex].button, isPlayer1);
+        customHandleButton(self, m_inputFrames[m_inputIndex].down, static_cast<PlayerButton>(m_inputFrames[m_inputIndex].button), isPlayer1);
         m_inputIndex++;
     }
 }
@@ -153,7 +154,7 @@ void ReplayEngine::handle_button(bool down, int button, bool isPlayer1) {
     if (mode != state::record)
         return;
 
-    bool swapControls = GameManager::get()->getGameVariable("0010");
+    bool swapControls = GameManager::get()->getGameVariable(GameVar::Flip2PlayerControls);
 
     if (swapControls) {
         isPlayer1 = !isPlayer1;
@@ -280,4 +281,31 @@ std::string ReplayEngine::load(const std::string& replay_name) {
 void ReplayEngine::clear() {
     m_physicFrames.clear();
     m_inputFrames.clear();
+}
+
+void ReplayEngine::customHandleButton(GJBaseGameLayer* self, bool down, PlayerButton button, bool player1) {
+    auto buttonAction = down ? &PlayerObject::pushButton : &PlayerObject::releaseButton;
+
+    if (GameManager::get()->getGameVariable(GameVar::Flip2PlayerControls)) {
+        player1 = !player1;
+    }
+
+    if (self->m_levelSettings->m_twoPlayerMode) {
+        PlayerObject* player = player1 ? self->m_player1 : self->m_player2;
+        (player->*buttonAction)(button);
+    } else {
+        (self->m_player1->*buttonAction)(button);
+        if (self->m_gameState.m_isDualMode) {
+            (self->m_player2->*buttonAction)(button);
+        }
+    }
+
+    self->m_effectManager->playerButton(down, player1);
+
+    if (down) {
+        self->m_clicks++;
+        if (button == PlayerButton::Jump) {
+            self->m_jumping = true;
+        }
+    }
 }

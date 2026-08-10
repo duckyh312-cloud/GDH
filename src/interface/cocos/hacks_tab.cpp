@@ -51,7 +51,7 @@ void HacksTab::addToggle(GDH::Hack& hck) {
     hackNode->addChild(toggle);
 
     std::string name = hck.getName();
-    auto label = CCLabelBMFont::create(name.c_str(), "GoogleSans.fnt"_spr);
+    auto label = geode::Label::create(name, "GoogleSans.fnt"_spr);
     label->setAnchorPoint({0.f, 0.5f});
     label->setScale(0.65f); 
     label->setPosition({toggle->getPositionX() + 22.f, 15.f});
@@ -169,7 +169,7 @@ void HacksTab::addHackToggle(const std::string& labelText, const std::string& ke
     toggle->toggle(config.get<bool>(key, defaultValue));
     node->addChild(toggle);
 
-    auto label = CCLabelBMFont::create(labelText.c_str(), "GoogleSans.fnt"_spr);
+    auto label = geode::Label::create(labelText, "GoogleSans.fnt"_spr);
     label->setAnchorPoint({0.f, 0.5f});
     label->setScale(0.65f); 
     label->setPosition({toggle->getPositionX() + 22.f, 15.f});
@@ -195,7 +195,7 @@ void HacksTab::addConfigToggle(const std::string& labelText, const std::string& 
     toggle->toggle(config.get<bool>(key, defaultValue));
     node->addChild(toggle);
 
-    auto label = CCLabelBMFont::create(labelText.c_str(), "GoogleSans.fnt"_spr);
+    auto label = geode::Label::create(labelText, "GoogleSans.fnt"_spr);
     label->setAnchorPoint({0.f, 0.5f});
     label->setScale(0.65f); 
     label->setPosition({toggle->getPositionX() + 22.f, 15.f});
@@ -234,7 +234,7 @@ void HacksTab::addConfigIntInput(const std::string& labelText, const std::string
     });
     node->addChild(input);
     
-    auto label = CCLabelBMFont::create(labelText.c_str(), "GoogleSans.fnt"_spr);
+    auto label = geode::Label::create(labelText, "GoogleSans.fnt"_spr);
     label->setAnchorPoint({0.f, 0.5f});
     label->setScale(0.55f);
     label->setPosition({60.f, 15.f});
@@ -273,7 +273,7 @@ void HacksTab::addConfigFloatInput(const std::string& labelText, const std::stri
     });
     node->addChild(input);
 
-    auto label = CCLabelBMFont::create(labelText.c_str(), "GoogleSans.fnt"_spr);
+    auto label = geode::Label::create(labelText, "GoogleSans.fnt"_spr);
     label->setAnchorPoint({0.f, 0.5f});
     label->setScale(0.55f);
     label->setPosition({60.f, 15.f});
@@ -285,7 +285,7 @@ void HacksTab::addConfigFloatInput(const std::string& labelText, const std::stri
 }
 
 void HacksTab::addText(const std::string& text, float scale) {
-    auto label = CCLabelBMFont::create(text.c_str(), "GoogleSans.fnt"_spr);
+    auto label = geode::Label::create(text, "GoogleSans.fnt"_spr);
     label->setScale(scale);
     
     prepareNewRow(); 
@@ -345,8 +345,8 @@ void HacksTab::addConfigButton(const std::string& labelText, geode::Function<voi
     m_currentRow = nullptr;
 }
 
-CCLabelBMFont* HacksTab::AddTextToToggle(const char *str, CCMenuItemToggler* toggler, float x_space) {
-    auto label = CCLabelBMFont::create(str, "GoogleSans.fnt"_spr);
+geode::Label* HacksTab::AddTextToToggle(const char *str, CCMenuItemToggler* toggler, float x_space) {
+    auto label = geode::Label::create(str, "GoogleSans.fnt"_spr);
     label->setAnchorPoint({0.f, 0.5f});
     label->setPosition({toggler->getPositionX() + x_space, toggler->getPositionY()});
     label->setScale(0.65f);

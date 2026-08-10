@@ -105,10 +105,11 @@ class $modify(ReplayCCScheduler, cocos2d::CCScheduler) {
 
 class $modify(ReplayGJBaseGameLayer, GJBaseGameLayer) {
     static void onModify(auto& self) {
+        // TPS Bypass
         auto& gui = GDH::Gui::get();
-        auto& hack = gui.getWindow("Invisible").findHackByName("TPS");       
-        hack.setCheating(true); 
-        hack.addHookPtr(self.getHook("GJBaseGameLayer::getModifiedDelta").unwrap());
+        auto& tps = gui.getWindow("Invisible").findHackByName("TPS");       
+        tps.setCheating(true); 
+        tps.addHookPtr(self.getHook("GJBaseGameLayer::getModifiedDelta").unwrap());
     }
 
     double getModifiedDelta(float dt) {
@@ -142,8 +143,24 @@ class $modify(ReplayGJBaseGameLayer, GJBaseGameLayer) {
     }
 
     void handleButton(bool down, int button, bool isPlayer1) {
+        auto& engine = GDH::ReplayEngine::get();
+        auto& config = Config::get();
+        if (engine.mode == state::play && config.get<bool>("engine::ignore_inputs", true)) return;
+        
         GJBaseGameLayer::handleButton(down, button, isPlayer1);
-        GDH::ReplayEngine::get().handle_button(down, button, isPlayer1);
+        engine.handle_button(down, button, isPlayer1);
+
+        if (config.get<bool>("level.dual_clicks", false) && m_level->m_twoPlayerMode && m_gameState.m_isDualMode) {
+            bool invert = config.get<bool>("level.dual_clicks::invert_click", false);
+            
+            if (engine.mode == state::record) {
+                engine.customHandleButton(this, invert ? !down : down, static_cast<PlayerButton>(button), !isPlayer1);
+                engine.handle_button(invert ? !down : down, button, !isPlayer1);
+            }
+            else {
+                GJBaseGameLayer::handleButton(invert ? !down : down, button, !isPlayer1);
+            }
+        }
     }
     
     // void processCommands(float dt, bool isHalfTick, bool isLastTick) {

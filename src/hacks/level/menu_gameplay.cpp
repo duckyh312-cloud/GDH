@@ -1,5 +1,6 @@
 #include <Geode/Geode.hpp>
 #include <Geode/modify/MenuGameLayer.hpp>
+#include <Geode/modify/CCTouchDispatcher.hpp>
 #include "../../core/gui.hpp"
 #include "../../core/keybinds.hpp"
 
@@ -28,16 +29,16 @@ class $modify(MenuGameplayMenuGameLayer, MenuGameLayer) {
         if (m_playerObject && !m_playerObject->m_isSpider) {
             auto& kb = GDH::Keybinds::get();
             
-            bool currentInput = kb.isKeyDown(cocos2d::enumKeyCodes::KEY_W) || 
-                                kb.isKeyDown(cocos2d::enumKeyCodes::KEY_Up) || 
-                                kb.isMouseButtonDown(geode::MouseInputData::Button::Left);
+            bool currentInput = isHolding ||  kb.isKeyDown(cocos2d::enumKeyCodes::KEY_W) || kb.isKeyDown(cocos2d::enumKeyCodes::KEY_Up);
 
-            if (currentInput && !isHolding) {
-                isHolding = true;
+            static bool wasHolding = false;
+
+            if (currentInput && !wasHolding) {
+                wasHolding = true;
                 m_playerObject->pushButton(PlayerButton::Jump);
             } 
-            else if (!currentInput && isHolding) {
-                isHolding = false;
+            else if (!currentInput && wasHolding) {
+                wasHolding = false;
                 m_playerObject->releaseButton(PlayerButton::Jump);
             }
         }
@@ -50,5 +51,25 @@ class $modify(MenuGameplayMenuGameLayer, MenuGameLayer) {
         if (m_playerObject) {
             m_playerObject->setPositionY(105.f);
         }
+    }
+};
+
+class $modify(MenuGameplayCCTouchDispatcher, CCTouchDispatcher) {
+    static void onModify(auto& self) {
+        auto& gui = GDH::Gui::get();
+        auto& hack = gui.getWindow("Level").findHackByName("Menu Gameplay");        
+        
+        hack.addHookPtr(self.getHook("cocos2d::CCTouchDispatcher::touches").unwrap());
+    }
+
+    void touches(CCSet* touches, CCEvent* event, unsigned int type) {
+        if (type == CCTOUCHBEGAN) {
+            isHolding = true;
+        }
+        else if (type == CCTOUCHENDED || type == CCTOUCHCANCELLED) {
+            isHolding = false;
+        }
+
+        CCTouchDispatcher::touches(touches, event, type);
     }
 };

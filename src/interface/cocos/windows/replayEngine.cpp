@@ -6,17 +6,17 @@
 #include "../../../core/replayEngine.hpp"
 #include "../../../core/recorder/recorder.hpp"
 
-class LabelInfoScheduler : public CCLabelBMFont {
+class LabelInfoScheduler : public geode::Label {
 public:
     void customUpdate(float dt) {
         auto& engine = GDH::ReplayEngine::get();
         
-        this->setString(fmt::format(
+        this->setText(fmt::format(
             "Frame: {}\nReplay Size: {}/{}", 
             engine.get_frame(), 
             engine.get_current_index(), 
             engine.get_actions_size()
-        ).c_str());
+        ));
     }
 };
 
@@ -38,7 +38,7 @@ protected:
         menu->setPosition({0, 0});
         m_mainLayer->addChild(menu);
 
-        auto title = CCLabelBMFont::create("Recorder Settings", "GoogleSans.fnt"_spr);
+        auto title = geode::Label::create("Recorder Settings", "GoogleSans.fnt"_spr);
         title->setPosition({winSize.width / 2, winSize.height - 16.f});
         title->setScale(0.7f);
         m_mainLayer->addChild(title);
@@ -48,7 +48,7 @@ protected:
         m_closeBtn->setSprite(closeBtn);
 
         auto createLabel = [&menu](const std::string& text, const cocos2d::CCPoint& position, float scale = 0.6f) {
-            auto label = CCLabelBMFont::create(text.c_str(), "GoogleSans.fnt"_spr);
+            auto label = geode::Label::create(text, "GoogleSans.fnt"_spr);
             label->setAnchorPoint({0.f, 0.5f});
             label->setPosition(position);
             label->setScale(scale);
@@ -229,7 +229,7 @@ protected:
 
         auto winSize = m_mainLayer->getContentSize();
 
-        auto title = CCLabelBMFont::create("Select Replay", "GoogleSans.fnt"_spr);
+        auto title = geode::Label::create("Select Replay", "GoogleSans.fnt"_spr);
         title->setPosition({winSize.width / 2, winSize.height - 18.f});
         title->setScale(0.7f);
         m_mainLayer->addChild(title);
@@ -297,7 +297,7 @@ class MacroEditorLayer : public geode::Popup {
 protected:
     static const int page_size = 6;
     
-    int m_frameType = 0;
+    int m_frameType = 1;
     int m_selectedIndex = -1;
     int m_page = 0;
     std::string m_goToValue = "";
@@ -345,7 +345,7 @@ protected:
         typeLeftBtn->setPosition({25.f, 275.f});
         menu->addChild(typeLeftBtn);
 
-        auto typeLabel = CCLabelBMFont::create(typeNames[m_frameType], "GoogleSans.fnt"_spr);
+        auto typeLabel = geode::Label::create(typeNames[m_frameType], "GoogleSans.fnt"_spr);
         typeLabel->setScale(0.5f);
         typeLabel->setPosition({100.f, 275.f});
         menu->addChild(typeLabel);
@@ -370,7 +370,7 @@ protected:
     }
 
     geode::TextInput* createStyledInput(float width, const std::string& placeholder, const std::string& value, const std::string& filter, float x, float y, std::function<void(const std::string&)> cb) {
-        auto input = geode::TextInput::create(width, placeholder.c_str(), "GoogleSans.fnt"_spr);
+        auto input = geode::TextInput::create(width, placeholder, "GoogleSans.fnt"_spr);
         if (auto* bg = input->getChildByType<geode::NineSlice>(0)) {
             bg->setColor({71, 71, 131});
             bg->setOpacity(255);
@@ -393,7 +393,7 @@ protected:
         m_page = std::clamp(m_page, 0, totalPages - 1);
 
         if (!frames.empty()) {
-            auto headerLabel = CCLabelBMFont::create("Sel                    Frame                    Player                          X                                          Y                                   YAccel", "GoogleSans.fnt"_spr);
+            auto headerLabel = geode::Label::create("Sel                    Frame                    Player                          X                                          Y                                   YAccel", "GoogleSans.fnt"_spr);
             headerLabel->setAnchorPoint({0.f, 0.5f});
             headerLabel->setScale(0.4f);
             headerLabel->setPosition({25.f, 253.f});
@@ -467,7 +467,7 @@ protected:
         }
 
         if (frames.empty()) {
-            auto emptyLabel = CCLabelBMFont::create("No physic frames", "GoogleSans.fnt"_spr);
+            auto emptyLabel = geode::Label::create("No physic frames", "GoogleSans.fnt"_spr);
             emptyLabel->setScale(0.45f);
             emptyLabel->setOpacity(120);
             emptyLabel->setPosition({205.f, 150.f});
@@ -500,7 +500,7 @@ protected:
         m_page = std::clamp(m_page, 0, totalPages - 1);
 
         if (!frames.empty()) {
-            auto headerLabel = CCLabelBMFont::create("Sel                         Frame                         Player                            Button                                    Action", "GoogleSans.fnt"_spr);
+            auto headerLabel = geode::Label::create("Sel                         Frame                         Player                            Button                                    Action", "GoogleSans.fnt"_spr);
             headerLabel->setAnchorPoint({0.f, 0.5f});
             headerLabel->setScale(0.4f);
             headerLabel->setPosition({25.f, 253.f});
@@ -570,7 +570,7 @@ protected:
         }
 
         if (frames.empty()) {
-            auto emptyLabel = CCLabelBMFont::create("No input frames", "GoogleSans.fnt"_spr);
+            auto emptyLabel = geode::Label::create("No input frames", "GoogleSans.fnt"_spr);
             emptyLabel->setScale(0.45f);
             emptyLabel->setOpacity(120);
             emptyLabel->setPosition({205.f, 150.f});
@@ -608,7 +608,7 @@ protected:
         if (m_page <= 0) prevBtn->setOpacity(100);
         menu->addChild(prevBtn);
 
-        auto pageLabel = CCLabelBMFont::create(fmt::format("{}/{}", m_page + 1, totalPages).c_str(), "GoogleSans.fnt"_spr);
+        auto pageLabel = geode::Label::create(fmt::format("{}/{}", m_page + 1, totalPages), "GoogleSans.fnt"_spr);
         pageLabel->setScale(0.4f);
         pageLabel->setPosition({50.f, 18.f});
         menu->addChild(pageLabel);

@@ -36,7 +36,7 @@ target_include_directories(${PROJECT_NAME} PRIVATE libs libs/imgui)
 
 set(HAS_IMGUI ON)
 add_subdirectory(libs/imgui)
-CPMAddPackage("gh:matcool/gd-imgui-cocos#b93f08c")
+CPMAddPackage("gh:prevter/gd-imgui-cocos#6383c75")
 
 if (WIN32)
     add_subdirectory(libs/discord-rpc)

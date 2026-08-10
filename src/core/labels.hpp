@@ -5,6 +5,7 @@
 #include <vector>
 #include <unordered_map>
 #include <string>
+#include <queue>
 
 namespace GDH {
     namespace Labels {
@@ -84,3 +85,104 @@ namespace GDH {
         };
     } // namespace Labels
 } // namespace GDH
+
+class NoclipAccuracy {
+public:    
+    static NoclipAccuracy& get() {
+        static NoclipAccuracy instance;
+        return instance;
+    }
+
+    NoclipAccuracy& operator=(const NoclipAccuracy&) = delete;
+    NoclipAccuracy(const NoclipAccuracy&) = delete;
+
+    int frames = 0, deaths = 0, deaths_full = 0;
+    bool wouldDie = false, prevDied = false;
+
+    void handle_update(GJBaseGameLayer* self, float delta) {
+        auto pl = PlayLayer::get();
+        if (!pl || self->m_player1->m_isDead || pl->m_levelEndAnimationStarted) {
+            prevDied = false;
+            return;
+        }
+
+        frames++;
+
+        if (wouldDie) {
+            wouldDie = false;
+            deaths++;
+
+            if (!prevDied) {
+                deaths_full++;
+                prevDied = true;
+            }
+        } else {
+            prevDied = false;
+        }
+    }
+
+    void handle_reset() {
+        frames = 0;
+        deaths = 0;
+        deaths_full = 0;
+        wouldDie = false;
+        prevDied = false;
+    }
+
+    void handle_death() {
+        wouldDie = true;
+    }
+
+    float getPercentage() const {
+        if (frames == 0) return 100.0f;
+        return (1.0f - static_cast<float>(deaths) / frames) * 100.0f;
+    }
+
+private:
+    NoclipAccuracy() = default;
+};
+
+class CpsCounter {
+public:
+    static CpsCounter& get() {
+        static CpsCounter instance;
+        return instance;
+    }
+
+    CpsCounter(const CpsCounter&) = delete;
+    CpsCounter& operator=(const CpsCounter&) = delete;
+
+    std::queue<std::chrono::steady_clock::time_point> clicks;
+
+    int cps = 0;
+    int highscore = 0;
+    int overall = 0;
+    
+    void reset() {
+        cps = 0;
+        highscore = 0;
+        overall = 0;
+        std::queue<std::chrono::steady_clock::time_point>().swap(clicks);
+    }
+    
+    void click() {
+        overall++;
+        clicks.push(std::chrono::steady_clock::now());
+    }
+    
+    void update() {
+        auto one_second_ago = std::chrono::steady_clock::now() - std::chrono::seconds(1);
+        
+        while (!clicks.empty() && clicks.front() < one_second_ago) {
+            clicks.pop();
+        }
+
+        cps = static_cast<int>(clicks.size());
+
+        if (highscore < cps) {
+            highscore = cps;
+        }
+    }
+private:
+    CpsCounter() = default;
+};

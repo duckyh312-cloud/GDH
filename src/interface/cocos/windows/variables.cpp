@@ -112,9 +112,9 @@ void refreshVariablesTab(HacksTab* tab) {
     auto typeLabelContainer = CCNode::create();
     typeLabelContainer->setContentSize({140.f, 20.f});
 
-    auto typeLabel = CCLabelBMFont::create(s_typeItems[s_typeIndex].c_str(), "GoogleSans.fnt"_spr);
+    auto typeLabel = geode::Label::create(s_typeItems[s_typeIndex], "GoogleSans.fnt"_spr);
     typeLabel->setScale(0.6f);
-    typeLabel->setAlignment(CCTextAlignment::kCCTextAlignmentCenter);
+    typeLabel->setAlignment(geode::Label::Alignment::Center);
     typeLabel->setPosition({70.f, 10.f});
     typeLabelContainer->addChild(typeLabel);
     typeSelectorRow->addChild(typeLabelContainer);
@@ -151,9 +151,9 @@ void refreshVariablesTab(HacksTab* tab) {
     auto varLabelContainer = CCNode::create();
     varLabelContainer->setContentSize({140.f, 20.f});
 
-    auto varLabel = CCLabelBMFont::create(currentItems[currentIndex].c_str(), "GoogleSans.fnt"_spr);
+    auto varLabel = geode::Label::create(currentItems[currentIndex], "GoogleSans.fnt"_spr);
     varLabel->setScale(0.6f);
-    varLabel->setAlignment(CCTextAlignment::kCCTextAlignmentCenter);
+    varLabel->setAlignment(geode::Label::Alignment::Center);
     varLabel->setPosition({70.f, 10.f});
     varLabelContainer->addChild(varLabel);
     varSelectorRow->addChild(varLabelContainer);

@@ -25,7 +25,7 @@ bool HackSettingsPopup::init(GDH::Hack& hack) {
     m_hack = &hack;
     auto winSize = m_mainLayer->getContentSize();
 
-    auto title = cocos2d::CCLabelBMFont::create((hack.getName() + " Settings").c_str(), "GoogleSans.fnt"_spr);
+    auto title = geode::Label::create(hack.getName() + " Settings", "GoogleSans.fnt"_spr);
     title->setPosition({winSize.width / 2.f, winSize.height - 18.f});
     title->setScale(0.6f);
     m_mainLayer->addChild(title);
@@ -87,7 +87,7 @@ void HackSettingsPopup::addConfigToggle(const std::string& labelText, const std:
     toggle->toggle(config.get<bool>(key, defaultValue));
     m_currentRow->addChild(toggle);
 
-    auto label = cocos2d::CCLabelBMFont::create(labelText.c_str(), "GoogleSans.fnt"_spr);
+    auto label = geode::Label::create(labelText, "GoogleSans.fnt"_spr);
     label->setScale(0.55f); 
     if (label->getScaledContentSize().width > 160.f) {
         label->setScale(160.f / label->getContentSize().width);
@@ -125,7 +125,7 @@ void HackSettingsPopup::addConfigIntInput(const std::string& labelText, const st
     });
     m_currentRow->addChild(input);
     
-    auto label = cocos2d::CCLabelBMFont::create(labelText.c_str(), "GoogleSans.fnt"_spr);
+    auto label = geode::Label::create(labelText, "GoogleSans.fnt"_spr);
     label->setScale(0.55f);
     if (label->getScaledContentSize().width > 160.f) {
         label->setScale(160.f / label->getContentSize().width);
@@ -163,7 +163,7 @@ void HackSettingsPopup::addConfigFloatInput(const std::string& labelText, const 
     });
     m_currentRow->addChild(input);
 
-    auto label = cocos2d::CCLabelBMFont::create(labelText.c_str(), "GoogleSans.fnt"_spr);
+    auto label = geode::Label::create(labelText, "GoogleSans.fnt"_spr);
     label->setScale(0.55f);
     if (label->getScaledContentSize().width > 160.f) {
         label->setScale(160.f / label->getContentSize().width);
@@ -203,7 +203,7 @@ void HackSettingsPopup::addConfigColor3Hex(const std::string& labelText, const s
     });
     m_currentRow->addChild(colorBtn);
 
-    auto label = cocos2d::CCLabelBMFont::create(labelText.c_str(), "GoogleSans.fnt"_spr);
+    auto label = geode::Label::create(labelText, "GoogleSans.fnt"_spr);
     label->setScale(0.55f);
     if (label->getScaledContentSize().width > 120.f) {
         label->setScale(120.f / label->getContentSize().width);
@@ -266,7 +266,7 @@ void HackSettingsPopup::addConfigColor4Hex(const std::string& labelText, const s
     });
     m_currentRow->addChild(colorBtn);
 
-    auto label = cocos2d::CCLabelBMFont::create(labelText.c_str(), "GoogleSans.fnt"_spr);
+    auto label = geode::Label::create(labelText, "GoogleSans.fnt"_spr);
     label->setScale(0.55f);
     if (label->getScaledContentSize().width > 120.f) {
         label->setScale(120.f / label->getContentSize().width);

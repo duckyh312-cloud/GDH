@@ -11,7 +11,7 @@
 #include <Geode/modify/GJBaseGameLayer.hpp>
 
 #include <chrono>
-#include <queue>
+
 
 using namespace GDH::Labels;
 
@@ -21,107 +21,6 @@ static float g_rainbowHue = 0.0f;
 $execute {
     GDH::Labels::Manager::get().load();
 }
-
-class NoclipAccuracy {
-public:    
-    static NoclipAccuracy& get() {
-        static NoclipAccuracy instance;
-        return instance;
-    }
-
-    NoclipAccuracy& operator=(const NoclipAccuracy&) = delete;
-    NoclipAccuracy(const NoclipAccuracy&) = delete;
-
-    int frames = 0, deaths = 0, deaths_full = 0;
-    bool wouldDie = false, prevDied = false;
-
-    void handle_update(GJBaseGameLayer* self, float delta) {
-        auto pl = PlayLayer::get();
-        if (!pl || self->m_player1->m_isDead || pl->m_levelEndAnimationStarted) {
-            prevDied = false;
-            return;
-        }
-
-        frames++;
-
-        if (wouldDie) {
-            wouldDie = false;
-            deaths++;
-
-            if (!prevDied) {
-                deaths_full++;
-                prevDied = true;
-            }
-        } else {
-            prevDied = false;
-        }
-    }
-
-    void handle_reset() {
-        frames = 0;
-        deaths = 0;
-        deaths_full = 0;
-        wouldDie = false;
-        prevDied = false;
-    }
-
-    void handle_death() {
-        wouldDie = true;
-    }
-
-    float getPercentage() const {
-        if (frames == 0) return 100.0f;
-        return (1.0f - static_cast<float>(deaths) / frames) * 100.0f;
-    }
-
-private:
-    NoclipAccuracy() = default;
-};
-
-class CpsCounter {
-public:
-    static CpsCounter& get() {
-        static CpsCounter instance;
-        return instance;
-    }
-
-    CpsCounter(const CpsCounter&) = delete;
-    CpsCounter& operator=(const CpsCounter&) = delete;
-
-    std::queue<std::chrono::steady_clock::time_point> clicks;
-
-    int cps = 0;
-    int highscore = 0;
-    int overall = 0;
-    
-    void reset() {
-        cps = 0;
-        highscore = 0;
-        overall = 0;
-        std::queue<std::chrono::steady_clock::time_point>().swap(clicks);
-    }
-    
-    void click() {
-        overall++;
-        clicks.push(std::chrono::steady_clock::now());
-    }
-    
-    void update() {
-        auto one_second_ago = std::chrono::steady_clock::now() - std::chrono::seconds(1);
-        
-        while (!clicks.empty() && clicks.front() < one_second_ago) {
-            clicks.pop();
-        }
-
-        cps = static_cast<int>(clicks.size());
-
-        if (highscore < cps) {
-            highscore = cps;
-        }
-    }
-private:
-    CpsCounter() = default;
-};
 
 bool renderVariable(geode::utils::StringBuffer<> &stream, std::string_view var_name) {
     auto pl = PlayLayer::get();
@@ -336,20 +235,20 @@ static bool m_push = false;
 
 class $modify(LabelsPlayLayer, PlayLayer) {
     struct Fields {
-        std::unordered_map<Corner, std::vector<cocos2d::CCLabelBMFont*>> labelObjs;
+        std::unordered_map<Corner, std::vector<geode::Label*>> labelObjs;
     };
 
     bool init(GJGameLevel *level, bool useReplay, bool dontCreateObjects) {
         if (!PlayLayer::init(level, useReplay, dontCreateObjects)) return false;
-        m_fields->labelObjs[Corner::Top_Left] = std::vector<cocos2d::CCLabelBMFont*>();
-        m_fields->labelObjs[Corner::Top_Center] = std::vector<cocos2d::CCLabelBMFont*>();
-        m_fields->labelObjs[Corner::Top_Right] = std::vector<cocos2d::CCLabelBMFont*>();
-        m_fields->labelObjs[Corner::Center_Left] = std::vector<cocos2d::CCLabelBMFont*>();
-        m_fields->labelObjs[Corner::Center_Center] = std::vector<cocos2d::CCLabelBMFont*>();
-        m_fields->labelObjs[Corner::Center_Right] = std::vector<cocos2d::CCLabelBMFont*>();
-        m_fields->labelObjs[Corner::Bottom_Left] = std::vector<cocos2d::CCLabelBMFont*>();
-        m_fields->labelObjs[Corner::Bottom_Center] = std::vector<cocos2d::CCLabelBMFont*>();
-        m_fields->labelObjs[Corner::Bottom_Right] = std::vector<cocos2d::CCLabelBMFont*>();
+        m_fields->labelObjs[Corner::Top_Left] = std::vector<geode::Label*>();
+        m_fields->labelObjs[Corner::Top_Center] = std::vector<geode::Label*>();
+        m_fields->labelObjs[Corner::Top_Right] = std::vector<geode::Label*>();
+        m_fields->labelObjs[Corner::Center_Left] = std::vector<geode::Label*>();
+        m_fields->labelObjs[Corner::Center_Center] = std::vector<geode::Label*>();
+        m_fields->labelObjs[Corner::Center_Right] = std::vector<geode::Label*>();
+        m_fields->labelObjs[Corner::Bottom_Left] = std::vector<geode::Label*>();
+        m_fields->labelObjs[Corner::Bottom_Center] = std::vector<geode::Label*>();
+        m_fields->labelObjs[Corner::Bottom_Right] = std::vector<geode::Label*>();
         g_sessionStart = std::chrono::steady_clock::now();
         return true;
     }
@@ -409,20 +308,20 @@ class $modify(LabelsPlayLayer, PlayLayer) {
                     std::string renderedText = labelObj.render();
                     if (renderedText.empty()) continue; 
 
-                    cocos2d::CCLabelBMFont *label = NULL;
+                    geode::Label *label = NULL;
                     if (i < labelVec.size()) label = labelVec[i];
                     else {
-                        label = cocos2d::CCLabelBMFont::create("Swag", "bigFont.fnt");
+                        label = geode::Label::create("Swag", "bigFont.fnt");
                         switch (corner) {
-                        case Corner::Top_Left: label->setAnchorPoint({0.0f, 1.0f}); label->setAlignment(cocos2d::CCTextAlignment::kCCTextAlignmentLeft); break;
-                        case Corner::Top_Center: label->setAnchorPoint({0.5f, 1.0f}); label->setAlignment(cocos2d::CCTextAlignment::kCCTextAlignmentCenter); break;
-                        case Corner::Top_Right: label->setAnchorPoint({1.0f, 1.0f}); label->setAlignment(cocos2d::CCTextAlignment::kCCTextAlignmentRight); break;
-                        case Corner::Center_Left: label->setAnchorPoint({0.0f, 1.0f}); label->setAlignment(cocos2d::CCTextAlignment::kCCTextAlignmentLeft); break;
-                        case Corner::Center_Center: label->setAnchorPoint({0.5f, 1.0f}); label->setAlignment(cocos2d::CCTextAlignment::kCCTextAlignmentCenter); break;
-                        case Corner::Center_Right: label->setAnchorPoint({1.0f, 1.0f}); label->setAlignment(cocos2d::CCTextAlignment::kCCTextAlignmentRight); break;
-                        case Corner::Bottom_Left: label->setAnchorPoint({0.0f, 1.0f}); label->setAlignment(cocos2d::CCTextAlignment::kCCTextAlignmentLeft); break;
-                        case Corner::Bottom_Center: label->setAnchorPoint({0.5f, 1.0f}); label->setAlignment(cocos2d::CCTextAlignment::kCCTextAlignmentCenter); break;
-                        case Corner::Bottom_Right: label->setAnchorPoint({1.0f, 1.0f}); label->setAlignment(cocos2d::CCTextAlignment::kCCTextAlignmentRight); break;
+                        case Corner::Top_Left: label->setAnchorPoint({0.0f, 1.0f}); label->setAlignment(geode::Label::Alignment::Left); break;
+                        case Corner::Top_Center: label->setAnchorPoint({0.5f, 1.0f}); label->setAlignment(geode::Label::Alignment::Center); break;
+                        case Corner::Top_Right: label->setAnchorPoint({1.0f, 1.0f}); label->setAlignment(geode::Label::Alignment::Right); break;
+                        case Corner::Center_Left: label->setAnchorPoint({0.0f, 1.0f}); label->setAlignment(geode::Label::Alignment::Left); break;
+                        case Corner::Center_Center: label->setAnchorPoint({0.5f, 1.0f}); label->setAlignment(geode::Label::Alignment::Center); break;
+                        case Corner::Center_Right: label->setAnchorPoint({1.0f, 1.0f}); label->setAlignment(geode::Label::Alignment::Right); break;
+                        case Corner::Bottom_Left: label->setAnchorPoint({0.0f, 1.0f}); label->setAlignment(geode::Label::Alignment::Left); break;
+                        case Corner::Bottom_Center: label->setAnchorPoint({0.5f, 1.0f}); label->setAlignment(geode::Label::Alignment::Center); break;
+                        case Corner::Bottom_Right: label->setAnchorPoint({1.0f, 1.0f}); label->setAlignment(geode::Label::Alignment::Right); break;
                         }
                         addChild(label, 999);
                         labelVec.push_back(label);
@@ -450,7 +349,7 @@ class $modify(LabelsPlayLayer, PlayLayer) {
                             static_cast<GLubyte>(labelObj.color[1] * 255),static_cast<GLubyte>(labelObj.color[2] * 255)});
                     }
                     label->setOpacity(static_cast<GLubyte>(labelObj.color[3] * 255));
-                    label->setCString(renderedText.c_str());
+                    label->setText(renderedText);
 
                     y += label->getContentHeight() * labelObj.size + manager.midPadding;
                 } else if (labelObj.type == LabelType::Spacing) {
@@ -468,7 +367,7 @@ class $modify(LabelsPlayLayer, PlayLayer) {
                 if (labelObj.type == LabelType::Text) {
                     if (labelObj.render().empty()) continue; 
 
-                    cocos2d::CCLabelBMFont *label = labelVec[i++];
+                    geode::Label *label = labelVec[i++];
                     switch (corner) {
                     case Corner::Top_Left: label->setPosition({manager.cornerPadding, windowSize.height - manager.cornerPadding - y}); break;
                     case Corner::Top_Center: label->setPosition({windowSize.width / 2.0f, windowSize.height - manager.cornerPadding - y}); break;

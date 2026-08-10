@@ -799,7 +799,7 @@ $execute {
         static bool onceResize = false;
         if (!onceResize && ImGui::IsPopupOpen("Pro Settings")) {
             onceResize = true;
-            ImGui::SetNextWindowSize({layout.multipleScale(800.f), layout.multipleScale(620.f)});
+            ImGui::SetNextWindowSize({layout.multipleScale(800.f), layout.multipleScale(655.f)});
         }
         
         if (ImGui::BeginPopupModal("Pro Settings", &isProSettingsOpen)) {
@@ -812,6 +812,8 @@ $execute {
                     ImGuiWidgetConfig::Checkbox("Accuracy Fix", "engine::accuracy_fix", true);
                     ImGui::SameLine();
                     ImGuiWidgetConfig::Checkbox("Y Velocity Fix", "engine::velocity_fix", false);
+                    ImGui::SameLine();
+                    ImGuiWidgetConfig::Checkbox("Ignore Inputs on Playback", "engine::ignore_inputs", true);
                     ImGuiH::SpaceSeparator();
                     
                     ImGui::EndTabItem();

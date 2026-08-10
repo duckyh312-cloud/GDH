@@ -103,6 +103,7 @@ class $modify(PracticeFixPlayLayer, PlayLayer) {
         if (!m_checkpointArray->count()) {
             auto fields = m_fields.self();
             fields->m_checkpoints.clear();
+            m_clickReleased.fill(true);
         }
         
         PlayLayer::resetLevel();
@@ -113,13 +114,13 @@ class $modify(PracticeFixPlayLayer, PlayLayer) {
         if (auto gjbgl = GJBaseGameLayer::get()) {
             gjbgl->m_queuedButtons.clear();
             
-            bool swapControls = GameManager::get()->getGameVariable("0010");
+            bool swapControls = GameManager::get()->getGameVariable(GameVar::Flip2PlayerControls);
             for (int i = 0; i < 3; ++i) {
                 if (!m_clickReleased[i]) {
-                    gjbgl->queueButton(i + 1, false, swapControls, 0.0);
+                    engine.customHandleButton(gjbgl, false, static_cast<PlayerButton>(i + 1), !swapControls);
                 }
                 if (!m_clickReleased[i + 3]) {
-                    gjbgl->queueButton(i + 1, false, !swapControls, 0.0);
+                    engine.customHandleButton(gjbgl, false, static_cast<PlayerButton>(i + 1), swapControls);
                 }
             }
 
@@ -132,12 +133,10 @@ class $modify(PracticeFixPlayLayer, PlayLayer) {
             };
 
             if (isJumpButtonPressedForPlayer(gjbgl->m_uiLayer, true)) {
-                // geode::log::debug("FLIP: {}; PRESS: P1; PLAYER: {}", swapControls, !swapControls ? "P1" : "P2");
                 gjbgl->queueButton(1, true, false, 0.0);
             }
             
             if (isJumpButtonPressedForPlayer(gjbgl->m_uiLayer, false)) {
-                // geode::log::debug("FLIP: {}; PRESS: P2; PLAYER: {}", swapControls, swapControls ? "P1" : "P2");
                 gjbgl->queueButton(1, true, true, 0.0);
             }
         }
@@ -150,12 +149,13 @@ class $modify(PracticeFixGJBaseGameLayer, GJBaseGameLayer) {
         auto& hack = gui.getWindow("Level").findHackByName("Practice Fix");        
         
         hack.addHookPtr(self.getHook("GJBaseGameLayer::handleButton").unwrap());
+        (void) self.setHookPriority("GJBaseGameLayer::handleButton", geode::Priority::Late); 
     }
 
     void handleButton(bool down, int button, bool isPlayer1) {
         GJBaseGameLayer::handleButton(down, button, isPlayer1);
 
-        bool swapControls = GameManager::get()->getGameVariable("0010");
+        bool swapControls = GameManager::get()->getGameVariable(GameVar::Flip2PlayerControls);
 
         if (swapControls) {
             isPlayer1 = !isPlayer1;

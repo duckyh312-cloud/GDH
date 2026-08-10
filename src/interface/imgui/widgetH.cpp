@@ -287,7 +287,7 @@ namespace ImGuiH {
             static bool chk1 = true, chk2 = false;
             ImGuiH::Checkbox("Toggle Switch Active", &chk1);
             ImGuiH::Checkbox("Toggle Switch Inactive", &chk2);
-            ImGui::Separator();
+            SpaceSeparator();
 
             static int radioVal = 0;
             if (ImGuiH::RadioButton("Radio Option 1", radioVal == 0)) radioVal = 0;
@@ -304,10 +304,42 @@ namespace ImGuiH {
             static int comboIdx = 0;
             const char* items[] = { "Apple", "Banana", "Cherry", "Kiwi" };
             ImGui::Combo("Native Combo", &comboIdx, items, IM_ARRAYSIZE(items));
-            ImGui::Spacing();
+            SpaceSeparator();
 
             ImGui::Text("Hover here for Tooltip");
             ImGuiH::Tooltip("This is your tooltip window!", ImGui::IsItemHovered());
+            ImGui::Spacing();
+
+            SpaceSeparator();
+
+            ImGui::Text("Table Example:");
+
+            if (ImGui::BeginTable("simple_table", 3, ImGuiTableFlags_Borders)) 
+            {
+                ImGui::TableSetupColumn("Fruits");
+                ImGui::TableSetupColumn("Vegetables");
+                ImGui::TableSetupColumn("Other");
+                ImGui::TableHeadersRow();
+
+                ImGui::TableNextRow();
+                ImGui::TableNextColumn(); ImGui::Text("Apple");
+                ImGui::TableNextColumn(); ImGui::Text("Carrot");
+                ImGui::TableNextColumn(); ImGui::Text("Bread");
+
+                ImGui::TableNextRow();
+                ImGui::TableNextColumn(); ImGui::Text("Banana");
+                ImGui::TableNextColumn(); ImGui::Text("Cucumber");
+                ImGui::TableNextColumn(); ImGui::Text("Milk");
+
+                ImGui::TableNextRow();
+                ImGui::TableNextColumn(); ImGui::Text("Orange");
+                ImGui::TableNextColumn(); ImGui::Text("Tomato");
+                ImGui::TableNextColumn(); ImGui::Text("Cheese");
+
+                ImGui::EndTable();
+            }
+
+            SpaceSeparator();
 
             if (ImGui::BeginTabBar("ExampleTabBar")) {
                 if (ImGui::BeginTabItem("Example 1")) {

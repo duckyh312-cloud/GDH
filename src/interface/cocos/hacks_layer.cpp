@@ -23,7 +23,7 @@ bool HacksLayer::init() {
 
     m_closeBtn->setVisible(false);
     
-    auto version = CCLabelBMFont::create(geode::Mod::get()->getVersion().toVString().c_str(), "GoogleSans.fnt"_spr);
+    auto version = geode::Label::create(geode::Mod::get()->getVersion().toVString(), "GoogleSans.fnt"_spr);
     version->setAnchorPoint({1.f, 0.f});
     version->setScale(0.5f);
     version->setPosition({CCDirector::get()->getScreenRight() - 6.f, 10.f});

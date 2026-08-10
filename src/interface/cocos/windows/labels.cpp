@@ -23,7 +23,7 @@ protected:
 
         auto winSize = m_mainLayer->getContentSize();
 
-        auto title = CCLabelBMFont::create("Add Label", "GoogleSans.fnt"_spr);
+        auto title = geode::Label::create("Add Label", "GoogleSans.fnt"_spr);
         title->setPosition({winSize.width / 2, winSize.height - 18.f});
         title->setScale(0.7f);
         m_mainLayer->addChild(title);
@@ -140,7 +140,7 @@ protected:
         if (m_index >= manager.labels[m_corner].size()) return false;
         auto& label = manager.labels[m_corner][m_index];
 
-        auto title = CCLabelBMFont::create("Edit Label", "GoogleSans.fnt"_spr);
+        auto title = geode::Label::create("Edit Label", "GoogleSans.fnt"_spr);
         title->setPosition({winSize.width / 2, winSize.height - 18.f});
         title->setScale(0.7f);
         m_mainLayer->addChild(title);
@@ -158,7 +158,7 @@ protected:
         toggle->toggle(label.enabled);
         menu->addChild(toggle);
 
-        auto enabledLabel = CCLabelBMFont::create("Enabled", "GoogleSans.fnt"_spr);
+        auto enabledLabel = geode::Label::create("Enabled", "GoogleSans.fnt"_spr);
         enabledLabel->setScale(0.6f);
         enabledLabel->setAnchorPoint({0.f, 0.5f});
         enabledLabel->setPosition({60.f, y});
@@ -181,7 +181,7 @@ protected:
 
             y -= 35.f;
 
-            auto sizeLabel = CCLabelBMFont::create("Size:", "GoogleSans.fnt"_spr);
+            auto sizeLabel = geode::Label::create("Size:", "GoogleSans.fnt"_spr);
             sizeLabel->setScale(0.6f);
             sizeLabel->setPosition({35.f, y});
             menu->addChild(sizeLabel);
@@ -201,7 +201,7 @@ protected:
             });
             m_mainLayer->addChild(sizeInput);
 
-            auto colorLabel = CCLabelBMFont::create("Color:", "GoogleSans.fnt"_spr);
+            auto colorLabel = geode::Label::create("Color:", "GoogleSans.fnt"_spr);
             colorLabel->setScale(0.6f);
             colorLabel->setPosition({145.f, y});
             menu->addChild(colorLabel);
@@ -260,7 +260,7 @@ protected:
             rbToggle->toggle(label.rainbow);
             menu->addChild(rbToggle);
 
-            auto rbL = CCLabelBMFont::create("Rainbow", "GoogleSans.fnt"_spr);
+            auto rbL = geode::Label::create("Rainbow", "GoogleSans.fnt"_spr);
             rbL->setScale(0.35f);
             rbL->setAnchorPoint({0.f, 0.5f});
             rbL->setPosition({45.f, y});
@@ -273,7 +273,7 @@ protected:
             cpsToggle->toggle(label.cps);
             menu->addChild(cpsToggle);
 
-            auto cpsL = CCLabelBMFont::create("CPS", "GoogleSans.fnt"_spr);
+            auto cpsL = geode::Label::create("CPS", "GoogleSans.fnt"_spr);
             cpsL->setScale(0.35f);
             cpsL->setAnchorPoint({0.f, 0.5f});
             cpsL->setPosition({135.f, y});
@@ -286,14 +286,14 @@ protected:
             ncToggle->toggle(label.noclip);
             menu->addChild(ncToggle);
 
-            auto ncL = CCLabelBMFont::create("Noclip", "GoogleSans.fnt"_spr);
+            auto ncL = geode::Label::create("Noclip", "GoogleSans.fnt"_spr);
             ncL->setScale(0.35f);
             ncL->setAnchorPoint({0.f, 0.5f});
             ncL->setPosition({215.f, y});
             menu->addChild(ncL);
 
         } else {
-            auto spaceLabel = CCLabelBMFont::create("Spacing (px):", "GoogleSans.fnt"_spr);
+            auto spaceLabel = geode::Label::create("Spacing (px):", "GoogleSans.fnt"_spr);
             spaceLabel->setScale(0.4f);
             spaceLabel->setPosition({60.f, y});
             menu->addChild(spaceLabel);
@@ -398,7 +398,7 @@ void refreshLabelsTab(HacksTab* tab) {
     padsSpacer->setContentSize({5.f, 0.f});
     padsMenu->addChild(padsSpacer);
 
-    auto lbl1 = CCLabelBMFont::create("Corner Pad:", "GoogleSans.fnt"_spr);
+    auto lbl1 = geode::Label::create("Corner Pad:", "GoogleSans.fnt"_spr);
     padsMenu->addChild(lbl1);
 
     auto input1 = TextInput::create(55.f, "Pad", "GoogleSans.fnt"_spr);
@@ -418,7 +418,7 @@ void refreshLabelsTab(HacksTab* tab) {
     padSpacer->setContentSize({8.f, 0.f});
     padsMenu->addChild(padSpacer);
 
-    auto lbl2 = CCLabelBMFont::create("Mid Pad:", "GoogleSans.fnt"_spr);
+    auto lbl2 = geode::Label::create("Mid Pad:", "GoogleSans.fnt"_spr);
     padsMenu->addChild(lbl2);
 
     auto input2 = TextInput::create(55.f, "Pad", "GoogleSans.fnt"_spr);
@@ -466,9 +466,9 @@ void refreshLabelsTab(HacksTab* tab) {
     auto labelWidthContainer = CCNode::create();
     labelWidthContainer->setContentSize({110.f, 20.f});
 
-    auto currentCornerLabel = CCLabelBMFont::create(cornerNames[s_currentCornerIndex].c_str(), "GoogleSans.fnt"_spr);
+    auto currentCornerLabel = geode::Label::create(cornerNames[s_currentCornerIndex], "GoogleSans.fnt"_spr);
     currentCornerLabel->setScale(0.6f);
-    currentCornerLabel->setAlignment(CCTextAlignment::kCCTextAlignmentCenter);
+    currentCornerLabel->setAlignment(geode::Label::Alignment::Center);
 
     currentCornerLabel->setPosition({55.f, 10.f}); 
     labelWidthContainer->addChild(currentCornerLabel);
@@ -502,7 +502,7 @@ void refreshLabelsTab(HacksTab* tab) {
 
     auto& labelsList = manager.labels[corner];
     if (labelsList.empty()) {
-        auto emptyLabel = CCLabelBMFont::create("No labels added here", "GoogleSans.fnt"_spr);
+        auto emptyLabel = geode::Label::create("No labels added here", "GoogleSans.fnt"_spr);
         emptyLabel->setScale(0.45f);
         emptyLabel->setOpacity(100);
         content->addChild(emptyLabel);
@@ -528,7 +528,7 @@ void refreshLabelsTab(HacksTab* tab) {
                 ? (label.text.empty() ? "Empty Text" : label.text)
                 : fmt::format("Spacing: {:.1f}px", label.size);
 
-            auto textLabel = CCLabelBMFont::create(displayText.c_str(), "GoogleSans.fnt"_spr);
+            auto textLabel = geode::Label::create(displayText, "GoogleSans.fnt"_spr);
             itemRow->addChild(textLabel);
             
             itemRow->updateLayout();

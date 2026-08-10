@@ -345,6 +345,7 @@ void RenderMain() {
     auto& config = Config::get();
     auto& layoutManager = GDH::Layout::Manager::get();
     auto& kb = GDH::Keybinds::get();
+    ImGuiIO &io = ImGui::GetIO();
     
     animateAlpha();
 
@@ -357,7 +358,7 @@ void RenderMain() {
     bool isRightPressed = GDH::Keybinds::get().isMouseButtonDown(geode::MouseInputData::Button::Right);
 
     if (isRightPressed != lastRightPressed) {
-        ImGui::GetIO().AddMouseButtonEvent(1, isRightPressed);
+        io.AddMouseButtonEvent(1, isRightPressed);
         lastRightPressed = isRightPressed;
     }
 
@@ -436,7 +437,7 @@ void RenderMain() {
     
     if (g_inited) {
         static ImVec2 lastSize = ImVec2(0, 0);
-        ImVec2 currentSize = ImGui::GetIO().DisplaySize;
+        ImVec2 currentSize = io.DisplaySize;
     
         if (g_hardRecalculation || currentSize.x != lastSize.x || currentSize.y != lastSize.y) {
             g_hardRecalculation = false;

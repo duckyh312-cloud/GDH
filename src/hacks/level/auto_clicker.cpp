@@ -37,7 +37,8 @@ class $modify(AutoclickerGJBaseGameLayer, GJBaseGameLayer) {
 
     void processQueuedButtons(float dt, bool clearInputQueue) {
         GJBaseGameLayer::processQueuedButtons(dt, clearInputQueue);
-
+        if (m_levelEndAnimationStarted) return;
+        
         auto& config = Config::get();
         int push_length = config.get<int>("level.autoclicker::push_length", 4);
         int release_length = config.get<int>("level.autoclicker::release_length", 4);

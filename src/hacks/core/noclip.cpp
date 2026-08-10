@@ -2,6 +2,7 @@
 #include <Geode/modify/PlayLayer.hpp>
 #include "../../core/gui.hpp"
 #include "../../core/config.hpp"
+#include "../../core/labels.hpp"
 #include "../../core/utils.hpp"
 #include "../../interface/imgui/widget_helper.hpp"
 #include "../../interface/cocos/hack_settings_popup.hpp"
@@ -26,7 +27,11 @@ class $modify(NoclipPlayLayer, PlayLayer) {
             fadeKey = hack.formatAdditionalSetting("tint_fade"),
             colorKey = hack.formatAdditionalSetting("tint_color"),
             p1 = hack.formatAdditionalSetting("p1"),
-            p2 = hack.formatAdditionalSetting("p2")
+            p2 = hack.formatAdditionalSetting("p2"),
+            limitAccKey = hack.formatAdditionalSetting("limit_acc"),
+            limitAccValKey = hack.formatAdditionalSetting("limit_acc_val"),
+            limitDeathsKey = hack.formatAdditionalSetting("limit_deaths"),
+            limitDeathsValKey = hack.formatAdditionalSetting("limit_deaths_val")
         ]{
             ImGuiWidgetConfig::Checkbox("Tint On Death", tintOnDeathKey, false);
             ImGuiWidgetConfig::DragInt("##Tint Opacity", opacityKey, 1.f, 0, 255, 100, "Tint Opacity: %d");
@@ -35,6 +40,12 @@ class $modify(NoclipPlayLayer, PlayLayer) {
             ImGui::Separator();
             ImGuiWidgetConfig::Checkbox("Player 1", p1, true);
             ImGuiWidgetConfig::Checkbox("Player 2", p2, true);
+            ImGui::Separator();
+            ImGuiWidgetConfig::Checkbox("Limit Accuracy", limitAccKey, false);
+            ImGuiWidgetConfig::DragFloat("##Limit Acc Val", limitAccValKey, 0.5f, 0.0f, 100.0f, 80.0f, "Min Accuracy: %.1f%%");
+            ImGui::Separator();
+            ImGuiWidgetConfig::Checkbox("Limit Deaths", limitDeathsKey, false);
+            ImGuiWidgetConfig::DragInt("##Limit Deaths Val", limitDeathsValKey, 1.f, 0, 100, 5, "Max Deaths: %d");
         });
         
         hack.setCustomWindowCocos([
@@ -43,7 +54,11 @@ class $modify(NoclipPlayLayer, PlayLayer) {
             fadeKey = hack.formatAdditionalSetting("tint_fade"),
             colorKey = hack.formatAdditionalSetting("tint_color"),
             p1 = hack.formatAdditionalSetting("p1"),
-            p2 = hack.formatAdditionalSetting("p2")
+            p2 = hack.formatAdditionalSetting("p2"),
+            limitAccKey = hack.formatAdditionalSetting("limit_acc"),
+            limitAccValKey = hack.formatAdditionalSetting("limit_acc_val"),
+            limitDeathsKey = hack.formatAdditionalSetting("limit_deaths"),
+            limitDeathsValKey = hack.formatAdditionalSetting("limit_deaths_val")
         ](cocos2d::CCNode* popupNode) {
             auto* popup = static_cast<HackSettingsPopup*>(popupNode);
             popup->addConfigToggle("Tint On Death", tintOnDeathKey, false);
@@ -53,6 +68,12 @@ class $modify(NoclipPlayLayer, PlayLayer) {
             popup->addSeparator();
             popup->addConfigToggle("Player 1", p1, true);
             popup->addConfigToggle("Player 2", p2, true);
+            popup->addSeparator();
+            popup->addConfigToggle("Limit Accuracy", limitAccKey, false);
+            popup->addConfigFloatInput("Min Accuracy %", limitAccValKey, 0.f, 100.f, 80.0f);
+            popup->addSeparator();
+            popup->addConfigToggle("Limit Deaths", limitDeathsKey, false);
+            popup->addConfigIntInput("Max Deaths", limitDeathsValKey, 0, 100, 5);
         });
     }
 
@@ -80,8 +101,28 @@ class $modify(NoclipPlayLayer, PlayLayer) {
 
         auto& config = Config::get();
 
-        bool shouldDestroy = config.get<bool>("core.noclip", false) ? ((player == m_player1 && !config.get<bool>("core.noclip::p1", true)) || 
+        bool noclipEnabled = config.get<bool>("core.noclip", false);
+
+        bool shouldDestroy = noclipEnabled ? ((player == m_player1 && !config.get<bool>("core.noclip::p1", true)) || 
             (player == m_player2 && !config.get<bool>("core.noclip::p2", true))) : true;
+
+        if (noclipEnabled && !shouldDestroy) {
+            auto& accuracy = NoclipAccuracy::get();
+
+            if (config.get<bool>("core.noclip::limit_deaths", false)) {
+                int maxDeaths = config.get<int>("core.noclip::limit_deaths_val", 5);
+                if (accuracy.deaths_full + 1 > maxDeaths) {
+                    shouldDestroy = true;
+                }
+            }
+
+            if (config.get<bool>("core.noclip::limit_acc", false)) {
+                float minAcc = config.get<float>("core.noclip::limit_acc_val", 80.0f);
+                if (accuracy.getPercentage() < minAcc) {
+                    shouldDestroy = true;
+                }
+            }
+        }
             
         if (shouldDestroy) PlayLayer::destroyPlayer(player, obj);
 

@@ -34,7 +34,7 @@ class $modify(AutoSafeModeEndLevelLayer, EndLevelLayer) {
         
         text += "Auto Safe Mode (GDH)";
 
-        if (auto* label = CCLabelBMFont::create(text.c_str(), "GoogleSans.fnt"_spr)) {
+        if (auto* label = geode::Label::create(text, "GoogleSans.fnt"_spr)) {
             label->setScale(0.40f);
             label->setAnchorPoint({0.0f, 0.0f});
             label->setPosition({3.0f, 3.0f});

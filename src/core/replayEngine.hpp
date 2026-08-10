@@ -49,10 +49,12 @@ namespace GDH {
 
         void handle_reset(bool pause = false);
 
-        void handle_button(bool down, int button, bool isPlayer2);
+        void handle_button(bool down, int button, bool isPlayer1);
 
         std::vector<physic_data>& get_physic_frames() { return m_physicFrames; }
         std::vector<input_data>& get_input_frames() { return m_inputFrames; }
+
+        void customHandleButton(GJBaseGameLayer* self, bool down, PlayerButton button, bool player1);
     private:
         ReplayEngine() = default;
 
