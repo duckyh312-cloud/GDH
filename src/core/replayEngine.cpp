@@ -240,7 +240,10 @@ std::string ReplayEngine::load(const std::string& replay_name) {
 
     float tps;
     in.read(reinterpret_cast<char*>(&tps), sizeof(tps));
-    Config::get().set<float>("invisible.tps::value", tps);
+
+    auto& config = Config::get();
+    config.set<float>("invisible.tps::value", tps);
+    config.set<float>("invisible.lock_delta::value", tps);
 
     uint64_t physicSize = 0;
     in.read(reinterpret_cast<char*>(&physicSize), sizeof(physicSize));

@@ -64,7 +64,7 @@ class $modify(StraightFlyGJBaseGameLayer, GJBaseGameLayer) {
     }
 
     void processStraightFlyForPlayer(PlayerObject* player, float& startY, bool isPlayer2) {
-        if (!player) return;
+        if (!player && !player->m_isShip) return;
 
         auto& config = Config::get();
         float accuracy = config.get<float>("level.straightfly::accuracy", 40.0f);
