@@ -22,6 +22,7 @@ Hacks Changes:
 - Added Dual Clicks
 - Added Straight Fly Bot
 - Added more Label Variables
+- Fixed Menu Gameplay not working on mobile
 
 Replay Engine Changes:
 - Fixed "Allow Buttons" limitation

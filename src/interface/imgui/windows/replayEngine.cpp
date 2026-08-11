@@ -618,13 +618,6 @@ $execute {
         static std::vector<std::filesystem::path> replay_list;
         static bool isProSettingsOpen = true;
 
-        auto enableHackIfDisabled = [&](const char* windowName, const char* hackName) {
-            auto& hack = gui.getWindow(windowName).findHackByName(hackName);
-            if (!hack.getEnabled()) {
-                hack.toggle();
-            }
-        };
-
         if (ImGuiH::RadioButton("Disable", engine.mode == state::disable)) {
             engine.mode = state::disable;
         }
@@ -636,9 +629,7 @@ $execute {
                     ImGui::OpenPopup("Record Overwrite Warning");
                 } else {
                     engine.clear();
-                    enableHackIfDisabled("Level", "Practice Fix");
-                    enableHackIfDisabled("Invisible", "TPS");
-                    enableHackIfDisabled("Level", "Respawn Lag Fix");
+                    engine.setupHacks(true);
                     engine.mode = state::record;
                 }
             }
@@ -646,7 +637,7 @@ $execute {
         ImGui::SameLine();
         
         if (ImGuiH::RadioButton("Play", engine.mode == state::play)) {
-            enableHackIfDisabled("Invisible", "TPS");
+            engine.setupHacks(false);
             engine.mode = state::play;
         }
         
@@ -712,9 +703,7 @@ $execute {
             ImGuiH::SpaceSeparator();
             if (ImGuiH::Button("Yes, Overwrite", {ImGui::GetContentRegionAvail().x / 2, 0})) {
                 engine.clear();
-                enableHackIfDisabled("Level", "Practice Fix");
-                enableHackIfDisabled("Invisible", "TPS");
-                enableHackIfDisabled("Level", "Respawn Lag Fix");
+                engine.setupHacks(true);
                 engine.mode = state::record;
                 ImGui::CloseCurrentPopup();
             }

@@ -1,5 +1,7 @@
 #include "replayEngine.hpp"
 #include "config.hpp"
+#include "gui.hpp"
+#include "../interface/imgui/widgetH.hpp"
 
 using namespace GDH;
 
@@ -308,4 +310,32 @@ void ReplayEngine::customHandleButton(GJBaseGameLayer* self, bool down, PlayerBu
             self->m_jumping = true;
         }
     }
+}
+
+void ReplayEngine::setupHacks(bool isRecord) {
+    auto& gui = GDH::Gui::get();
+
+    auto ToggleHack = [&gui](const char* windowName, const char* hackName, bool enabled) {
+        auto& hack = gui.getWindow(windowName).findHackByName(hackName);
+        enabled ? hack.enable() : hack.disable();
+    };
+
+    ToggleHack("Invisible", "TPS", true);
+    ToggleHack("Level", "Click Between Steps", false);
+    ToggleHack("Level", "Click On Steps", false);
+    ToggleHack("Level", "Click Between Frames", false);
+
+    if (isRecord) {
+        ToggleHack("Level", "Practice Fix", true);
+        ToggleHack("Level", "Respawn Lag Fix", true);
+    }
+
+    #ifdef GEODE_IS_WINDOWS
+    if (isRecord) {
+        auto& hack = gui.getWindow("Invisible").findHackByName("Lock Delta");
+        if (!hack.getEnabled()) {
+            ImGuiH::AddPopup("Recommended to enable Lock Delta for more accurate macro recording (in Framerate Window)");
+        }
+    }
+    #endif
 }

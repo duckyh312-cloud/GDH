@@ -735,13 +735,7 @@ $execute {
                 if (!sender->isOn()) {
                     engine.clear();
                     engine.mode = state::record;
-
-                    auto& gui = GDH::Gui::get();
-                    auto& practiceFix = gui.getWindow("Level").findHackByName("Practice Fix");   
-                    if (!practiceFix.getEnabled()) practiceFix.toggle();
-                    
-                    auto& tps_bypass = gui.getWindow("Invisible").findHackByName("TPS");       
-                    if (!tps_bypass.getEnabled()) tps_bypass.toggle();
+                    engine.setupHacks(true);
                 } else {
                     engine.mode = state::disable;
                 }
@@ -763,9 +757,7 @@ $execute {
 
                 engine.mode = !sender->isOn() ? state::play : state::disable;
 
-                auto& gui = GDH::Gui::get();
-                auto& tps_bypass = gui.getWindow("Invisible").findHackByName("TPS");       
-                if (!tps_bypass.getEnabled()) tps_bypass.toggle();
+                engine.setupHacks(false);
             });
 
         playToggle->setPosition({123.f, 235.f});

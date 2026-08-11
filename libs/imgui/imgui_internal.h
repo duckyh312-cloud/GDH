@@ -496,7 +496,7 @@ IM_MSVC_RUNTIME_CHECKS_OFF
 inline float  ImPow(float x, float y)    { return powf(x, y); }          // DragBehaviorT/SliderBehaviorT uses ImPow with either float/double and need the precision
 inline double ImPow(double x, double y)  { return pow(x, y); }
 inline float  ImLog(float x)             { return logf(x); }             // DragBehaviorT/SliderBehaviorT uses ImLog with either float/double and need the precision
-inline double ImLog(double x)            { return log(x); }
+inline double ImLog(double x)            { return ::log(x); }
 inline int    ImAbs(int x)               { return x < 0 ? -x : x; }
 inline float  ImAbs(float x)             { return fabsf(x); }
 inline double ImAbs(double x)            { return fabs(x); }

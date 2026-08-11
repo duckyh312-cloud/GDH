@@ -55,6 +55,7 @@ namespace GDH {
         std::vector<input_data>& get_input_frames() { return m_inputFrames; }
 
         void customHandleButton(GJBaseGameLayer* self, bool down, PlayerButton button, bool player1);
+        void setupHacks(bool isRecord);
     private:
         ReplayEngine() = default;
 
