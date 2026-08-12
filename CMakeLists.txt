@@ -28,6 +28,7 @@ if(DEFINED ENV{CI})
     set_target_properties(
         ${PROJECT_NAME} PROPERTIES
         UNITY_BUILD ON
+        UNITY_BUILD_BATCH_SIZE 14
         UNITY_BUILD_UNIQUE_ID "GEODE_UNITY_NS_ID"
     )
 endif()

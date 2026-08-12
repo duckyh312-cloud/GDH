@@ -16,6 +16,7 @@ stages:
   stage: build
   variables:
     BUILD_CONFIG: "Release"
+    CMAKE_BUILD_PARALLEL_LEVEL: "4"
   before_script:
     - apt-get update && apt-get install -y p7zip-full
     - mkdir -p .cache/ffmpeg
