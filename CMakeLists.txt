@@ -24,15 +24,6 @@ endif()
 
 add_subdirectory($ENV{GEODE_SDK} ${CMAKE_CURRENT_BINARY_DIR}/geode)
 
-if(DEFINED ENV{CI})
-    set_target_properties(
-        ${PROJECT_NAME} PROPERTIES
-        UNITY_BUILD ON
-        UNITY_BUILD_BATCH_SIZE 14
-        UNITY_BUILD_UNIQUE_ID "GEODE_UNITY_NS_ID"
-    )
-endif()
-
 target_include_directories(${PROJECT_NAME} PRIVATE libs libs/imgui)
 
 set(HAS_IMGUI ON)
@@ -73,3 +64,16 @@ if (ANDROID AND ANDROID_ABI STREQUAL "armeabi-v7a")
 endif()
 
 setup_geode_mod(${PROJECT_NAME})
+
+if(DEFINED ENV{CI})
+    set_target_properties(
+        ${PROJECT_NAME} PROPERTIES
+        UNITY_BUILD ON
+        UNITY_BUILD_BATCH_SIZE 45
+        UNITY_BUILD_UNIQUE_ID "GEODE_UNITY_NS_ID"
+    )
+
+    set_target_properties(GeodeBindings PROPERTIES
+        UNITY_BUILD_BATCH_SIZE 300
+    )
+endif()

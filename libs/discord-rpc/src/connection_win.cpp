@@ -12,11 +12,11 @@ struct BaseConnectionWin : public BaseConnection {
     HANDLE pipe{INVALID_HANDLE_VALUE};
 };
 
-static BaseConnectionWin Connection;
+static BaseConnectionWin g_WinConnection;
 
 BaseConnection* BaseConnection::Create()
 {
-    return &Connection;
+    return &g_WinConnection;
 }
 
 void BaseConnection::Destroy(BaseConnection*& c)

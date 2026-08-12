@@ -9,7 +9,7 @@
 #include "../../core/recorder/recorder.hpp"
 #include "../../core/recorder/audio_recorder.hpp"
 
-static float left_over = 0.f;
+static float g_left_over = 0.f;
 
 GUI_HACK_CREATE("Invisible", "Lock Delta", "", true);
 
@@ -49,7 +49,7 @@ class $modify(LockDeltaCCScheduler, cocos2d::CCScheduler) {
             #endif
 
 
-            left_over = 0.f;
+            g_left_over = 0.f;
             return;
         }
 
@@ -72,7 +72,7 @@ class $modify(LockDeltaCCScheduler, cocos2d::CCScheduler) {
         auto start = std::chrono::high_resolution_clock::now();
         using namespace std::literals;
         
-        unsigned times = static_cast<int>((dt + left_over) / new_dt);  
+        unsigned times = static_cast<int>((dt + g_left_over) / new_dt);  
         for (unsigned i = 0; i < times; ++i) {
             CCScheduler::update(new_dt);
 
@@ -82,7 +82,7 @@ class $modify(LockDeltaCCScheduler, cocos2d::CCScheduler) {
             }
         }
 
-        left_over = std::max(0.f, left_over + dt - new_dt * times);
+        g_left_over = std::max(0.f, g_left_over + dt - new_dt * times);
     }
 };
 
@@ -95,7 +95,7 @@ class $modify(LockDeltalayLayer, PlayLayer) {
     }
 
     void resetLevel() {
-        left_over = 0;
+        g_left_over = 0;
         PlayLayer::resetLevel();
     }
 };

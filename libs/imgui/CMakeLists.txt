@@ -10,3 +10,9 @@ add_library(imgui STATIC
 )
 
 target_include_directories(imgui PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+
+set_target_properties(imgui PROPERTIES
+    UNITY_BUILD ON
+    UNITY_BUILD_BATCH_SIZE 10
+    UNITY_BUILD_UNIQUE_ID "IMGUI_UNITY_ID"
+)
