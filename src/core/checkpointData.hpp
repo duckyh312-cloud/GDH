@@ -10,10 +10,10 @@ struct checkpoint_data {
     double m_dashY;
     double m_dashAngle;
     double m_dashStartTime;
-    DashRingObject* m_dashRing;
+    // DashRingObject* m_dashRing;
     double m_slopeStartTime;
     bool m_justPlacedStreak;
-    GameObject* m_maybeLastGroundObject;
+    // GameObject* m_maybeLastGroundObject;
     // cocos2d::CCDictionary* m_collisionLogTop;
     // cocos2d::CCDictionary* m_collisionLogBottom;
     // cocos2d::CCDictionary* m_collisionLogLeft;
@@ -73,10 +73,10 @@ struct checkpoint_data {
     // PlayerFireBoostSprite* m_swingFireBottom;
     // PlayerFireBoostSprite* m_swingFireTop;
     // cocos2d::CCSprite* m_dashSpritesContainer;
-    cocos2d::CCMotionStreak* m_regularTrail;
-    cocos2d::CCMotionStreak* m_shipStreak;
+    // cocos2d::CCMotionStreak* m_regularTrail;
+    // cocos2d::CCMotionStreak* m_shipStreak;
 
-    HardStreak* m_waveTrail;
+    // HardStreak* m_waveTrail;
     std::vector<cocos2d::CCPoint> m_waveTrailPoints;
 
     double m_speedMultiplier;
@@ -112,10 +112,10 @@ struct checkpoint_data {
     double m_snapDistance;
     bool m_ringJumpRelated;
     GameObject* m_objectSnappedTo;
-    CheckpointObject* m_pendingCheckpoint;
+    // CheckpointObject* m_pendingCheckpoint;
     int m_onFlyCheckpointTries;
-    GJRobotSprite* m_robotSprite;
-    GJSpiderSprite* m_spiderSprite;
+    // GJRobotSprite* m_robotSprite;
+    // GJSpiderSprite* m_spiderSprite;
     bool m_maybeSpriteRelated;
     // cocos2d::CCParticleSystemQuad* m_playerGroundParticles;
     // cocos2d::CCParticleSystemQuad* m_trailingParticles;
@@ -320,10 +320,10 @@ namespace GDH { namespace PracticeFix {
         state.m_dashY = player->m_dashY;
         state.m_dashAngle = player->m_dashAngle;
         state.m_dashStartTime = player->m_dashStartTime;
-        state.m_dashRing = player->m_dashRing;
+        // state.m_dashRing = player->m_dashRing;
         state.m_slopeStartTime = player->m_slopeStartTime;
         state.m_justPlacedStreak = player->m_justPlacedStreak;
-        state.m_maybeLastGroundObject = player->m_maybeLastGroundObject;
+        // state.m_maybeLastGroundObject = player->m_maybeLastGroundObject;
         // state.m_collisionLogTop = player->m_collisionLogTop;
         // state.m_collisionLogBottom = player->m_collisionLogBottom;
         // state.m_collisionLogLeft = player->m_collisionLogLeft;
@@ -389,10 +389,10 @@ namespace GDH { namespace PracticeFix {
         // state.m_swingFireBottom = player->m_swingFireBottom;
         // state.m_swingFireTop = player->m_swingFireTop;
         // state.m_dashSpritesContainer = player->m_dashSpritesContainer;
-        state.m_regularTrail = player->m_regularTrail;
-        state.m_shipStreak = player->m_shipStreak;
+        // state.m_regularTrail = player->m_regularTrail;
+        // state.m_shipStreak = player->m_shipStreak;
         
-        state.m_waveTrail = player->m_waveTrail;
+        // state.m_waveTrail = player->m_waveTrail;
         if (player && player->m_waveTrail && player->m_waveTrail->m_pointArray) {
             auto points = player->m_waveTrail->m_pointArray;
             
@@ -436,10 +436,10 @@ namespace GDH { namespace PracticeFix {
         state.m_snapDistance = player->m_snapDistance;
         state.m_ringJumpRelated = player->m_ringJumpRelated;
         state.m_objectSnappedTo = player->m_objectSnappedTo;
-        state.m_pendingCheckpoint = player->m_pendingCheckpoint;
+        // state.m_pendingCheckpoint = player->m_pendingCheckpoint;
         state.m_onFlyCheckpointTries = player->m_onFlyCheckpointTries;
-        state.m_robotSprite = player->m_robotSprite;
-        state.m_spiderSprite = player->m_spiderSprite;
+        // state.m_robotSprite = player->m_robotSprite;
+        // state.m_spiderSprite = player->m_spiderSprite;
         state.m_maybeSpriteRelated = player->m_maybeSpriteRelated;
         // state.m_playerGroundParticles = player->m_playerGroundParticles;
         // state.m_trailingParticles = player->m_trailingParticles;
@@ -648,10 +648,10 @@ namespace GDH { namespace PracticeFix {
         player->m_dashY = state.m_dashY;
         player->m_dashAngle = state.m_dashAngle;
         player->m_dashStartTime = state.m_dashStartTime;
-        player->m_dashRing = state.m_dashRing;
+        // player->m_dashRing = state.m_dashRing;
         player->m_slopeStartTime = state.m_slopeStartTime;
         player->m_justPlacedStreak = state.m_justPlacedStreak;
-        player->m_maybeLastGroundObject = state.m_maybeLastGroundObject;
+        // player->m_maybeLastGroundObject = state.m_maybeLastGroundObject;
         // player->m_collisionLogTop = state.m_collisionLogTop;
         // player->m_collisionLogBottom = state.m_collisionLogBottom;
         // player->m_collisionLogLeft = state.m_collisionLogLeft;
@@ -715,10 +715,10 @@ namespace GDH { namespace PracticeFix {
         // player->m_swingFireBottom = state.m_swingFireBottom;
         // player->m_swingFireTop = state.m_swingFireTop;
         // player->m_dashSpritesContainer = state.m_dashSpritesContainer;
-        player->m_regularTrail = state.m_regularTrail;
-        player->m_shipStreak = state.m_shipStreak;
+        // player->m_regularTrail = state.m_regularTrail;
+        // player->m_shipStreak = state.m_shipStreak;
 
-        player->m_waveTrail = state.m_waveTrail;
+        // player->m_waveTrail = state.m_waveTrail;
         if (player && player->m_waveTrail && player->m_waveTrail->m_pointArray) {
             auto points = player->m_waveTrail->m_pointArray;
             points->removeAllObjects();
@@ -766,10 +766,10 @@ namespace GDH { namespace PracticeFix {
         player->m_ringJumpRelated = state.m_ringJumpRelated;
 
         player->m_objectSnappedTo = state.m_objectSnappedTo;
-        player->m_pendingCheckpoint = state.m_pendingCheckpoint;
+        // player->m_pendingCheckpoint = state.m_pendingCheckpoint;
         player->m_onFlyCheckpointTries = state.m_onFlyCheckpointTries;
-        player->m_robotSprite = state.m_robotSprite;
-        player->m_spiderSprite = state.m_spiderSprite;
+        // player->m_robotSprite = state.m_robotSprite;
+        // player->m_spiderSprite = state.m_spiderSprite;
         player->m_maybeSpriteRelated = state.m_maybeSpriteRelated;
         // player->m_playerGroundParticles = state.m_playerGroundParticles;
         // player->m_trailingParticles = state.m_trailingParticles;

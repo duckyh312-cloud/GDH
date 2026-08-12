@@ -14,6 +14,8 @@ stages:
 
 .geode-cli-build:
   stage: build
+  variables:
+    BUILD_CONFIG: "Release"
   before_script:
     - apt-get update && apt-get install -y p7zip-full
     - mkdir -p .cache/ffmpeg
@@ -31,7 +33,7 @@ stages:
 
   script:
     - geode sdk update && geode sdk install-binaries -p "$GEODE_PLATFORM"
-    - geode build -p "$GEODE_PLATFORM" --config Release -- -G Ninja
+    - geode build -p "$GEODE_PLATFORM" --config "$BUILD_CONFIG" -- -G Ninja
     - mkdir -p artifacts/$GEODE_PLATFORM
     - find build* -type f -name "*.geode" -exec mv {} artifacts/$GEODE_PLATFORM/ \; || true
     - find build* -type f -name "*.pdb" -exec mv {} artifacts/$GEODE_PLATFORM/ \; || true
@@ -47,6 +49,7 @@ build-windows:
   image: prevter/geode-sdk:windows
   variables:
     GEODE_PLATFORM: "windows"
+    BUILD_CONFIG: "RelWithDebInfo"
 
 build-android32:
   extends: .geode-cli-build

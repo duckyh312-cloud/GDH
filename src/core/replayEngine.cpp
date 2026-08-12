@@ -2,6 +2,7 @@
 #include "config.hpp"
 #include "gui.hpp"
 #include "../interface/imgui/widgetH.hpp"
+#include "labels.hpp"
 
 using namespace GDH;
 
@@ -136,6 +137,9 @@ void ReplayEngine::handle_commands(GJBaseGameLayer* self) {
         self->m_allowedButtons.clear();
         #endif
 
+        if (m_inputFrames[m_inputIndex].down)
+            CpsCounter::get().click();
+        
         customHandleButton(self, m_inputFrames[m_inputIndex].down, static_cast<PlayerButton>(m_inputFrames[m_inputIndex].button), isPlayer1);
         m_inputIndex++;
     }
