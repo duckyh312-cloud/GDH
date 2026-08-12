@@ -17,6 +17,10 @@ class $modify(LockDeltaCCScheduler, cocos2d::CCScheduler) {
     static void onModify(auto& self) {
         auto& gui = GDH::Gui::get();
         auto& hack = gui.getWindow("Invisible").findHackByName("Lock Delta");
+
+        auto &config = Config::get();
+        float value = config.get<float>("invisible.lock_delta::value", 240.f); 
+        config.set<float>("invisible.lock_delta::value", std::clamp(value, 10.f, 240.f));
     }
 
     void update(float dt) {

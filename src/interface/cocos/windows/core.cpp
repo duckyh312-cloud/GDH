@@ -15,7 +15,7 @@ $execute {
         tab->addSeparator();
         tab->prepareNewRow();
 
-        tab->addConfigFloatInput("TPS Value", "invisible.tps::value", 240.f, 1.f, 50000.f);
+        tab->addConfigFloatInput("TPS Value", "invisible.tps::value", 240.f, 1.f, FLT_MAX);
         tab->addHackToggle("TPS Enabled", "invisible.tps");
         
         tab->addSeparator();

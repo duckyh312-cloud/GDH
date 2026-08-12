@@ -29,7 +29,35 @@ static float getMultiplier(GameObject* obj) {
     return 1.f;
 }
 
-class $modify(HitboxGameObject, GameObject) {
+class $modify(HitboxMultiplierGameObject, GameObject) {
+    static void onModify(auto& self) {
+        auto& gui = GDH::Gui::get();
+        auto& hack = gui.getWindow("Level").findHackByName("Hitbox Multiplier");
+        hack.addHookPtr(self.getHook("GameObject::getObjectRect").unwrap());
+        hack.addHookPtr(self.getHook("GameObject::updateOrientedBox").unwrap());
+
+        hack.setCustomWindowImGui([
+            pKey = hack.formatAdditionalSetting("player"),
+            sKey = hack.formatAdditionalSetting("solid"),
+            hKey = hack.formatAdditionalSetting("hazard")
+        ] {
+            ImGuiWidgetConfig::DragFloat("##Player Multiplier", pKey, 0.05f, 0.f, 10.f, 1.f, "Player Multiplier: %.2fx");
+            ImGuiWidgetConfig::DragFloat("##Solid Multiplier", sKey, 0.05f, 0.f, 10.f, 1.f, "Solid Multiplier: %.2fx");
+            ImGuiWidgetConfig::DragFloat("##Hazard Multiplier", hKey, 0.05f, 0.f, 10.f, 1.f, "Hazard Multiplier: %.2fx");
+        });
+
+        hack.setCustomWindowCocos([
+            pKey = hack.formatAdditionalSetting("player"),
+            sKey = hack.formatAdditionalSetting("solid"),
+            hKey = hack.formatAdditionalSetting("hazard")
+        ](cocos2d::CCNode* popupNode) {
+            auto* popup = static_cast<HackSettingsPopup*>(popupNode);
+            popup->addConfigFloatInput("Player", pKey, 0.f, 10.f, 1.f);
+            popup->addConfigFloatInput("Solid", sKey, 0.f, 10.f, 1.f);
+            popup->addConfigFloatInput("Hazard", hKey, 0.f, 10.f, 1.f);
+        });
+    }
+
     struct Fields { float m_origRadius = -1.f; };
 
     cocos2d::CCRect getObjectRect(float x, float y) {
@@ -51,7 +79,7 @@ static void forceHitboxRecalculation() {
     for (auto obj : g_affectedObjs) {
         obj->setObjectRectDirty(true);
         obj->setOrientedRectDirty(true);
-        obj->m_objectRadius = static_cast<HitboxGameObject*>(obj)->m_fields->m_origRadius;
+        obj->m_objectRadius = static_cast<HitboxMultiplierGameObject*>(obj)->m_fields->m_origRadius;
     }
     g_affectedObjs.clear();
 }
@@ -80,17 +108,24 @@ class $modify(HitboxMultiplierOBB2D, OBB2D) {
 };
 
 class $modify(HitboxMultiplierPlayLayer, PlayLayer) {
+    struct Fields { ~Fields() { resetState(); } };
+
     bool init(GJGameLevel* level, bool useReplay, bool dontCreateObjects) {
+        m_fields.self();
+
         resetState();
         return PlayLayer::init(level, useReplay, dontCreateObjects);
     }
 
     void resetLevel() { forceHitboxRecalculation(); PlayLayer::resetLevel(); }
-    void onQuit() { resetState(); PlayLayer::onQuit(); }
 };
 
 class $modify(HitboxMultiplierEditorLayer, LevelEditorLayer) {
+    struct Fields { ~Fields() { resetState(); } };
+
     bool init(GJGameLevel* level, bool noUI) {
+        m_fields.self();
+
         resetState();
         bool result = LevelEditorLayer::init(level, noUI);
         resetState();
@@ -99,28 +134,3 @@ class $modify(HitboxMultiplierEditorLayer, LevelEditorLayer) {
 
     void onPlaytest() { forceHitboxRecalculation(); LevelEditorLayer::onPlaytest(); }
 };
-
-$execute {
-    auto& hack = GDH::Gui::get().getWindow("Level").findHackByName("Hitbox Multiplier");
-
-    hack.setCustomWindowImGui([
-        pKey = hack.formatAdditionalSetting("player"),
-        sKey = hack.formatAdditionalSetting("solid"),
-        hKey = hack.formatAdditionalSetting("hazard")
-    ] {
-        ImGuiWidgetConfig::DragFloat("##Player Multiplier", pKey, 0.05f, 0.f, 10.f, 1.f, "Player Multiplier: %.2fx");
-        ImGuiWidgetConfig::DragFloat("##Solid Multiplier", sKey, 0.05f, 0.f, 10.f, 1.f, "Solid Multiplier: %.2fx");
-        ImGuiWidgetConfig::DragFloat("##Hazard Multiplier", hKey, 0.05f, 0.f, 10.f, 1.f, "Hazard Multiplier: %.2fx");
-    });
-
-    hack.setCustomWindowCocos([
-        pKey = hack.formatAdditionalSetting("player"),
-        sKey = hack.formatAdditionalSetting("solid"),
-        hKey = hack.formatAdditionalSetting("hazard")
-    ](cocos2d::CCNode* popupNode) {
-        auto* popup = static_cast<HackSettingsPopup*>(popupNode);
-        popup->addConfigFloatInput("Player", pKey, 0.f, 10.f, 1.f);
-        popup->addConfigFloatInput("Solid", sKey, 0.f, 10.f, 1.f);
-        popup->addConfigFloatInput("Hazard", hKey, 0.f, 10.f, 1.f);
-    });
-}

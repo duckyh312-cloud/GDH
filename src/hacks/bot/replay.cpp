@@ -29,6 +29,10 @@ class $modify(ReplayCCScheduler, cocos2d::CCScheduler) {
         hack.setCheating(true);     
         hack.setEarlyInit(false);
 
+        auto &config = Config::get();
+        float value = config.get<float>("invisible.tps::value", 240.f); 
+        config.set<float>("invisible.tps::value", std::clamp(value, 10.f, 240.f));
+
         hack.setHandler([](bool enabled) {
             auto expectedTicksAddr = (uintptr_t)&expectedTicks;
             std::vector<uint8_t> patchBytes;

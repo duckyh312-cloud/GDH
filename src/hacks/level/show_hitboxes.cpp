@@ -43,17 +43,28 @@ static void drawRect(cocos2d::CCDrawNode* node, cocos2d::CCRect const& rect,
 static void drawOrientedOrRect(GJBaseGameLayer* layer, cocos2d::CCDrawNode* drawNode, GameObject* obj,
                                cocos2d::ccColor4F const& fill, float bw, cocos2d::ccColor4F const& border) 
 {
-    bool isEditor = layer->m_isEditor;
+    bool dirty = obj->m_isObjectRectDirty;
+    bool boxOff = obj->m_boxOffsetCalculated;
 
-    if (auto* ob = isEditor ? obj->getOrientedBox() : obj->m_orientedBox) {
-        drawNode->drawPolygon(ob->m_corners.data(), 4, fill, bw, border);
+    auto rect = obj->getObjectRect();
+
+    int rotation = static_cast<int>(obj->getRotation());
+    bool isRotated = (rotation % 90) != 0;
+
+    if (isRotated && (layer->m_isEditor || obj->m_shouldUseOuterOb)) {
+        obj->calculateOrientedBox();
+        
+        if (auto* ob = obj->getOrientedBox()) {
+            drawNode->drawPolygon(ob->m_corners.data(), 4, fill, bw, border);
+        } else {
+            drawRect(drawNode, rect, fill, bw, border);
+        }
     } else {
-        bool dirty = obj->m_isObjectRectDirty;
-        bool boxOff = obj->m_boxOffsetCalculated;
-        drawRect(drawNode, obj->getObjectRect(), fill, bw, border);
-        obj->m_isObjectRectDirty = dirty;
-        obj->m_boxOffsetCalculated = boxOff;
+        drawRect(drawNode, rect, fill, bw, border);
     }
+
+    obj->m_isObjectRectDirty = dirty;
+    obj->m_boxOffsetCalculated = boxOff;
 }
 
 static RingBuffer<cocos2d::CCRect> playerTrail1, playerTrail2;
@@ -163,10 +174,16 @@ void updateHitboxes(GJBaseGameLayer* layer, cocos2d::CCDrawNode* drawNode) {
 
     auto drawPlayer = [&](PlayerObject* player) {
         if (!player) return;
-        if (auto* ob = player->m_orientedBox)
-            drawNode->drawPolygon(ob->m_corners.data(), 4, getFillColor(playerRotateColor), size, playerRotateColor);
 
-        drawRect(drawNode, player->getObjectRect(), getFillColor(playerColor), size, playerColor);
+        if (player->m_isBall) {
+            drawRect(drawNode, player->getObjectRect(), getFillColor(playerColor), size, playerColor);
+        } else {
+            player->updateOrientedBox();
+            if (auto* ob = player->getOrientedBox()) {
+                drawNode->drawPolygon(ob->m_corners.data(), 4, getFillColor(playerRotateColor), size, playerRotateColor);
+            }
+            drawRect(drawNode, player->getObjectRect(), getFillColor(playerColor), size, playerColor);
+        }
         drawRect(drawNode, player->getObjectRect(0.3f, 0.3f), getFillColor(playerInnerColor), size, playerInnerColor);
     };
 

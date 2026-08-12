@@ -1,4 +1,5 @@
 #include <Geode/Geode.hpp>
+#include <Geode/binding/PlayLayer.hpp>
 #include <Geode/modify/CCScheduler.hpp>
 #include <Geode/modify/GJBaseGameLayer.hpp>
 #include <Geode/modify/PlayLayer.hpp>
@@ -45,7 +46,7 @@ class $modify(FrameStepperCCScheduler, cocos2d::CCScheduler) {
 
         hack.setCustomWindowImGui([]() {
             ImGuiWidgetConfig::DrawCustomKeybindButton("frame_stepper::step_key", "Step");
-            ImGuiWidgetConfig::DrawCustomKeybindButton("frame_stepper::advance_key", "Advance (Multi-Frame)");
+            ImGuiWidgetConfig::DrawCustomKeybindButton("frame_stepper::advance_key", "Multi-Step");
             ImGuiWidgetConfig::DrawCustomKeybindButton("frame_stepper::pause_key", "Pause");
             ImGuiWidgetConfig::DrawCustomKeybindButton("frame_stepper::back_key", "Back");
 
@@ -53,14 +54,14 @@ class $modify(FrameStepperCCScheduler, cocos2d::CCScheduler) {
             ImGui::Separator();
             ImGui::Spacing();
 
-            ImGuiWidgetConfig::DragInt("##AdvanceFramesCount", "frame_stepper::advance_frames_count", 1, 1, 100, 5, "Advance Frames Count: %d");
+            ImGuiWidgetConfig::DragInt("##AdvanceFramesCount", "frame_stepper::advance_frames_count", 1, 1, 100, 5, "Multi-Step Frames Count: %d");
             ImGuiWidgetConfig::Checkbox("Backward Stepping", "frame_stepper::backward", false);
             ImGuiWidgetConfig::DragInt("##BackFrameLength", "frame_stepper::back_frames_length", 1, 1, 1000, 240, "Back Frames Length: %d");
         });
 
         hack.setCustomWindowCocos([](cocos2d::CCNode* popupNode) {
             auto* popup = static_cast<HackSettingsPopup*>(popupNode);
-            popup->addConfigIntInput("Advance Frames Count", "frame_stepper::advance_frames_count", 1, 100, 5);
+            popup->addConfigIntInput("Multi-Step Frames Count", "frame_stepper::advance_frames_count", 1, 100, 5);
             popup->addConfigToggle("Backward Stepping", "frame_stepper::backward", false);
             popup->addConfigIntInput("Back Frames Length", "frame_stepper::back_frames_length", 1, 1000, 240);
         });
@@ -146,6 +147,9 @@ class $modify(FrameStepperPlayLayer, PlayLayer) {
         ~Fields() {
             g_checkpoints.clear();
         }
+
+        cocos2d::CCMenu* m_stepperMenu = nullptr;
+        bool isMenuVisible = false;
     };
 
     static void onModify(auto& self) {
@@ -154,9 +158,6 @@ class $modify(FrameStepperPlayLayer, PlayLayer) {
         
         hack.addHookPtr(self.getHook("PlayLayer::updateAttempts").unwrap());
         hack.addHookPtr(self.getHook("PlayLayer::resetLevel").unwrap());
-        #ifdef GEODE_IS_ANDROID
-        hack.addHookPtr(self.getHook("PlayLayer::createObjectsFromSetupFinished").unwrap());
-        #endif
     }
 
     bool init(GJGameLevel* level, bool useReplay, bool dontCreateObjects) {
@@ -203,9 +204,9 @@ class $modify(FrameStepperPlayLayer, PlayLayer) {
         auto next_step_click = geode::cocos::CCMenuItemExt::createSpriteExtra(next_arrow, [](CCMenuItemSpriteExtra* sender) {
             g_pause = true;
             g_nextFrame = true;
-        });       
+        });        
         
-        next_step_click->setPosition({120.f, director->getScreenTop() - next_step_click->getScaledContentHeight() - 5.f});
+        next_step_click->setPosition({50.f, director->getScreenTop() - next_step_click->getScaledContentHeight() - 5.f});
         next_step_click->setOpacity(200);
         next_step_click->setID("frame_stepper_next_btn"_spr);
 
@@ -217,21 +218,46 @@ class $modify(FrameStepperPlayLayer, PlayLayer) {
             g_prevFrame = true;
         });  
 
-        back_arrow_click->setPosition({120.f, director->getScreenTop() - back_arrow_click->getScaledContentHeight() * 2 - 10.f});
+        back_arrow_click->setPosition({50.f, director->getScreenTop() - back_arrow_click->getScaledContentHeight() * 2 - 10.f});
         back_arrow_click->setOpacity(200);
         back_arrow_click->setID("frame_stepper_back_btn"_spr);
 
-        auto m_stepperMenu = cocos2d::CCMenu::create();
-        m_stepperMenu->setID("frame_stepper_menu"_spr);
-        m_stepperMenu->setPosition(0, 0);
-        m_stepperMenu->setZOrder(999);
+        auto fields = m_fields.self();
+        fields->m_stepperMenu = cocos2d::CCMenu::create();
+        fields->m_stepperMenu->setID("frame_stepper_menu"_spr);
+        fields->m_stepperMenu->setPosition(0, 0);
+        fields->m_stepperMenu->setZOrder(999);
 
-        m_stepperMenu->addChild(next_step_click);
-        if (Config::get().get<bool>("frame_stepper::backward", false)) {
-            m_stepperMenu->addChild(back_arrow_click);
+        fields->m_stepperMenu->addChild(next_step_click);
+        fields->m_stepperMenu->addChild(back_arrow_click);
+
+        auto& config = Config::get();
+        bool enabled = config.get<bool>("level.frame_stepper", false);
+        if (m_fields->m_stepperMenu) {
+            m_fields->m_stepperMenu->setVisible(enabled);
         }
-        m_uiLayer->addChild(m_stepperMenu);
+
+        m_uiLayer->addChild(fields->m_stepperMenu);
     }
+    
+    void toggleUI() {
+        auto& config = Config::get();
+        bool enabled = config.get<bool>("level.frame_stepper", false);
+        if (m_fields->m_stepperMenu) {
+            m_fields->m_stepperMenu->setVisible(enabled);
+        }
+    }
+
+    void pauseGame(bool unfocused) {
+        PlayLayer::pauseGame(unfocused);
+        toggleUI();
+    }
+    
+    void resume() {
+        PlayLayer::resume();
+        toggleUI();
+    }
+
     #endif
 };
 

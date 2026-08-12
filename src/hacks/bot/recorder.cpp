@@ -30,8 +30,8 @@ class $modify(PlayLayer) {
         return true;
     }
 
-     void startMusic() {
-        PlayLayer::startMusic();
+    void resetLevel() {
+        PlayLayer::resetLevel();
 
         auto& recorder = GDH::Recorder::get();
         if (recorder.isRecording() && recorder.record_audio) {

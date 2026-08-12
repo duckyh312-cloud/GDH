@@ -6,7 +6,7 @@
 #include <Geode/modify/GJBaseGameLayer.hpp>
 #include "../../interface/cocos/hack_settings_popup.hpp"
 
-GUI_HACK_CREATE("Level", "Straight Fly", "", true);
+GUI_HACK_CREATE("Level", "Straight Fly Bot", "", true);
 
 static float m_startY1 = 0.0f;
 static float m_startY2 = 0.0f;
@@ -21,22 +21,22 @@ class $modify(StraightFlyGJBaseGameLayer, GJBaseGameLayer) {
 
     static void onModify(auto& self) {
         auto& gui = GDH::Gui::get();
-        auto& hack = gui.getWindow("Level").findHackByName("Straight Fly");        
+        auto& hack = gui.getWindow("Level").findHackByName("Straight Fly Bot");        
         
         hack.addHookPtr(self.getHook("GJBaseGameLayer::processQueuedButtons").unwrap());
         hack.addHookPtr(self.getHook("GJBaseGameLayer::teleportPlayer").unwrap());
 
         hack.setCustomWindowImGui([] {
-            ImGuiWidgetConfig::DragFloat("##straightfly::accuracy", "level.straightfly::accuracy", 1.f, 0.f, 100.f, 40.f, "Y Accuracy: %.1f");
-            ImGuiWidgetConfig::Checkbox("First Player", "level.straightfly::p1", true);
-            ImGuiWidgetConfig::Checkbox("Second Player", "level.straightfly::p2", false);
+            ImGuiWidgetConfig::DragFloat("##straightfly_bot::accuracy", "level.straightfly_bot::accuracy", 1.f, 0.f, 100.f, 40.f, "Y Accuracy: %.1f");
+            ImGuiWidgetConfig::Checkbox("First Player", "level.straightfly_bot::p1", true);
+            ImGuiWidgetConfig::Checkbox("Second Player", "level.straightfly_bot::p2", false);
         });
 
         hack.setCustomWindowCocos([](cocos2d::CCNode* popupNode) {
             auto* popup = static_cast<HackSettingsPopup*>(popupNode);
-            popup->addConfigFloatInput("Accuracy", "level.straightfly::accuracy", 0.f, 100.f, 40.f);
-            popup->addConfigToggle("First Player", "level.straightfly::p1", true);
-            popup->addConfigToggle("Second Player", "level.straightfly::p2", false);
+            popup->addConfigFloatInput("Accuracy", "level.straightfly_bot::accuracy", 0.f, 100.f, 40.f);
+            popup->addConfigToggle("First Player", "level.straightfly_bot::p1", true);
+            popup->addConfigToggle("Second Player", "level.straightfly_bot::p2", false);
         });
 
         hack.setHandler([](bool enabled) {
@@ -67,7 +67,7 @@ class $modify(StraightFlyGJBaseGameLayer, GJBaseGameLayer) {
         if (!player && !player->m_isShip) return;
 
         auto& config = Config::get();
-        float accuracy = config.get<float>("level.straightfly::accuracy", 40.0f);
+        float accuracy = config.get<float>("level.straightfly_bot::accuracy", 40.0f);
 
         if (startY == 0.0f) {
             startY = player->m_position.y;
@@ -97,10 +97,10 @@ class $modify(StraightFlyGJBaseGameLayer, GJBaseGameLayer) {
         if (m_levelEndAnimationStarted) return;
 
         auto& config = Config::get();
-        if (config.get<bool>("level.straightfly::p1", true)) {
+        if (config.get<bool>("level.straightfly_bot::p1", true)) {
             processStraightFlyForPlayer(m_player1, m_startY1, false);
         }
-        if (config.get<bool>("level.straightfly::p2", false)) {
+        if (config.get<bool>("level.straightfly_bot::p2", false)) {
             processStraightFlyForPlayer(m_player2, m_startY2, true);
         }
     }
