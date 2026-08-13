@@ -88,6 +88,8 @@ void drawLabelCornerControls(GDH::Labels::Corner corner) {
             if (!label.enabled) ImGui::BeginDisabled(true);
             if (label.type == GDH::Labels::LabelType::Text) {
                 ImGui::InputText("##TextInput", &label.text);
+            } else if (label.type == GDH::Labels::LabelType::CheatIndicator) {
+                ImGui::TextUnformatted("Cheat Indicator (.)");
             } else if (label.type == GDH::Labels::LabelType::Spacing) {
                 ImGuiH::DragFloat("##Spacing", &label.size, 1.0f, 1.0f, 256.0f, "Spacing: %.1fpx");
             }
@@ -165,7 +167,13 @@ $execute {
                     ImGui::CloseCurrentPopup();
                 }
             }
-            
+
+            if (ImGuiH::Button("Cheat Indicator", {layout.multipleScale(290.f), 0.f})) {
+                manager.labels[g_popupCorner].push_back(GDH::Labels::Label(1.f, GDH::Labels::LabelType::CheatIndicator));
+                g_updateSize = true;
+                ImGui::CloseCurrentPopup();
+            }
+
             if (ImGuiH::Button("Spacing", {layout.multipleScale(290.f), 0.f})) {
                 manager.labels[g_popupCorner].push_back(GDH::Labels::Label(g_newLabelSize));
                 g_updateSize = true;
@@ -193,11 +201,15 @@ $execute {
             ImGuiH::Checkbox("Enabled", &currentLabel.enabled);
             if (!currentLabel.enabled) ImGui::BeginDisabled(true);
             
-            const char* typeName = (currentLabel.type == GDH::Labels::LabelType::Text) ? "Text" : "Spacing";
+            const char* typeName = (currentLabel.type == GDH::Labels::LabelType::Text) ? "Text" :
+                                   (currentLabel.type == GDH::Labels::LabelType::CheatIndicator) ? "Cheat Indicator" : "Spacing";
                 
             if (ImGui::BeginCombo("Label Type", typeName)) {
                 if (ImGui::Selectable("Text", currentLabel.type == GDH::Labels::LabelType::Text)) {
                     currentLabel.type = GDH::Labels::LabelType::Text;
+                }
+                if (ImGui::Selectable("Cheat Indicator", currentLabel.type == GDH::Labels::LabelType::CheatIndicator)) {
+                    currentLabel.type = GDH::Labels::LabelType::CheatIndicator;
                 }
                 if (ImGui::Selectable("Spacing", currentLabel.type == GDH::Labels::LabelType::Spacing)) {
                     currentLabel.type = GDH::Labels::LabelType::Spacing;
@@ -216,6 +228,8 @@ $execute {
                 ImGuiH::Checkbox("Noclip", &currentLabel.noclip);
                 ImGui::Spacing(); ImGui::Separator(); ImGui::Spacing();
                 
+                ImGuiH::DragFloat("Size", &currentLabel.size, 0.1f, 0.1f, 4.0f);
+            } else if (currentLabel.type == GDH::Labels::LabelType::CheatIndicator) {
                 ImGuiH::DragFloat("Size", &currentLabel.size, 0.1f, 0.1f, 4.0f);
             } else if (currentLabel.type == GDH::Labels::LabelType::Spacing) {
                 ImGuiH::DragFloat("##Spacing", &currentLabel.size, 1.0f, 1.0f, 256.0f, "Spacing: %.1fpx");

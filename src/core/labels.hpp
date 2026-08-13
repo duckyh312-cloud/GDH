@@ -24,6 +24,7 @@ namespace GDH {
         enum LabelType {
             Text,
             Spacing,
+            CheatIndicator
         };
 
         class Label {
@@ -55,6 +56,17 @@ namespace GDH {
                 this->text = "";
                 this->color = {1.0f, 1.0f, 1.0f, 1.0f};
                 this->size = spacing;
+                this->rainbow = false;
+                this->cps = false;
+                this->noclip = false;
+            }
+
+            Label(float size, LabelType type) {
+                this->enabled = true;
+                this->type = type;
+                this->text = ".";
+                this->color = {1.0f, 1.0f, 1.0f, 1.0f};
+                this->size = size;
                 this->rainbow = false;
                 this->cps = false;
                 this->noclip = false;

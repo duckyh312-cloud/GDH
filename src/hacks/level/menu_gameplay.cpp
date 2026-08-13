@@ -4,7 +4,7 @@
 #include "../../core/gui.hpp"
 #include "../../core/keybinds.hpp"
 
-GUI_HACK_CREATE("Level", "Menu Gameplay", "Prevents kicking from certain levels", false);
+GUI_HACK_CREATE("Level", "Menu Gameplay", "Manual control of the player on the main menu", false);
 
 static bool isHolding = false;
 

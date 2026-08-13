@@ -12,7 +12,6 @@
 
 #include <chrono>
 
-
 using namespace GDH::Labels;
 
 static std::chrono::steady_clock::time_point g_sessionStart;
@@ -162,6 +161,9 @@ void Manager::save() {
                     labelObj["noclip"] = label.noclip;
                     labelObj["size"] = label.size;
                 } break;
+                case LabelType::CheatIndicator: {
+                    labelObj["size"] = label.size;
+                } break;
                 case LabelType::Spacing: {
                     labelObj["spacing"] = label.size;
                 } break;
@@ -213,19 +215,22 @@ void Manager::load() {
 
         for (const auto &i : obj[cornerIndice]) {
             switch (i["type"].get<LabelType>()) {
-            case LabelType::Text: {
-                std::array<float, 4> color = { i["color"][0], i["color"][1], i["color"][2], i["color"][3] };
-                bool rainbow = i.value("rainbow", false);
-                bool cps = i.value("cps", false);
-                bool noclip = i.value("noclip", false);
-                
-                Label newLabel(i["text"], color, i["size"], rainbow, cps, noclip);
-                
-                labelsCorner.push_back(newLabel);
-            } break;
-            case LabelType::Spacing: {
-                labelsCorner.push_back(Label(i["spacing"]));
-            } break;
+                case LabelType::Text: {
+                    std::array<float, 4> color = { i["color"][0], i["color"][1], i["color"][2], i["color"][3] };
+                    bool rainbow = i.value("rainbow", false);
+                    bool cps = i.value("cps", false);
+                    bool noclip = i.value("noclip", false);
+                    
+                    Label newLabel(i["text"], color, i["size"], rainbow, cps, noclip);
+                    labelsCorner.push_back(newLabel);
+                } break;
+                case LabelType::CheatIndicator: {
+                    Label newLabel(i["size"].get<float>(), LabelType::CheatIndicator);
+                    labelsCorner.push_back(newLabel);
+                } break;
+                case LabelType::Spacing: {
+                    labelsCorner.push_back(Label(i["spacing"]));
+                } break;
             }
         }
     }
@@ -352,14 +357,49 @@ class $modify(LabelsPlayLayer, PlayLayer) {
                     label->setText(renderedText);
 
                     y += label->getContentHeight() * labelObj.size + manager.midPadding;
-                } else if (labelObj.type == LabelType::Spacing) {
+                } 
+                else if (labelObj.type == LabelType::CheatIndicator) {
+                    geode::Label *label = NULL;
+                    if (i < labelVec.size()) label = labelVec[i];
+                    else {
+                        label = geode::Label::create(".", "bigFont.fnt");
+                        switch (corner) {
+                        case Corner::Top_Left: label->setAnchorPoint({0.0f, 1.0f}); label->setAlignment(geode::Label::Alignment::Left); break;
+                        case Corner::Top_Center: label->setAnchorPoint({0.5f, 1.0f}); label->setAlignment(geode::Label::Alignment::Center); break;
+                        case Corner::Top_Right: label->setAnchorPoint({1.0f, 1.0f}); label->setAlignment(geode::Label::Alignment::Right); break;
+                        case Corner::Center_Left: label->setAnchorPoint({0.0f, 1.0f}); label->setAlignment(geode::Label::Alignment::Left); break;
+                        case Corner::Center_Center: label->setAnchorPoint({0.5f, 1.0f}); label->setAlignment(geode::Label::Alignment::Center); break;
+                        case Corner::Center_Right: label->setAnchorPoint({1.0f, 1.0f}); label->setAlignment(geode::Label::Alignment::Right); break;
+                        case Corner::Bottom_Left: label->setAnchorPoint({0.0f, 1.0f}); label->setAlignment(geode::Label::Alignment::Left); break;
+                        case Corner::Bottom_Center: label->setAnchorPoint({0.5f, 1.0f}); label->setAlignment(geode::Label::Alignment::Center); break;
+                        case Corner::Bottom_Right: label->setAnchorPoint({1.0f, 1.0f}); label->setAlignment(geode::Label::Alignment::Right); break;
+                        }
+                        addChild(label, 999);
+                        labelVec.push_back(label);
+                    }
+
+                    i++;
+
+                    label->setScale(labelObj.size);
+                    label->setText(".");
+                    label->setContentHeight(12.5f);
+
+                    label->setColor({255, 255, 255});
+                    label->setOpacity(255);
+
+                    y += (label->getContentHeight()) * labelObj.size + manager.midPadding;
+                } 
+                else if (labelObj.type == LabelType::Spacing) {
                     y += labelObj.size + manager.midPadding;
                 }
             }
+
             for (; i < labelVec.size(); i++) {
                 labelVec[i]->setOpacity(0);
             }
+
             labelsHeight = y - manager.midPadding; y = 0.0f; i = 0;
+
             for (const auto &labelObj : manager.labels[corner]) {
                 if (!labelObj.enabled) continue;
                 if (labelObj.noclip && !noclip_enabled) continue;
@@ -380,8 +420,25 @@ class $modify(LabelsPlayLayer, PlayLayer) {
                     case Corner::Bottom_Right: label->setPosition({windowSize.width - manager.cornerPadding, manager.cornerPadding + labelsHeight - y}); break;
                     }
                     y += label->getContentHeight() * labelObj.size + manager.midPadding;
-                } else if (labelObj.type == LabelType::Spacing) {
-                    y += manager.midPadding;
+                } 
+                else if (labelObj.type == LabelType::CheatIndicator) {
+                    geode::Label *label = labelVec[i++];
+
+                    switch (corner) {
+                    case Corner::Top_Left: label->setPosition({manager.cornerPadding, windowSize.height - manager.cornerPadding - y}); break;
+                    case Corner::Top_Center: label->setPosition({windowSize.width / 2.0f, windowSize.height - manager.cornerPadding - y}); break;
+                    case Corner::Top_Right: label->setPosition({windowSize.width - manager.cornerPadding, windowSize.height - manager.cornerPadding - y}); break;
+                    case Corner::Center_Left: label->setPosition({manager.cornerPadding, windowSize.height / 2.0f + labelsHeight / 2.0f - y}); break;
+                    case Corner::Center_Center: label->setPosition({windowSize.width / 2.0f, windowSize.height / 2.0f + labelsHeight / 2.0f - y}); break;
+                    case Corner::Center_Right: label->setPosition({windowSize.width - manager.cornerPadding, windowSize.height / 2.0f + labelsHeight / 2.0f - y}); break;
+                    case Corner::Bottom_Left: label->setPosition({manager.cornerPadding, manager.cornerPadding + labelsHeight - y}); break;
+                    case Corner::Bottom_Center: label->setPosition({windowSize.width / 2.0f, manager.cornerPadding + labelsHeight - y}); break;
+                    case Corner::Bottom_Right: label->setPosition({windowSize.width - manager.cornerPadding, manager.cornerPadding + labelsHeight - y}); break;
+                    }
+                    y += (label->getContentHeight()) * labelObj.size + manager.midPadding;
+                } 
+                else if (labelObj.type == LabelType::Spacing) {
+                    y += labelObj.size + manager.midPadding;
                 }
             }
         }

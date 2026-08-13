@@ -244,7 +244,7 @@ void KeybindsRender() {
 
     if (ImGui::BeginPopup("Framerate Keys")) {
         ImGui::Text("Speedhack:");
-        ImGuiWidgetConfig::DrawCustomKeybindButton("keybinds::speedhack", "Sppedhack");
+        ImGuiWidgetConfig::DrawCustomKeybindButton("keybinds::speedhack", "Speedhack");
         ImGuiWidgetConfig::DrawCustomKeybindButton("keybinds::speedhack_inc", "Speedhack +0.05x");
         ImGuiWidgetConfig::DrawCustomKeybindButton("keybinds::speedhack_dec", "Speedhack -0.05x");
         ImGui::EndPopup();
