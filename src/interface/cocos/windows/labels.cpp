@@ -35,6 +35,7 @@ protected:
         std::vector<std::pair<std::string, std::string>> templates = {
             {"Attempts", "Attempt {attempt}"},
             {"CPS Counter", "{cps}/{cps_high}/{clicks}"},
+            {"Cheat Indicator", ""},
             {"Custom text", "Edit me!"},
             {"Date", "{date}"},
             {"Death Counter", "{deaths} Deaths"},
@@ -80,6 +81,13 @@ protected:
                 auto& manager = GDH::Labels::Manager::get();
                 if (name == "Spacing") {
                     manager.labels[m_corner].push_back(GDH::Labels::Label(10.0f)); 
+                } 
+                else if (name == "Cheat Indicator") {
+                    manager.labels[m_corner].push_back(GDH::Labels::Label(1.f, GDH::Labels::LabelType::CheatIndicator));
+
+                    auto& gui = GDH::Gui::get();
+                    auto& hack = gui.getWindow("Level").findHackByName("Cheat Indicator");
+                    if (!hack.getEnabled()) hack.enable();
                 } else {
                     bool isRainbow = (name == "Rainbow Text");
                     bool isCPS = (name == "CPS Counter");

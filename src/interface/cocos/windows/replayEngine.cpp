@@ -28,6 +28,22 @@ protected:
     geode::TextInput* fpsInput;
     geode::TextInput* bitrateInput;
 
+    bool tryStartRecorder(const std::filesystem::path& path) {
+        auto& recorder = GDH::Recorder::get();
+        if (!GDH::Utils::isOnlyAsciiPath(path)) {
+            recorder.enabled = false;
+            GDH::MaterialLayer(FLAlertLayer::create(
+                "Recorder",
+                "Invalid path. Please remove any Cyrillic characters.",
+                "OK"
+            ))->show();
+            return false;
+        }
+        Config::get().set<std::string>("recorder::path", path.string());
+        recorder.start();
+        return true;
+    }
+
     bool init() {
         if (!geode::Popup::init(360.f, 230.f, "GDH_square.png"_spr)) return false;
 
@@ -68,32 +84,44 @@ protected:
                 return;
             }
 
-            if (recorder.enabled) {
-                geode::async::spawn(
-                    geode::utils::file::pick(
-                        geode::utils::file::PickMode::OpenFolder,
-                        {}
-                    ),
-                    [&recorder](geode::utils::file::PickResult res) {
-                        if (!res) return;
-                        auto pathOpt = std::move(res).unwrapOr(std::nullopt);
-                        if (!pathOpt.has_value()) return;
-
-                        auto folderPath = std::move(pathOpt).value();
-
-                        if (GDH::Utils::isOnlyAsciiPath(folderPath)) {
-                            Config::get().set<std::string>("recorder::path", (folderPath).string());
-                            recorder.start();
-                        }
-                        else {
-                            recorder.enabled = false;
-                            GDH::MaterialLayer(FLAlertLayer::create("Recorder", "Invalid path to the showcase folder. Please remove any Cyrillic characters", "OK"))->show();
-                        }
-                    }
-                );
-            } else {
+            if (!recorder.enabled) {
                 recorder.stop();
+                return;
             }
+            
+            auto showError = [](const char* msg) {
+                GDH::MaterialLayer(FLAlertLayer::create("Recorder", msg, "OK"))->show();
+            };
+
+            std::string question =
+                "Do you want to set a custom directory to save the showcase?\n\n"
+                "Yes - Select folder manually\n"
+                "No  - Keep the default directory";
+
+            auto popup = geode::createQuickPopup(
+                "Recorder",
+                question,
+                "No", "Yes",
+                [&](auto, bool btn2) {
+                    if (btn2) {
+                        geode::async::spawn(
+                            geode::utils::file::pick(
+                                geode::utils::file::PickMode::OpenFolder, {}
+                            ),
+                            [&](geode::utils::file::PickResult res) {
+                                if (!res) return;
+                                auto pathOpt = std::move(res).unwrapOr(std::nullopt);
+                                if (!pathOpt) return;
+                                tryStartRecorder(std::move(*pathOpt));
+                            }
+                        );
+                    } else {
+                        tryStartRecorder(folderShowcasesPath);
+                    }
+                }
+            );
+
+            GDH::MaterialLayer(popup);
         });
         
         recordToggle->toggle(recorder.enabled);
@@ -837,6 +865,14 @@ $execute {
         y_velocity_toggle->setPosition({145.f, 130.f});
         engineTab->addChild(y_velocity_toggle);
         engineTab->addChild(tab->AddTextToToggle("Y Velocity Fix", y_velocity_toggle));
+
+        auto ignore_inputs_toggle = CCMenuItemExt::createTogglerWithFilename("GDH_togglerOn.png"_spr, "GDH_togglerOff.png"_spr, 0.8f, [&config](CCMenuItemToggler* sender) {
+            config.set<bool>("engine::ignore_inputs", !sender->isOn());
+        });
+        ignore_inputs_toggle->toggle(config.get<bool>("engine::ignore_inputs", true));
+        ignore_inputs_toggle->setPosition({25.f, 100.f});
+        engineTab->addChild(ignore_inputs_toggle);
+        engineTab->addChild(tab->AddTextToToggle("Ignore Input on Playback", ignore_inputs_toggle));
 
         tab->m_scrollLayer->m_contentLayer->addChild(engineTab);
     });

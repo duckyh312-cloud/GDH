@@ -7,13 +7,18 @@ GUI_HACK_CREATE("Creator", "Zoom Bypass", "Lets you zoom an infinite amount in t
 class $modify(ZoomBypassEditorUI, EditorUI) {
     static void onModify(auto& self) {
         auto& gui = GDH::Gui::get();
-        auto& hack = gui.getWindow("Creator").findHackByName("Zoom Bypass");        
+        auto& hack = gui.getWindow("Creator").findHackByName("Zoom Bypass");   
+        
+        (void) self.setHookPriority("EditorUI::zoomIn", geode::Priority::Early); 
+        (void) self.setHookPriority("EditorUI::zoomOut", geode::Priority::Early); 
+        (void) self.setHookPriority("EditorUI::scrollWheel", geode::Priority::Early); 
         
         #if defined(GEODE_IS_WINDOWS)
         hack.addHookPtr(self.getHook("EditorUI::zoomIn").unwrap());
         hack.addHookPtr(self.getHook("EditorUI::zoomOut").unwrap());
         hack.addHookPtr(self.getHook("EditorUI::scrollWheel").unwrap());
         #elif defined(GEODE_IS_ANDROID) 
+        (void) self.setHookPriority("EditorUI::zoomGameLayer", geode::Priority::Early); 
         hack.addHookPtr(self.getHook("EditorUI::zoomGameLayer").unwrap());
         #endif
     }

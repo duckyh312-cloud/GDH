@@ -170,6 +170,10 @@ $execute {
 
             if (ImGuiH::Button("Cheat Indicator", {layout.multipleScale(290.f), 0.f})) {
                 manager.labels[g_popupCorner].push_back(GDH::Labels::Label(1.f, GDH::Labels::LabelType::CheatIndicator));
+
+                auto& hack = gui.getWindow("Level").findHackByName("Cheat Indicator");
+                if (!hack.getEnabled()) hack.enable();
+
                 g_updateSize = true;
                 ImGui::CloseCurrentPopup();
             }

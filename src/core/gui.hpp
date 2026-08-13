@@ -56,6 +56,8 @@ namespace GDH {
         void rescanActiveCheats();
         std::unordered_set<std::string>& getActiveCheats() { return m_activeCheats; }
 
+        void disableCheats();
+
         void sortAllHacksAlphabetically();
     private:
         Gui() = default;

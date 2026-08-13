@@ -803,7 +803,12 @@ $execute {
                     ImGuiWidgetConfig::Checkbox("Y Velocity Fix", "engine::velocity_fix", false);
                     ImGui::SameLine();
                     ImGuiWidgetConfig::Checkbox("Ignore Inputs on Playback", "engine::ignore_inputs", true);
+
                     ImGuiH::SpaceSeparator();
+                    ImGui::Text("Replay Engine v3 to Replay Engine v4 Converter");
+                    if (ImGui::TextLink("https://tobyadd.pages.dev/GDH/re3_to_re4")) {
+                        geode::utils::web::openLinkInBrowser("https://tobyadd.pages.dev/GDH/re3_to_re4");
+                    }
                     
                     ImGui::EndTabItem();
                 }

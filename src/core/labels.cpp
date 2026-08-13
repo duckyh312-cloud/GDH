@@ -280,10 +280,18 @@ class $modify(LabelsPlayLayer, PlayLayer) {
     
     void updateProgressbar() {
         PlayLayer::updateProgressbar();
-
+        
         auto& config = Config::get();
+        auto& manager = GDH::Labels::Manager::get();
+
         bool disable_all = config.get<bool>("labels::disable_all", false);
         bool noclip_enabled = config.get<bool>("core.noclip", false);
+        bool safe_mode = config.get<bool>("core.safe_mode", false) || config.get<bool>("level.auto_safe_mode", false);
+
+        bool indicate_when_cheating = config.get<bool>("level.cheat_indicator::indicate_when_cheating", false);
+        bool is_cheating = manager.m_cheatedInCurrentAttempt;
+
+        bool cheat_indicator_enabled = config.get<bool>("level.cheat_indicator", false) && (!indicate_when_cheating || is_cheating || safe_mode);
 
         static bool was_disabled = false;
 
@@ -300,7 +308,6 @@ class $modify(LabelsPlayLayer, PlayLayer) {
 
         CpsCounter::get().update();
 
-        auto& manager = GDH::Labels::Manager::get();
         auto windowSize = cocos2d::CCDirector::sharedDirector()->getWinSize();
         
         for (auto &[corner, labelVec] : m_fields->labelObjs) {
@@ -359,6 +366,8 @@ class $modify(LabelsPlayLayer, PlayLayer) {
                     y += label->getContentHeight() * labelObj.size + manager.midPadding;
                 } 
                 else if (labelObj.type == LabelType::CheatIndicator) {
+                    if (!cheat_indicator_enabled) continue;
+                    
                     geode::Label *label = NULL;
                     if (i < labelVec.size()) label = labelVec[i];
                     else {
@@ -384,7 +393,15 @@ class $modify(LabelsPlayLayer, PlayLayer) {
                     label->setText(".");
                     label->setContentHeight(12.5f);
 
-                    label->setColor({255, 255, 255});
+                    auto& config = Config::get();
+                    bool safe_mode = config.get<bool>("core.safe_mode", false);
+                    bool auto_safe_mode = config.get<bool>("level.auto_safe_mode", false);
+
+                    if (safe_mode || auto_safe_mode)
+                        label->setColor({255, 128, 0});
+                    else
+                        label->setColor(manager.m_cheatedInCurrentAttempt ? cocos2d::ccColor3B({255, 0, 0}) : cocos2d::ccColor3B({0, 255, 0}));
+
                     label->setOpacity(255);
 
                     y += (label->getContentHeight()) * labelObj.size + manager.midPadding;
@@ -422,6 +439,8 @@ class $modify(LabelsPlayLayer, PlayLayer) {
                     y += label->getContentHeight() * labelObj.size + manager.midPadding;
                 } 
                 else if (labelObj.type == LabelType::CheatIndicator) {
+                    if (!cheat_indicator_enabled) continue;
+
                     geode::Label *label = labelVec[i++];
 
                     switch (corner) {

@@ -157,6 +157,17 @@ void Gui::rescanActiveCheats() {
     }
 }
 
+void Gui::disableCheats() {
+    for (auto& window : m_windows) {
+        for (auto& hack : window.getHacks()) {
+            if (hack.isCheating() && hack.getEnabled()) {
+                hack.disable();
+            }
+        }
+    }
+    m_activeCheats.clear();
+}
+
 #include <Geode/modify/MenuLayer.hpp>
 class $modify(LateHacksInitMenuLayer, MenuLayer) {
     bool init() {

@@ -194,6 +194,27 @@ void SettingsRender() {
         ToggleUI();
     }
 
+    if (ImGuiH::Button("Disable cheating hacks", {ImGui::GetContentRegionAvail().x, 0})) {
+        ImGui::OpenPopup("Disable cheating hacks##Confirm");
+    }
+
+    if (ImGui::BeginPopupModal("Disable cheating hacks##Confirm", 0, ImGuiWindowFlags_AlwaysAutoResize)) {
+        auto& layout = GDH::Layout::Manager::get();
+        ImGuiH::GlowWindow(IM_COL32(71, 71, 131, 150), IM_COL32(255, 128, 128, 0), layout.multipleScale(500.f));
+        ImGui::Text("Are you sure you want to turn off cheating hacks?");
+
+        if (ImGuiH::Button("Cancel", {ImGui::GetContentRegionAvail().x, 0})) {
+            ImGui::CloseCurrentPopup();
+        }
+
+        if (ImGuiH::Button("OK", {ImGui::GetContentRegionAvail().x, 0})) {
+            GDH::Gui::get().disableCheats();
+            ImGui::CloseCurrentPopup();
+        }
+
+        ImGui::EndPopup();
+    }
+
     if (layoutManager.isCollecting()) {
         auto size = ImGui::GetWindowSize();
         layoutManager.addWindowInfo(windowName, size.x, size.y);
@@ -233,6 +254,7 @@ void KeybindsRender() {
         ImGuiWidgetConfig::DrawCustomKeybindButton("shortcut::appdata", "AppData");
         ImGuiWidgetConfig::DrawCustomKeybindButton("shortcut::gdh_appdata", "GDH AppData");
         ImGuiWidgetConfig::DrawCustomKeybindButton("shortcut::crash_game", "Crash Game");
+        ImGuiWidgetConfig::DrawCustomKeybindButton("shortcut::disable_cheat_hacks", "Disable cheat hacks");
         ImGui::EndPopup();
     }
 

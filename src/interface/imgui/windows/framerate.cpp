@@ -6,6 +6,7 @@
 #include "../../../core/utils.hpp"
 #include "../widget_helper.hpp"
 #include "../layout.hpp"
+#include "../widgetH.hpp"
 #include <imgui-cocos.hpp>
 
 $execute {
@@ -19,7 +20,7 @@ $execute {
         // ImGuiWidgetConfig::DrawValueToggle("tps_value", 1, 1, FLT_MAX, 240.f, "%0.f TPS");
 
         ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x - layout.multipleScale(52.f));
-        if (ImGuiWidgetConfig::DragFloat("##FPS_Value", "invisible.fps::value", 1, 1, FLT_MAX, 60.f, "%.0f FPS")) {
+        if (ImGuiWidgetConfig::DragFloat("##FPS_Value", "invisible.fps::value", 1, 1, FLT_MAX, 60.f, "%.2f FPS")) {
             auto& hack = gui.getWindow("Invisible").findHackByName("FPS");  
             if (hack.getEnabled()) {
                 hack.disable();
@@ -30,7 +31,7 @@ $execute {
         ImGuiWidgetConfig::HackCheckbox("##FPS_Enabled", "invisible.fps", false);
 
         ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x - layout.multipleScale(52.f));
-        if (ImGuiWidgetConfig::DragFloat("##TPS_Value", "invisible.tps::value", 1, 1, FLT_MAX, 240.f, "%.0f TPS")) {
+        if (ImGuiWidgetConfig::DragFloat("##TPS_Value", "invisible.tps::value", 1, 1, FLT_MAX, 240.f, "%.2f TPS")) {
             if (config.get<bool>("invisible.lock_delta::sync_tps", true)) {
                 auto value = config.get<float>("invisible.tps::value", 240.f);
                 config.set<float>("invisible.lock_delta::value", value);
@@ -39,15 +40,16 @@ $execute {
         ImGui::SameLine();
         ImGuiWidgetConfig::HackCheckbox("##TPS_Enabled", "invisible.tps", false);
 
-        ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x - layout.multipleScale(52.f));
-        if (ImGuiWidgetConfig::DragFloat("##LockDelta_Value", "invisible.lock_delta::value", 1, 1, FLT_MAX, 240.f, "Lock DT: %.0f FPS")) {
+        ImGuiH::SpaceSeparator();
+        ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
+        if (ImGuiWidgetConfig::DragFloat("##LockDelta_Value", "invisible.lock_delta::value", 1, 1, FLT_MAX, 240.f, "LockDT: %.2f FPS")) {
             if (config.get<bool>("invisible.lock_delta::sync_tps", true)) {
                 auto value = config.get<float>("invisible.lock_delta::value", 240.f);
                 config.set<float>("invisible.tps::value", value);
             }
         }
-        ImGui::SameLine();
-        ImGuiWidgetConfig::HackCheckbox("##LockDelta_Enabled", "invisible.lock_delta", false);
+        ImGuiWidgetConfig::HackCheckbox("Lock Delta Enabled", "invisible.lock_delta", false);
+        ImGuiH::SpaceSeparator();
         
         ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x - layout.multipleScale(52.f));
         if (ImGuiWidgetConfig::DragFloat("##Speedhack_Value", "invisible.speedhack::value", 0.01f, 0, 500.f, 1.f, "Speed: %.2fx"))
@@ -65,6 +67,9 @@ $execute {
         ImGuiWidgetConfig::HackCheckbox("##Pitch_Shifter_Enabled", "invisible.pitch_shifter", false);
         
         ImGuiWidgetConfig::HackCheckbox("Speedhack Audio", "invisible.speedhack_audio", false);
+
+        ImGuiH::SpaceSeparator();
+
         ImGuiWidgetConfig::HackCheckbox("Vertical Sync", "invisible.vertical_sync", false);
 
         ImGuiWidgetConfig::Checkbox("Real Time (Lock Delta)", "invisible.lock_delta::real_time", true);

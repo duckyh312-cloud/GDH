@@ -91,7 +91,8 @@ namespace GDH {
 
             void save();
             void load();
-
+            
+            bool m_cheatedInCurrentAttempt = false;
         private:
             Manager() = default;
         };
