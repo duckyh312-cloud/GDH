@@ -244,7 +244,7 @@ void Recorder::handle_recording(float dt) {
             after_end_extra_time += dt;
         }
 
-        if (record_audio && !AudioRecorder::get().is_recording && playLayer->m_resumeTimer < 1.f) {
+        if (record_audio && !AudioRecorder::get().is_recording && playLayer->m_resumeTimer < 1) {
             AudioRecorder::get().start();
         }
 

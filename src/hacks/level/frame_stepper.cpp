@@ -191,6 +191,11 @@ class $modify(FrameStepperPlayLayer, PlayLayer) {
             removeCheckpoint(false);
         }
     }
+
+    void storeCheckpoint(CheckpointObject *checkpoint) {
+        PlayLayer::storeCheckpoint(checkpoint);
+        g_checkpoints.clear();
+    }
     
     #ifdef GEODE_IS_ANDROID
     void createObjectsFromSetupFinished() {

@@ -1,3 +1,21 @@
+# v5.1.0-beta.3
+- Added Cheat Indicator
+- Fixed Keybinds
+- Sync TPS with Lock Delta on replay load
+- Fixed Frame Backward Stepper
+- Added Frame Multi-Step (PC Only)
+- Frame Stepper UI toggle without level reload
+- Fixed Audio Recorder on Startposes
+- Framerate values now demical and unlocked (hold alt or double-click to edit)
+- Added Pause Buffering Bypass
+- Added Playtest Zoom Bypass
+- Fixed Hitbox Multiplier
+- Fixed Show Hitboxes (changes physics in editor)
+- Added symbols for better debugging (Windows)
+- Fixed Practice Fix (i hope)
+- Fixed RE Playback not registering clicks (CPS)
+- Confirmation dialog for the default video save path (Android)
+
 # v5.1.0-beta.2
 Major Changes:
 - Added Frame Stepper (Backward Support)
