@@ -16,6 +16,9 @@ $execute {
     auto& window = gui.getWindow("Framerate");
 
     window.setCustomWindowImGui([&config, &gui, &layout] {
+        static bool showTpsWarning = false;
+        static bool hasShownThisSession = false;
+
         // ImGuiWidgetConfig::DrawValueToggle("fps_value", 1, 1, FLT_MAX, 60.f, "%0.f FPS");
         // ImGuiWidgetConfig::DrawValueToggle("tps_value", 1, 1, FLT_MAX, 240.f, "%0.f TPS");
 
@@ -32,13 +35,57 @@ $execute {
 
         ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x - layout.multipleScale(52.f));
         if (ImGuiWidgetConfig::DragFloat("##TPS_Value", "invisible.tps::value", 1, 1, FLT_MAX, 240.f, "%.2f TPS")) {
+            auto tpsValue = config.get<float>("invisible.tps::value", 240.f);
+            bool dontShowSaved = config.get<bool>("invisible.tps_warning_dont_show_again", false);
+            
+            if (tpsValue < 240.f && !dontShowSaved && !hasShownThisSession) {
+                showTpsWarning = true;
+                hasShownThisSession = true;
+            }
+
             if (config.get<bool>("invisible.lock_delta::sync_tps", true)) {
-                auto value = config.get<float>("invisible.tps::value", 240.f);
-                config.set<float>("invisible.lock_delta::value", value);
+                config.set<float>("invisible.lock_delta::value", tpsValue);
             }
         }
         ImGui::SameLine();
         ImGuiWidgetConfig::HackCheckbox("##TPS_Enabled", "invisible.tps", false);
+
+        if (showTpsWarning) {
+            ImGui::OpenPopup("TPS Warning##Modal");
+            showTpsWarning = false;
+        }
+
+        if (ImGui::BeginPopupModal("TPS Warning##Modal", NULL, ImGuiWindowFlags_AlwaysAutoResize)) {
+            ImGuiH::GlowWindow(IM_COL32(255, 128, 128, 150), IM_COL32(255, 128, 128, 0), layout.multipleScale(500.f));
+
+            float oldScale = ImGui::GetFont()->Scale;
+            ImGui::GetFont()->Scale = layout.multipleScale(32.0f) / ImGui::GetFontSize();
+            ImGui::PushFont(ImGui::GetFont());
+
+            ImGui::TextColored(ImColor(255, 128, 128).Value, "Warning: TPS below 240 breaks physics!");
+            ImGui::Spacing(); ImGui::Spacing();
+            ImGui::Text("• Geometry Dash physics requires at least 240 TPS to remain stable");
+            ImGui::Text("  (RobTop never designed the engine physics for native TPS changes)");
+            ImGui::Spacing(); ImGui::Spacing();
+            ImGui::Text("• If you need lower visual frame rates: Use 'Lock Delta' or 'FPS Bypass'");
+            ImGui::Text("  This lowers visual FPS without breaking game physics");
+
+            ImGui::GetFont()->Scale = oldScale;
+            ImGui::PopFont();
+
+            ImGuiH::SpaceSeparator();
+
+            static bool dontShowAgain = false;
+            ImGuiH::Checkbox("Don't show this warning again", &dontShowAgain);
+
+            if (ImGuiH::Button("OK", ImVec2(ImGui::GetContentRegionAvail().x, 0))) {
+                if (dontShowAgain) {
+                    config.set<bool>("invisible.tps_warning_dont_show_again", true);
+                }
+                ImGui::CloseCurrentPopup();
+            }
+            ImGui::EndPopup();
+        }
 
         ImGuiH::SpaceSeparator();
         ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);

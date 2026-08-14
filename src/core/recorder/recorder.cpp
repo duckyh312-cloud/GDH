@@ -244,6 +244,10 @@ void Recorder::handle_recording(float dt) {
             after_end_extra_time += dt;
         }
 
+        if (record_audio && !AudioRecorder::get().is_recording && playLayer->m_resumeTimer < 1.f) {
+            AudioRecorder::get().start();
+        }
+
         double frame_dt = 1.0 / static_cast<double>(fps);
         double time = (playLayer->m_gameState.m_levelTime - delay) + extra_time - last_frame_time;
         

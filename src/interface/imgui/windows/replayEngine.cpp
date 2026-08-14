@@ -697,7 +697,7 @@ $execute {
             ImGui::OpenPopup("Pro Settings");
         }
 
-        if (ImGui::BeginPopupModal("Record Overwrite Warning", NULL, ImGuiWindowFlags_AlwaysAutoResize)) {
+        if (ImGui::BeginPopupModal("Record Overwrite Warning", 0, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoResize)) {
             ImGuiH::GlowWindow(IM_COL32(71, 71, 131, 150), IM_COL32(255, 128, 128, 0), layout.multipleScale(500.f));
             ImGui::Text("You currently have actions stored in the buffer.\nStarting a new recording will clear your current unsaved active macro.\n\nAre you sure you want to proceed?");
             ImGuiH::SpaceSeparator();
@@ -714,7 +714,7 @@ $execute {
             ImGui::EndPopup();
         }
 
-        if (ImGui::BeginPopupModal("Save Overwrite Warning", NULL, ImGuiWindowFlags_AlwaysAutoResize)) {
+        if (ImGui::BeginPopupModal("Save Overwrite Warning", 0, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoResize)) {
             ImGuiH::GlowWindow(IM_COL32(71, 71, 131, 150), IM_COL32(255, 128, 128, 0), layout.multipleScale(500.f));
             ImGui::Text("A macro named \"%s.re4\" already exists.\nAre you sure you want to overwrite it?", engine.replay_name.c_str());
             ImGuiH::SpaceSeparator();
@@ -729,7 +729,7 @@ $execute {
             ImGui::EndPopup();
         }
 
-        if (ImGui::BeginPopupModal("Load Overwrite Warning", NULL, ImGuiWindowFlags_AlwaysAutoResize)) {
+        if (ImGui::BeginPopupModal("Load Overwrite Warning", 0, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoResize)) {
             ImGuiH::GlowWindow(IM_COL32(71, 71, 131, 150), IM_COL32(255, 128, 128, 0), layout.multipleScale(500.f));
             ImGui::Text("You currently have recorded actions actively loaded.\nLoading this macro will clear your unsaved working progress.\n\nAre you sure you want to proceed?");
             ImGuiH::SpaceSeparator();
@@ -744,7 +744,7 @@ $execute {
             ImGui::EndPopup();
         }
 
-        if (ImGui::BeginPopupModal("Clear Warning", NULL, ImGuiWindowFlags_AlwaysAutoResize)) {
+        if (ImGui::BeginPopupModal("Clear Warning", 0, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoResize)) {
             ImGuiH::GlowWindow(IM_COL32(71, 71, 131, 150), IM_COL32(255, 128, 128, 0), layout.multipleScale(500.f));
             ImGui::Text("Are you sure you want to completely clear the current macro?\nThis action cannot be undone.");
             ImGuiH::SpaceSeparator();
@@ -760,7 +760,7 @@ $execute {
             ImGui::EndPopup();
         }
 
-        if (ImGui::BeginPopupModal("Select Replay", 0, ImGuiWindowFlags_AlwaysAutoResize)) {
+        if (ImGui::BeginPopupModal("Select Replay", 0, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoResize)) {
             ImGuiH::GlowWindow(IM_COL32(120, 100, 240, 100), IM_COL32(120, 100, 240, 0), layout.multipleScale(250.f));
             ImGui::BeginChild("Replay List", {layout.multipleScale(400.f), layout.multipleScale(500.f)});
             for (const auto& replay : replay_list)
@@ -808,6 +808,10 @@ $execute {
                     ImGui::Text("Replay Engine v3 to Replay Engine v4 Converter");
                     if (ImGui::TextLink("https://tobyadd.pages.dev/GDH/re3_to_re4")) {
                         geode::utils::web::openLinkInBrowser("https://tobyadd.pages.dev/GDH/re3_to_re4");
+                    }
+                    ImGuiH::SpaceSeparator();
+                    if (ImGuiH::Button("Reset TPS Warning Popup")) {
+                        config.set<bool>("invisible.tps_warning_dont_show_again", false);
                     }
                     
                     ImGui::EndTabItem();

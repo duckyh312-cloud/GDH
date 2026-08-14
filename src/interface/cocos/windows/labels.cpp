@@ -300,7 +300,7 @@ protected:
             ncL->setPosition({215.f, y});
             menu->addChild(ncL);
 
-        } else {
+        } else if (label.type == GDH::Labels::LabelType::Spacing) {
             auto spaceLabel = geode::Label::create("Spacing (px):", "GoogleSans.fnt"_spr);
             spaceLabel->setScale(0.4f);
             spaceLabel->setPosition({60.f, y});
@@ -320,6 +320,26 @@ protected:
                 }
             });
             m_mainLayer->addChild(spaceInput);
+        } else if (label.type == GDH::Labels::LabelType::CheatIndicator) {
+            auto sizeLabel = geode::Label::create("Size (px):", "GoogleSans.fnt"_spr);
+            sizeLabel->setScale(0.4f);
+            sizeLabel->setPosition({60.f, y});
+            menu->addChild(sizeLabel);
+
+            auto sizeInput = TextInput::create(80.f, "Px", "chatFont.fnt");
+            if (auto* bg = sizeInput->getChildByType<geode::NineSlice>(0)) { 
+                bg->setColor({71, 71, 131}); 
+                bg->setOpacity(255); 
+            }
+            sizeInput->setPosition({150.f, y});
+            sizeInput->setString(fmt::format("{:.1f}", label.size));
+            sizeInput->setFilter("0123456789.");
+            sizeInput->setCallback([&label](const std::string& str) {
+                if (auto val = geode::utils::numFromString<float>(str)) {
+                    label.size = std::clamp(val.unwrap(), 1.0f, 256.0f);
+                }
+            });
+            m_mainLayer->addChild(sizeInput);
         }
 
         y = 30.f;
@@ -532,9 +552,8 @@ void refreshLabelsTab(HacksTab* tab) {
             });
             itemRow->addChild(editBtn);
 
-            std::string displayText = (label.type == GDH::Labels::LabelType::Text) 
-                ? (label.text.empty() ? "Empty Text" : label.text)
-                : fmt::format("Spacing: {:.1f}px", label.size);
+            std::string displayText = (label.type == GDH::Labels::LabelType::Text) ? (label.text.empty() ? "Empty Text" : label.text)
+                : fmt::format("{}: {:.1f}px", (label.type == GDH::Labels::LabelType::Spacing) ? "Spacing" : "Cheat Indicator", label.size);
 
             auto textLabel = geode::Label::create(displayText, "GoogleSans.fnt"_spr);
             itemRow->addChild(textLabel);

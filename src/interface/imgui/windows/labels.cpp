@@ -89,7 +89,7 @@ void drawLabelCornerControls(GDH::Labels::Corner corner) {
             if (label.type == GDH::Labels::LabelType::Text) {
                 ImGui::InputText("##TextInput", &label.text);
             } else if (label.type == GDH::Labels::LabelType::CheatIndicator) {
-                ImGui::TextUnformatted("Cheat Indicator (.)");
+                ImGuiH::DragFloat("##CISize", &label.size, 1.0f, 1.0f, 256.0f, "Indicator Size: %.1fpx");
             } else if (label.type == GDH::Labels::LabelType::Spacing) {
                 ImGuiH::DragFloat("##Spacing", &label.size, 1.0f, 1.0f, 256.0f, "Spacing: %.1fpx");
             }

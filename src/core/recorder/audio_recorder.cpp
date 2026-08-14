@@ -22,21 +22,12 @@ void AudioRecorder::init() {
 
         if (!recorder->is_recording) return FMOD_OK;
 
-        auto pl = PlayLayer::get();
-        bool should_record = pl && pl->m_started && !pl->m_isPaused;
-
         {
             std::lock_guard<std::mutex> lock(recorder->m_lock);
-            if (should_record) {
-                recorder->m_data.insert(recorder->m_data.end(), inbuffer, inbuffer + length * channels);
-                recorder->m_current_audio_time += static_cast<double>(length) / recorder->m_sampleRate;
-            }
+            recorder->m_data.insert(recorder->m_data.end(), inbuffer, inbuffer + length * channels);
+            recorder->m_current_audio_time += static_cast<double>(length) / recorder->m_sampleRate;
         }
         recorder->m_cv.notify_all();
-
-        FMOD::ChannelGroup* master;
-        FMODAudioEngine::sharedEngine()->m_system->getMasterChannelGroup(&master);
-        master->setPaused(true);
 
         return FMOD_OK;
     };
@@ -50,6 +41,7 @@ void AudioRecorder::start() {
     if (!m_dsp) init();
 
     m_masterGroup->addDSP(0, m_dsp);
+    m_masterGroup->setPaused(true);
     
     {
         std::lock_guard<std::mutex> lock(m_lock);
@@ -88,18 +80,23 @@ std::vector<float> AudioRecorder::get_data() {
 void AudioRecorder::wait_for_audio(double dt) {
     if (!is_recording) return;
 
+    auto pl = PlayLayer::get();
+    if (pl && (!pl->m_started || pl->m_isPaused)) return;
+
     std::unique_lock<std::mutex> lock(m_lock);
     m_target_audio_time += dt;
-    
-    while (m_current_audio_time < m_target_audio_time) {
-        m_masterGroup->setPaused(false);
-        if (m_cv.wait_for(lock, std::chrono::milliseconds(100)) == std::cv_status::timeout) {
-            geode::log::warn("timeout waiting for audio! current: {}; target: {}", m_current_audio_time, m_target_audio_time);
-            break; 
-        }
-    }
-    
+
+    m_masterGroup->setPaused(false);
+
+    bool reached_target = m_cv.wait_for(lock, std::chrono::milliseconds(100), [this] {
+        return m_current_audio_time >= m_target_audio_time;
+    });
+
     m_masterGroup->setPaused(true);
+
+    if (!reached_target) {
+        geode::log::warn("timeout waiting for audio! current: {}; target: {}", m_current_audio_time, m_target_audio_time);
+    }
 }
 
 void AudioRecorder::save_to_wav(const std::filesystem::path& filename) {

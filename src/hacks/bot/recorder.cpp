@@ -6,7 +6,6 @@
 #include <Geode/modify/LevelInfoLayer.hpp>
 #include <Geode/modify/UILayer.hpp>
 #include "../../core/recorder/recorder.hpp"
-#include "../../core/recorder/audio_recorder.hpp"
 
 class $modify(PlayLayer) {
     struct Fields {
@@ -28,15 +27,6 @@ class $modify(PlayLayer) {
         }
 
         return true;
-    }
-
-    void resetLevel() {
-        PlayLayer::resetLevel();
-
-        auto& recorder = GDH::Recorder::get();
-        if (recorder.isRecording() && recorder.record_audio) {
-            GDH::AudioRecorder::get().start();
-        }
     }
 };
 
