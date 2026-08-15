@@ -3,19 +3,72 @@
 #include "replayEngine.hpp"
 #include "config.hpp"
 
-#include <string_view>
 #include <json.hpp>
 
 #include <Geode/modify/PlayLayer.hpp>
 #include <Geode/modify/CCScheduler.hpp>
 #include <Geode/modify/GJBaseGameLayer.hpp>
 
-#include <chrono>
-
 using namespace GDH::Labels;
 
 static std::chrono::steady_clock::time_point g_sessionStart;
 static float g_rainbowHue = 0.0f;
+static bool m_push = false;
+
+static const std::unordered_set<int> g_robtopLevels = {
+    1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22,
+    5001, 5002, 5003, 5004, 3001
+};
+
+struct CornerProps {
+    cocos2d::CCPoint anchor;
+    geode::Label::Alignment align;
+};
+
+static const std::string_view getCornerKey(Corner corner) {
+    switch (corner) {
+        case Corner::Top_Left: return "labelsTL";
+        case Corner::Top_Center: return "labelsTC";
+        case Corner::Top_Right: return "labelsTR";
+        case Corner::Center_Left: return "labelsCL";
+        case Corner::Center_Center: return "labelsCC";
+        case Corner::Center_Right: return "labelsCR";
+        case Corner::Bottom_Left: return "labelsBL";
+        case Corner::Bottom_Center: return "labelsBC";
+        case Corner::Bottom_Right: return "labelsBR";
+    }
+    return "labelsTL";
+}
+
+static const CornerProps getCornerProps(Corner corner) {
+    switch (corner) {
+        case Corner::Top_Left:      return {{0.0f, 1.0f}, geode::Label::Alignment::Left};
+        case Corner::Top_Center:    return {{0.5f, 1.0f}, geode::Label::Alignment::Center};
+        case Corner::Top_Right:     return {{1.0f, 1.0f}, geode::Label::Alignment::Right};
+        case Corner::Center_Left:   return {{0.0f, 1.0f}, geode::Label::Alignment::Left};
+        case Corner::Center_Center: return {{0.5f, 1.0f}, geode::Label::Alignment::Center};
+        case Corner::Center_Right:  return {{1.0f, 1.0f}, geode::Label::Alignment::Right};
+        case Corner::Bottom_Left:   return {{0.0f, 1.0f}, geode::Label::Alignment::Left};
+        case Corner::Bottom_Center: return {{0.5f, 1.0f}, geode::Label::Alignment::Center};
+        case Corner::Bottom_Right:  return {{1.0f, 1.0f}, geode::Label::Alignment::Right};
+    }
+    return {{0.0f, 1.0f}, geode::Label::Alignment::Left};
+}
+
+static cocos2d::CCPoint getCornerPos(Corner corner, float cornerPadding, const cocos2d::CCSize& winSize, float y, float labelsHeight) {
+    switch (corner) {
+        case Corner::Top_Left:      return {cornerPadding, winSize.height - cornerPadding - y};
+        case Corner::Top_Center:    return {winSize.width / 2.0f, winSize.height - cornerPadding - y};
+        case Corner::Top_Right:     return {winSize.width - cornerPadding, winSize.height - cornerPadding - y};
+        case Corner::Center_Left:   return {cornerPadding, winSize.height / 2.0f + labelsHeight / 2.0f - y};
+        case Corner::Center_Center: return {winSize.width / 2.0f, winSize.height / 2.0f + labelsHeight / 2.0f - y};
+        case Corner::Center_Right:  return {winSize.width - cornerPadding, winSize.height / 2.0f + labelsHeight / 2.0f - y};
+        case Corner::Bottom_Left:   return {cornerPadding, cornerPadding + labelsHeight - y};
+        case Corner::Bottom_Center: return {winSize.width / 2.0f, cornerPadding + labelsHeight - y};
+        case Corner::Bottom_Right:  return {winSize.width - cornerPadding, cornerPadding + labelsHeight - y};
+    }
+    return {0, 0};
+}
 
 $execute {
     GDH::Labels::Manager::get().load();
@@ -24,49 +77,57 @@ $execute {
 bool renderVariable(geode::utils::StringBuffer<> &stream, std::string_view var_name) {
     auto pl = PlayLayer::get();
 
-    if (var_name == "time_24") { stream.append(fmt::format("{:%T}", geode::localtime(std::time(nullptr)), var_name)); }
-    else if (var_name == "time_12") { stream.append(fmt::format("{:%I:%M:%S %p}", geode::localtime(std::time(nullptr)), var_name)); }
-    else if (var_name == "date") { stream.append(fmt::format("{:%F}", geode::localtime(std::time(nullptr)), var_name)); }
-    else if (var_name == "clicks") { stream.append(CpsCounter::get().overall); }
-    else if (var_name == "cps") { stream.append(CpsCounter::get().cps); }
-    else if (var_name == "cps_high") { stream.append(CpsCounter::get().highscore); }
-    else if (var_name == "testmode") { stream.append(pl ? (pl->m_isTestMode ? "Testmode" : "") : ""); }
-    else if (var_name == "attempt") { stream.append(pl ? pl->m_attempts : 0); }
-    else if (var_name == "level_name") { stream.append(pl ? pl->m_level->m_levelName : ""); }
-    else if (var_name == "level_creator") {
+    if (var_name == "time_24") {
+        stream.append(fmt::format("{:%T}", geode::localtime(std::time(nullptr))));
+    } else if (var_name == "time_12") {
+        stream.append(fmt::format("{:%I:%M:%S %p}", geode::localtime(std::time(nullptr))));
+    } else if (var_name == "date") {
+        stream.append(fmt::format("{:%F}", geode::localtime(std::time(nullptr))));
+    } else if (var_name == "clicks") {
+        stream.append(CpsCounter::get().overall);
+    } else if (var_name == "cps") {
+        stream.append(CpsCounter::get().cps);
+    } else if (var_name == "cps_high") {
+        stream.append(CpsCounter::get().highscore);
+    } else if (var_name == "testmode") {
+        stream.append(pl ? (pl->m_isTestMode ? "Testmode" : "") : "");
+    } else if (var_name == "attempt") {
+        stream.append(pl ? pl->m_attempts : 0);
+    } else if (var_name == "level_name") {
+        stream.append(pl ? pl->m_level->m_levelName : "");
+    } else if (var_name == "level_creator") {
         if (pl && pl->m_level) {
-            static const std::unordered_set<int> robtop_levels = {
-                1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22,
-                5001, 5002, 5003, 5004, 3001
-            };
-            
-            if (robtop_levels.contains(pl->m_level->m_levelID)) { stream.append("RobTop"); } 
-            else { stream.append(pl->m_level->m_creatorName); }
-        } else {
-            stream.append("");
+            if (g_robtopLevels.contains(pl->m_level->m_levelID)) {
+                stream.append("RobTop");
+            } else {
+                stream.append(pl->m_level->m_creatorName);
+            }
         }
-    }
-    else if (var_name == "level_id") { stream.append(pl ? pl->m_level->m_levelID : 0); }
-    else if (var_name == "normal_percent") { stream.append(pl ? pl->m_level->getNormalPercent() : 0); }
-    else if (var_name == "practice_percent") { stream.append(pl ? pl->m_level->m_practicePercent : 0); }
-    else if (var_name == "noclip_accuracy") { stream.append(fmt::format("{:.2f}", NoclipAccuracy::get().getPercentage())); }
-    else if (var_name == "deaths") { stream.append(NoclipAccuracy::get().deaths_full); }
-    else if (var_name == "frame") { stream.append(GDH::ReplayEngine::get().get_frame() ); }
-    else if (var_name == "re_state") {
+    } else if (var_name == "level_id") {
+        stream.append(pl ? pl->m_level->m_levelID : 0);
+    } else if (var_name == "normal_percent") {
+        stream.append(pl ? pl->m_level->getNormalPercent() : 0);
+    } else if (var_name == "practice_percent") {
+        stream.append(pl ? pl->m_level->m_practicePercent : 0);
+    } else if (var_name == "noclip_accuracy") {
+        stream.append(fmt::format("{:.2f}", NoclipAccuracy::get().getPercentage()));
+    } else if (var_name == "deaths") {
+        stream.append(NoclipAccuracy::get().deaths_full);
+    } else if (var_name == "frame") {
+        stream.append(GDH::ReplayEngine::get().get_frame());
+    } else if (var_name == "re_state") {
         auto& engine = GDH::ReplayEngine::get();
         stream.append(engine.mode == state::disable ? "Disable" : engine.mode == state::record ? "Record" : "Play");
-    }
-    else if (var_name == "session_time") {
+    } else if (var_name == "session_time") {
         auto dur = std::chrono::steady_clock::now() - g_sessionStart;
         auto hours = std::chrono::duration_cast<std::chrono::hours>(dur);
         auto mins = std::chrono::duration_cast<std::chrono::minutes>(dur) % 60;
         auto secs = std::chrono::duration_cast<std::chrono::seconds>(dur) % 60;
-        
         stream.append(fmt::format("{:02}:{:02}:{:02}", hours.count(), mins.count(), secs.count()));
     } else if (var_name == "progress" || var_name.starts_with("progress:")) {
         var_name.remove_prefix(8);
         int decimal_points = 0;
-        if (var_name.size()) {
+        if (!var_name.empty()) {
             var_name.remove_prefix(1);
             auto parsed = geode::utils::numFromString<int>(var_name, 10);
             if (parsed.ok()) decimal_points = *parsed;
@@ -75,31 +136,30 @@ bool renderVariable(geode::utils::StringBuffer<> &stream, std::string_view var_n
     } else if (var_name == "fps" || var_name.starts_with("fps:")) {
         var_name.remove_prefix(3);
         int decimal_points = 0;
-        if (var_name.size()) {
+        if (!var_name.empty()) {
             var_name.remove_prefix(1);
             auto parsed = geode::utils::numFromString<int>(var_name, 10);
             if (parsed.ok()) decimal_points = *parsed;
         }
         stream.append(fmt::format("{:.{}f}", GDH::Utils::getFps(true), decimal_points));
-    } else if (var_name == "is_dual_mode") {      
+    } else if (var_name == "is_dual_mode") {
         stream.append(fmt::format("{}", pl ? pl->m_gameState.m_isDualMode : false));
-    } else if (var_name == "p1::x") {      
+    } else if (var_name == "p1::x") {
         stream.append(fmt::format("P1X: {}", pl ? pl->m_player1->m_position.x : 0.f));
-    } else if (var_name == "p1::y") {      
+    } else if (var_name == "p1::y") {
         stream.append(fmt::format("P1Y: {}", pl ? pl->m_player1->m_position.y : 0.f));
-    } else if (var_name == "p1::y_vel") {      
+    } else if (var_name == "p1::y_vel") {
         stream.append(fmt::format("P1YVEL: {}", pl ? pl->m_player1->m_yVelocity : 0.0));
-    } else if (var_name == "p2::x") {      
+    } else if (var_name == "p2::x") {
         if (!pl || !pl->m_gameState.m_isDualMode || !pl->m_player2) return false;
         stream.append(fmt::format("P2X: {}", pl->m_player2->m_position.x));
-    } else if (var_name == "p2::y") {      
+    } else if (var_name == "p2::y") {
         if (!pl || !pl->m_gameState.m_isDualMode || !pl->m_player2) return false;
         stream.append(fmt::format("P2Y: {}", pl->m_player2->m_position.y));
-    } else if (var_name == "p2::y_vel") {      
+    } else if (var_name == "p2::y_vel") {
         if (!pl || !pl->m_gameState.m_isDualMode || !pl->m_player2) return false;
         stream.append(fmt::format("P2YVEL: {}", pl->m_player2->m_yVelocity));
-    }
-    else if (var_name == "\\n") {      
+    } else if (var_name == "\\n") {
         stream.append("\n");
     } else {
         return false;
@@ -140,14 +200,7 @@ void Manager::save() {
     obj["cornerPadding"] = cornerPadding;
     obj["midPadding"] = midPadding;
     for (const auto &[corner, labelsCorner] : labels) {
-        std::string cornerIndice = corner == Corner::Top_Left ? "labelsTL" :
-            corner == Corner::Top_Center ? "labelsTC" :
-            corner == Corner::Top_Right ? "labelsTR" :
-            corner == Corner::Center_Left ? "labelsCL" :
-            corner == Corner::Center_Center ? "labelsCC" :
-            corner == Corner::Center_Right ? "labelsCR" :
-            corner == Corner::Bottom_Left ? "labelsBL" :
-            corner == Corner::Bottom_Center ? "labelsBC" : "labelsBR";
+        std::string cornerIndice(getCornerKey(corner));
         for (const auto &label : labelsCorner) {
             nlohmann::json labelObj;
             labelObj["enabled"] = label.enabled;
@@ -174,7 +227,6 @@ void Manager::save() {
     std::ofstream outFile(labelsDataPath);
     if (outFile.is_open()) {
         outFile << obj.dump(4);
-        outFile.close();
     }
 }
 
@@ -182,15 +234,16 @@ void Manager::load() {
     std::ifstream inFile(labelsDataPath);
     if (!inFile.is_open()) return;
 
-    labels[Corner::Top_Left] = std::vector<Label> {};
-    labels[Corner::Top_Center] = std::vector<Label> {};
-    labels[Corner::Top_Right] = std::vector<Label> {};
-    labels[Corner::Center_Left] = std::vector<Label> {};
-    labels[Corner::Center_Center] = std::vector<Label> {};
-    labels[Corner::Center_Right] = std::vector<Label> {};
-    labels[Corner::Bottom_Left] = std::vector<Label> {};
-    labels[Corner::Bottom_Center] = std::vector<Label> {};
-    labels[Corner::Bottom_Right] = std::vector<Label> {};
+    labels.clear();
+    labels[Corner::Top_Left] = {};
+    labels[Corner::Top_Center] = {};
+    labels[Corner::Top_Right] = {};
+    labels[Corner::Center_Left] = {};
+    labels[Corner::Center_Center] = {};
+    labels[Corner::Center_Right] = {};
+    labels[Corner::Bottom_Left] = {};
+    labels[Corner::Bottom_Center] = {};
+    labels[Corner::Bottom_Right] = {};
     
     std::string file_contents((std::istreambuf_iterator<char>(inFile)), std::istreambuf_iterator<char>());
     inFile.close();
@@ -200,18 +253,12 @@ void Manager::load() {
         return;
     }
     
-    cornerPadding = obj["cornerPadding"];
-    midPadding = obj["midPadding"];
+    cornerPadding = obj.value("cornerPadding", 4.0f);
+    midPadding = obj.value("midPadding", 3.0f);
 
     for (auto &[corner, labelsCorner] : labels) {
-        std::string cornerIndice = corner == Corner::Top_Left ? "labelsTL" :
-            corner == Corner::Top_Center ? "labelsTC" :
-            corner == Corner::Top_Right ? "labelsTR" :
-            corner == Corner::Center_Left ? "labelsCL" :
-            corner == Corner::Center_Center ? "labelsCC" :
-            corner == Corner::Center_Right ? "labelsCR" :
-            corner == Corner::Bottom_Left ? "labelsBL" :
-            corner == Corner::Bottom_Center ? "labelsBC" : "labelsBR";
+        std::string cornerIndice(getCornerKey(corner));
+        if (!obj.contains(cornerIndice)) continue;
 
         for (const auto &i : obj[cornerIndice]) {
             switch (i["type"].get<LabelType>()) {
@@ -221,39 +268,45 @@ void Manager::load() {
                     bool cps = i.value("cps", false);
                     bool noclip = i.value("noclip", false);
                     
-                    Label newLabel(i["text"], color, i["size"], rainbow, cps, noclip);
-                    labelsCorner.push_back(newLabel);
+                    labelsCorner.emplace_back(i["text"], color, i["size"], rainbow, cps, noclip);
                 } break;
                 case LabelType::CheatIndicator: {
-                    Label newLabel(i["size"].get<float>(), LabelType::CheatIndicator);
-                    labelsCorner.push_back(newLabel);
+                    labelsCorner.emplace_back(i["size"].get<float>(), LabelType::CheatIndicator);
                 } break;
                 case LabelType::Spacing: {
-                    labelsCorner.push_back(Label(i["spacing"]));
+                    labelsCorner.emplace_back(i["spacing"]);
                 } break;
             }
         }
     }
 }
 
-static bool m_push = false;
-
 class $modify(LabelsPlayLayer, PlayLayer) {
     struct Fields {
+        cocos2d::CCMenu* labelsMenu = nullptr;
         std::unordered_map<Corner, std::vector<geode::Label*>> labelObjs;
     };
 
     bool init(GJGameLevel *level, bool useReplay, bool dontCreateObjects) {
         if (!PlayLayer::init(level, useReplay, dontCreateObjects)) return false;
-        m_fields->labelObjs[Corner::Top_Left] = std::vector<geode::Label*>();
-        m_fields->labelObjs[Corner::Top_Center] = std::vector<geode::Label*>();
-        m_fields->labelObjs[Corner::Top_Right] = std::vector<geode::Label*>();
-        m_fields->labelObjs[Corner::Center_Left] = std::vector<geode::Label*>();
-        m_fields->labelObjs[Corner::Center_Center] = std::vector<geode::Label*>();
-        m_fields->labelObjs[Corner::Center_Right] = std::vector<geode::Label*>();
-        m_fields->labelObjs[Corner::Bottom_Left] = std::vector<geode::Label*>();
-        m_fields->labelObjs[Corner::Bottom_Center] = std::vector<geode::Label*>();
-        m_fields->labelObjs[Corner::Bottom_Right] = std::vector<geode::Label*>();
+
+        m_fields->labelsMenu = cocos2d::CCMenu::create();
+        m_fields->labelsMenu->setPosition({0, 0});
+        m_fields->labelsMenu->setID("labels-menu"_spr);
+        if (m_uiLayer) {
+            m_uiLayer->addChild(m_fields->labelsMenu, 999);
+        }
+
+        m_fields->labelObjs[Corner::Top_Left] = {};
+        m_fields->labelObjs[Corner::Top_Center] = {};
+        m_fields->labelObjs[Corner::Top_Right] = {};
+        m_fields->labelObjs[Corner::Center_Left] = {};
+        m_fields->labelObjs[Corner::Center_Center] = {};
+        m_fields->labelObjs[Corner::Center_Right] = {};
+        m_fields->labelObjs[Corner::Bottom_Left] = {};
+        m_fields->labelObjs[Corner::Bottom_Center] = {};
+        m_fields->labelObjs[Corner::Bottom_Right] = {};
+
         g_sessionStart = std::chrono::steady_clock::now();
         return true;
     }
@@ -312,6 +365,8 @@ class $modify(LabelsPlayLayer, PlayLayer) {
         
         for (auto &[corner, labelVec] : m_fields->labelObjs) {
             float y = 0.0f, labelsHeight = 0.0f; int i = 0;
+            auto cornerProps = getCornerProps(corner);
+
             for (const auto &labelObj : manager.labels[corner]) {
                 if (!labelObj.enabled) continue;
                 if (labelObj.noclip && !noclip_enabled) continue;
@@ -320,22 +375,16 @@ class $modify(LabelsPlayLayer, PlayLayer) {
                     std::string renderedText = labelObj.render();
                     if (renderedText.empty()) continue; 
 
-                    geode::Label *label = NULL;
-                    if (i < labelVec.size()) label = labelVec[i];
-                    else {
-                        label = geode::Label::create("Swag", "bigFont.fnt");
-                        switch (corner) {
-                        case Corner::Top_Left: label->setAnchorPoint({0.0f, 1.0f}); label->setAlignment(geode::Label::Alignment::Left); break;
-                        case Corner::Top_Center: label->setAnchorPoint({0.5f, 1.0f}); label->setAlignment(geode::Label::Alignment::Center); break;
-                        case Corner::Top_Right: label->setAnchorPoint({1.0f, 1.0f}); label->setAlignment(geode::Label::Alignment::Right); break;
-                        case Corner::Center_Left: label->setAnchorPoint({0.0f, 1.0f}); label->setAlignment(geode::Label::Alignment::Left); break;
-                        case Corner::Center_Center: label->setAnchorPoint({0.5f, 1.0f}); label->setAlignment(geode::Label::Alignment::Center); break;
-                        case Corner::Center_Right: label->setAnchorPoint({1.0f, 1.0f}); label->setAlignment(geode::Label::Alignment::Right); break;
-                        case Corner::Bottom_Left: label->setAnchorPoint({0.0f, 1.0f}); label->setAlignment(geode::Label::Alignment::Left); break;
-                        case Corner::Bottom_Center: label->setAnchorPoint({0.5f, 1.0f}); label->setAlignment(geode::Label::Alignment::Center); break;
-                        case Corner::Bottom_Right: label->setAnchorPoint({1.0f, 1.0f}); label->setAlignment(geode::Label::Alignment::Right); break;
+                    geode::Label *label = nullptr;
+                    if (i < labelVec.size()) {
+                        label = labelVec[i];
+                    } else {
+                        label = geode::Label::create("", "bigFont.fnt");
+                        label->setAnchorPoint(cornerProps.anchor);
+                        label->setAlignment(cornerProps.align);
+                        if (m_fields->labelsMenu) {
+                            m_fields->labelsMenu->addChild(label);
                         }
-                        addChild(label, 999);
                         labelVec.push_back(label);
                     }
 
@@ -368,22 +417,16 @@ class $modify(LabelsPlayLayer, PlayLayer) {
                 else if (labelObj.type == LabelType::CheatIndicator) {
                     if (!cheat_indicator_enabled) continue;
                     
-                    geode::Label *label = NULL;
-                    if (i < labelVec.size()) label = labelVec[i];
-                    else {
+                    geode::Label *label = nullptr;
+                    if (i < labelVec.size()) {
+                        label = labelVec[i];
+                    } else {
                         label = geode::Label::create(".", "bigFont.fnt");
-                        switch (corner) {
-                        case Corner::Top_Left: label->setAnchorPoint({0.0f, 1.0f}); label->setAlignment(geode::Label::Alignment::Left); break;
-                        case Corner::Top_Center: label->setAnchorPoint({0.5f, 1.0f}); label->setAlignment(geode::Label::Alignment::Center); break;
-                        case Corner::Top_Right: label->setAnchorPoint({1.0f, 1.0f}); label->setAlignment(geode::Label::Alignment::Right); break;
-                        case Corner::Center_Left: label->setAnchorPoint({0.0f, 1.0f}); label->setAlignment(geode::Label::Alignment::Left); break;
-                        case Corner::Center_Center: label->setAnchorPoint({0.5f, 1.0f}); label->setAlignment(geode::Label::Alignment::Center); break;
-                        case Corner::Center_Right: label->setAnchorPoint({1.0f, 1.0f}); label->setAlignment(geode::Label::Alignment::Right); break;
-                        case Corner::Bottom_Left: label->setAnchorPoint({0.0f, 1.0f}); label->setAlignment(geode::Label::Alignment::Left); break;
-                        case Corner::Bottom_Center: label->setAnchorPoint({0.5f, 1.0f}); label->setAlignment(geode::Label::Alignment::Center); break;
-                        case Corner::Bottom_Right: label->setAnchorPoint({1.0f, 1.0f}); label->setAlignment(geode::Label::Alignment::Right); break;
+                        label->setAnchorPoint(cornerProps.anchor);
+                        label->setAlignment(cornerProps.align);
+                        if (m_fields->labelsMenu) {
+                            m_fields->labelsMenu->addChild(label);
                         }
-                        addChild(label, 999);
                         labelVec.push_back(label);
                     }
 
@@ -393,8 +436,6 @@ class $modify(LabelsPlayLayer, PlayLayer) {
                     label->setText(".");
                     label->setContentHeight(12.5f);
 
-                    auto& config = Config::get();
-                    bool safe_mode = config.get<bool>("core.safe_mode", false);
                     bool auto_safe_mode = config.get<bool>("level.auto_safe_mode", false);
 
                     if (safe_mode || auto_safe_mode)
@@ -415,7 +456,9 @@ class $modify(LabelsPlayLayer, PlayLayer) {
                 labelVec[i]->setOpacity(0);
             }
 
-            labelsHeight = y - manager.midPadding; y = 0.0f; i = 0;
+            labelsHeight = y - manager.midPadding;
+            y = 0.0f;
+            i = 0;
 
             for (const auto &labelObj : manager.labels[corner]) {
                 if (!labelObj.enabled) continue;
@@ -423,37 +466,14 @@ class $modify(LabelsPlayLayer, PlayLayer) {
                 
                 if (labelObj.type == LabelType::Text) {
                     if (labelObj.render().empty()) continue; 
-
                     geode::Label *label = labelVec[i++];
-                    switch (corner) {
-                    case Corner::Top_Left: label->setPosition({manager.cornerPadding, windowSize.height - manager.cornerPadding - y}); break;
-                    case Corner::Top_Center: label->setPosition({windowSize.width / 2.0f, windowSize.height - manager.cornerPadding - y}); break;
-                    case Corner::Top_Right: label->setPosition({windowSize.width - manager.cornerPadding, windowSize.height - manager.cornerPadding - y}); break;
-                    case Corner::Center_Left: label->setPosition({manager.cornerPadding, windowSize.height / 2.0f + labelsHeight / 2.0f - y}); break;
-                    case Corner::Center_Center: label->setPosition({windowSize.width / 2.0f, windowSize.height / 2.0f + labelsHeight / 2.0f - y}); break;
-                    case Corner::Center_Right: label->setPosition({windowSize.width - manager.cornerPadding, windowSize.height / 2.0f + labelsHeight / 2.0f - y}); break;
-                    case Corner::Bottom_Left: label->setPosition({manager.cornerPadding, manager.cornerPadding + labelsHeight - y}); break;
-                    case Corner::Bottom_Center: label->setPosition({windowSize.width / 2.0f, manager.cornerPadding + labelsHeight - y}); break;
-                    case Corner::Bottom_Right: label->setPosition({windowSize.width - manager.cornerPadding, manager.cornerPadding + labelsHeight - y}); break;
-                    }
+                    label->setPosition(getCornerPos(corner, manager.cornerPadding, windowSize, y, labelsHeight));
                     y += label->getContentHeight() * labelObj.size + manager.midPadding;
                 } 
                 else if (labelObj.type == LabelType::CheatIndicator) {
                     if (!cheat_indicator_enabled) continue;
-
                     geode::Label *label = labelVec[i++];
-
-                    switch (corner) {
-                    case Corner::Top_Left: label->setPosition({manager.cornerPadding, windowSize.height - manager.cornerPadding - y}); break;
-                    case Corner::Top_Center: label->setPosition({windowSize.width / 2.0f, windowSize.height - manager.cornerPadding - y}); break;
-                    case Corner::Top_Right: label->setPosition({windowSize.width - manager.cornerPadding, windowSize.height - manager.cornerPadding - y}); break;
-                    case Corner::Center_Left: label->setPosition({manager.cornerPadding, windowSize.height / 2.0f + labelsHeight / 2.0f - y}); break;
-                    case Corner::Center_Center: label->setPosition({windowSize.width / 2.0f, windowSize.height / 2.0f + labelsHeight / 2.0f - y}); break;
-                    case Corner::Center_Right: label->setPosition({windowSize.width - manager.cornerPadding, windowSize.height / 2.0f + labelsHeight / 2.0f - y}); break;
-                    case Corner::Bottom_Left: label->setPosition({manager.cornerPadding, manager.cornerPadding + labelsHeight - y}); break;
-                    case Corner::Bottom_Center: label->setPosition({windowSize.width / 2.0f, manager.cornerPadding + labelsHeight - y}); break;
-                    case Corner::Bottom_Right: label->setPosition({windowSize.width - manager.cornerPadding, manager.cornerPadding + labelsHeight - y}); break;
-                    }
+                    label->setPosition(getCornerPos(corner, manager.cornerPadding, windowSize, y, labelsHeight));
                     y += (label->getContentHeight()) * labelObj.size + manager.midPadding;
                 } 
                 else if (labelObj.type == LabelType::Spacing) {

@@ -48,11 +48,13 @@ class $modify(StartposSwitcherPlayLayer, PlayLayer) {
     }
 
     void switchStartPos(int incBy, bool direction = true) {
-        auto fields = m_fields.self();
         auto pl = PlayLayer::get();
-        auto& config = Config::get();
+        if (!pl) return;
+        
+        auto fields = m_fields.self();
+        if (fields->m_startPositions.empty() || pl->m_levelEndAnimationStarted) return;
 
-        if (!pl || fields->m_startPositions.empty() || pl->m_levelEndAnimationStarted) return;
+        auto& config = Config::get();
 
         fields->m_selectedStartpos += incBy;
 
@@ -161,16 +163,14 @@ class $modify(StartposSwitcherPlayLayer, PlayLayer) {
             m_uiLayer->addChild(fields->startposSwitcherUI);
 
             auto& kb = GDH::Keybinds::get();
-            kb.addCallback("startpos_switcher::left", geode::Keybind(cocos2d::KEY_Q, KeyboardModifier::None), [left_arrowClick](bool repeat) {
+            kb.addCallback("startpos_switcher::left", geode::Keybind(cocos2d::KEY_Q, KeyboardModifier::None), [this](bool repeat) {
                 if (repeat) return;
-                if (auto pl = PlayLayer::get()) 
-                    left_arrowClick->activate();
+                switchStartPos(-1);
             });
 
-            kb.addCallback("startpos_switcher::right", geode::Keybind(cocos2d::KEY_E, KeyboardModifier::None), [right_arrowClick](bool repeat) {
+            kb.addCallback("startpos_switcher::right", geode::Keybind(cocos2d::KEY_E, KeyboardModifier::None), [this](bool repeat) {
                 if (repeat) return;
-                if (auto pl = PlayLayer::get()) 
-                    right_arrowClick->activate();
+                switchStartPos(1);
             });
         }
     }
