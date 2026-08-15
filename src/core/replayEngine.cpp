@@ -11,14 +11,7 @@ uint64_t ReplayEngine::get_frame() {
     auto gjbgl = GJBaseGameLayer::get();
     if (gjbgl) {
         auto& config = Config::get();
-
-        #ifdef GEODE_IS_WINDOWS
         return static_cast<uint64_t>(gjbgl->m_gameState.m_levelTime * config.get<float>("invisible.tps::value", 240.f));
-        #endif
-
-        #ifdef GEODE_IS_ANDROID
-        return static_cast<uint64_t>(gjbgl->m_gameState.m_levelTime * (config.get<float>("invisible.tps::value", 240.f) < 240.f ? 240.f : config.get<float>("invisible.tps::value", 240.f)));
-        #endif
     }
     return 0;
 }
@@ -202,12 +195,7 @@ std::string ReplayEngine::save(const std::string& replay_name) {
     out.write("RE4", 3);
     
     auto& config = Config::get();
-    float fps = config.get<float>("invisible.tps::value", 240.f);
-
-    #ifdef GEODE_IS_ANDROID
-    fps = fps < 240.f ? 240.f : fps;
-    #endif
-    
+    float fps = config.get<float>("invisible.tps::value", 240.f);    
     out.write(reinterpret_cast<const char*>(&fps), sizeof(fps));
 
     uint64_t physicSize = m_physicFrames.size();
