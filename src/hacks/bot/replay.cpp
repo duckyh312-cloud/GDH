@@ -82,12 +82,16 @@ class $modify(ReplayCCScheduler, cocos2d::CCScheduler) {
         auto &config = Config::get();
         auto& recorder = GDH::Recorder::get();
 
+        if (recorder.isRecording()) {
+            return CCScheduler::update(dt);
+        }
+
         float tps_value = config.get<float>("invisible.tps::value", 240.f);
         float new_dt = 1.f / tps_value;
 
         unsigned times = static_cast<int>((dt + left_over) / new_dt);  
         if (dt <= 0.f)
-            return CCScheduler::update(new_dt);
+            return CCScheduler::update(dt);
 
         auto start = std::chrono::high_resolution_clock::now();
         using namespace std::literals;
@@ -101,7 +105,7 @@ class $modify(ReplayCCScheduler, cocos2d::CCScheduler) {
             }
         }
 
-        left_over = recorder.isRecording() ? 0 : std::max(0.f, left_over + dt - new_dt * times);
+        left_over = std::max(0.f, left_over + dt - new_dt * times);
     }
 };
 
