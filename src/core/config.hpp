@@ -10,14 +10,16 @@
 #include <type_traits>
 #include <asp/fs.hpp>
 
-static const auto folderPath = geode::Mod::get()->getSaveDir();
-static const auto folderMacroPath = folderPath / "Macros";
-static const auto folderPresetsPath = folderPath / "Presets";
-static const auto folderShowcasesPath = folderPath / "Showcases";
-static const auto fileDataPath = folderPath / "config3.json";
-static const auto labelsDataPath = folderPath / "labels.json";
-static const auto colorsDataPath = folderPath / "colors.txt";
-static const auto keybindsDataPath = folderPath / "keybinds.json";
+inline std::filesystem::path getFolderPath() {
+    return geode::Mod::get()->getSaveDir();
+}
+inline std::filesystem::path getFolderMacroPath() { return getFolderPath() / "Macros"; }
+inline std::filesystem::path getFolderPresetsPath() { return getFolderPath() / "Presets"; }
+inline std::filesystem::path getFolderShowcasesPath() { return getFolderPath() / "Showcases"; }
+inline std::filesystem::path getFileDataPath() { return getFolderPath() / "config3.json"; }
+inline std::filesystem::path getLabelsDataPath() { return getFolderPath() / "labels.json"; }
+inline std::filesystem::path getColorsDataPath() { return getFolderPath() / "colors.txt"; }
+inline std::filesystem::path getKeybindsDataPath() { return getFolderPath() / "keybinds.json"; }
 
 template <typename T>
 struct requires_ref {
@@ -120,11 +122,11 @@ public:
                     std::filesystem::create_directory(path, ec);
                 }
             };
-            CheckDir(folderMacroPath);
-            CheckDir(folderShowcasesPath);
-            CheckDir(folderPresetsPath);
+            CheckDir(getFolderMacroPath());
+            CheckDir(getFolderShowcasesPath());
+            CheckDir(getFolderPresetsPath());
 
-            this->load(fileDataPath);
+            this->load(getFileDataPath());
             inited = true;
         }
 

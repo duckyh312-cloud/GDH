@@ -97,7 +97,7 @@ void Keybinds::rebuildCache() {
 }
 
 void Keybinds::load() {
-    std::ifstream file(keybindsDataPath);
+    std::ifstream file(getKeybindsDataPath());
     if (!file.is_open()) return;
 
     nlohmann::json jsonObject = nlohmann::json::parse(file, nullptr, false);
@@ -130,7 +130,7 @@ void Keybinds::load() {
 }
 
 void Keybinds::save() const {
-    std::ofstream file(keybindsDataPath);
+    std::ofstream file(getKeybindsDataPath());
     if (!file.is_open()) return;
 
     nlohmann::json jsonObject = nlohmann::json::object();

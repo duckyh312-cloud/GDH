@@ -110,7 +110,7 @@ void Recorder::startWindowsEncoder() {
         }
 
         if (record_audio) {
-            std::filesystem::path folder = Config::get().get<std::string>("recorder::path", (folderPath / "Showcases").string());
+            std::filesystem::path folder = Config::get().get<std::string>("recorder::path", (getFolderPath() / "Showcases").string());
             std::filesystem::path video_path = folder / videoName;
             std::filesystem::path audio_path = folder / AudioRecorder::get().audio_name;
             std::filesystem::path temp_video_path = folder / ("temp_" + videoName);
@@ -153,7 +153,7 @@ void Recorder::startWindowsEncoder() {
 #ifdef GEODE_IS_ANDROID
 void Recorder::startAndroidEncoder() {
     std::thread([this]() {
-        std::filesystem::path folder = Config::get().get<std::string>("recorder::path", (folderPath / "Showcases").string());
+        std::filesystem::path folder = Config::get().get<std::string>("recorder::path", (getFolderPath() / "Showcases").string());
         auto encoder = new H264Encoder(width, height, fps, bitrate, ultrafast ? "ultrafast" : "medium");
 
         if (!encoder->is_valid() || !encoder->start((folder / videoName).string())) {
@@ -275,7 +275,7 @@ void Recorder::compile_command() {
     
     if (!vf_args.empty()) command += fmt::format(" -vf {}", vf_args);
 
-    std::filesystem::path folder = Config::get().get<std::string>("recorder::path", (folderPath / "Showcases").string());
+    std::filesystem::path folder = Config::get().get<std::string>("recorder::path", (getFolderPath() / "Showcases").string());
     command += fmt::format(" -an \"{}\\{}\"", folder.string(), videoName);
 }
 

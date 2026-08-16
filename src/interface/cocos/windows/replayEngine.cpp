@@ -116,7 +116,7 @@ protected:
                             }
                         );
                     } else {
-                        tryStartRecorder(folderShowcasesPath);
+                        tryStartRecorder(getFolderShowcasesPath());
                     }
                 }
             );
@@ -279,7 +279,7 @@ protected:
 
         scroll->m_contentLayer->addChild(CCNode::create());
 
-        for (const auto& entry : std::filesystem::directory_iterator(folderMacroPath)) {
+        for (const auto& entry : std::filesystem::directory_iterator(getFolderMacroPath())) {
             if (entry.is_regular_file() && entry.path().extension() == ".re4") {
                 if (GDH::Utils::isOnlyAsciiPath(entry)) {
                     std::string macroName = entry.path().stem().string();

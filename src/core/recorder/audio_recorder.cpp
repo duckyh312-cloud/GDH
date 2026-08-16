@@ -65,7 +65,7 @@ void AudioRecorder::stop() {
     m_masterGroup->setPaused(false);
 
     #ifdef GEODE_IS_WINDOWS
-    std::filesystem::path folder = Config::get().get<std::string>("recorder::path", (folderPath / "Showcases").string());
+    std::filesystem::path folder = Config::get().get<std::string>("recorder::path", (getFolderPath() / "Showcases").string());
     save_to_wav(folder / audio_name);
     #endif
 }

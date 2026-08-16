@@ -224,14 +224,14 @@ void Manager::save() {
             obj[cornerIndice].push_back(labelObj);
         }
     }
-    std::ofstream outFile(labelsDataPath);
+    std::ofstream outFile(getLabelsDataPath());
     if (outFile.is_open()) {
         outFile << obj.dump(4);
     }
 }
 
 void Manager::load() {
-    std::ifstream inFile(labelsDataPath);
+    std::ifstream inFile(getLabelsDataPath());
     if (!inFile.is_open()) return;
 
     labels.clear();

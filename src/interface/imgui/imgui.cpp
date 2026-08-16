@@ -66,7 +66,7 @@ void onOpen() {
 
 void onClose() {
     GDH::Utils::updateCursorState(g_show);
-    Config::get().save(fileDataPath);
+    Config::get().save(getFileDataPath());
     GDH::Labels::Manager::get().save();
     GDH::Keybinds::get().save();
     ImGuiH::SaveTheme();

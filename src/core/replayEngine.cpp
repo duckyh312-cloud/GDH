@@ -189,7 +189,7 @@ std::string ReplayEngine::save(const std::string& replay_name) {
     if (m_inputFrames.empty())
         return "Replay doesn't have actions";
 
-    std::ofstream out(folderMacroPath / std::string(replay_name + ".re4"), std::ios::binary);
+    std::ofstream out(getFolderMacroPath() / std::string(replay_name + ".re4"), std::ios::binary);
     if (!out.is_open()) return "Failed to save Replay";
 
     out.write("RE4", 3);
@@ -232,7 +232,7 @@ std::string ReplayEngine::save(const std::string& replay_name) {
 
 std::string ReplayEngine::load(const std::string& replay_name) {
 
-    std::ifstream in(folderMacroPath / std::string(replay_name + ".re4"), std::ios::binary);
+    std::ifstream in(getFolderMacroPath() / std::string(replay_name + ".re4"), std::ios::binary);
     if (!in.is_open()) return "Failed to open Replay";
 
     m_physicFrames.clear();

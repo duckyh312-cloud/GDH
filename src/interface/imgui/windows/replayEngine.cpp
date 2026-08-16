@@ -82,7 +82,7 @@ void loadPreset(const std::filesystem::path& path, GDH::Recorder& recorder) {
 
 void drawRecorderInterface() {
     std::string ffmpegPath = getFFmpegPath();
-    std::filesystem::path folder = Config::get().get<std::string>("recorder::path", (folderPath / "Showcases").string());
+    std::filesystem::path folder = Config::get().get<std::string>("recorder::path", (getFolderPath() / "Showcases").string());
 
     if (ffmpegPath.empty()) {
         ImGui::TextColored(ImColor(255, 128, 128).Value, "FFmpeg not found!");
@@ -247,8 +247,8 @@ void drawRecorderInterface() {
 
     if (presetsNeedRefresh) {
         presetFiles.clear();
-        if (std::filesystem::exists(folderPresetsPath)) {
-            for (const auto& entry : std::filesystem::directory_iterator(folderPresetsPath)) {
+        if (std::filesystem::exists(getFolderPresetsPath())) {
+            for (const auto& entry : std::filesystem::directory_iterator(getFolderPresetsPath())) {
                 if (entry.is_regular_file() && entry.path().extension() == ".preset") {
                     presetFiles.push_back(entry.path());
                 }
@@ -263,8 +263,8 @@ void drawRecorderInterface() {
     ImGui::SameLine();
     
     if (ImGuiH::Button("Save Preset") && !customPresetName.empty()) {
-        std::filesystem::create_directories(folderPresetsPath);
-        auto path = folderPresetsPath / (customPresetName + ".preset");
+        std::filesystem::create_directories(getFolderPresetsPath());
+        auto path = getFolderPresetsPath() / (customPresetName + ".preset");
         savePreset(path, recorder);
         presetsNeedRefresh = true;
     }
@@ -272,7 +272,7 @@ void drawRecorderInterface() {
     ImGui::SameLine();
 
     if (ImGuiH::Button("Load Preset") && !customPresetName.empty()) {
-        auto path = folderPresetsPath / (customPresetName + ".preset");
+        auto path = getFolderPresetsPath() / (customPresetName + ".preset");
         if (std::filesystem::exists(path)) {
             loadPreset(path, recorder);
         }
@@ -281,7 +281,7 @@ void drawRecorderInterface() {
     ImGui::SameLine();
 
     if (ImGuiH::Button("Delete Preset") && !customPresetName.empty()) {
-        auto path = folderPresetsPath / (customPresetName + ".preset");
+        auto path = getFolderPresetsPath() / (customPresetName + ".preset");
         if (std::filesystem::exists(path)) {
             std::filesystem::remove(path);
             presetsNeedRefresh = true;
@@ -329,11 +329,11 @@ void drawRecorderInterface() {
     } ImGui::SameLine();
 
     if (ImGuiH::Button("Reset Showcase Folder")) {
-        Config::get().set<std::string>("recorder::path", (folderPath / "Showcases").string());
+        Config::get().set<std::string>("recorder::path", (getFolderPath() / "Showcases").string());
     }
 
     if (ImGuiH::Button("Open Presets Folder")) {
-        geode::utils::file::openFolder(folderPresetsPath);
+        geode::utils::file::openFolder(getFolderPresetsPath());
     }
 
     ImGui::Text("Showcase Folder: %s", folder.string().c_str());
@@ -649,7 +649,7 @@ $execute {
 
         if (ImGuiH::ArrowButton("##replay_select", ImGuiDir_Down)) {
             replay_list.clear();
-            for (const auto& entry : std::filesystem::directory_iterator(folderMacroPath)) {
+            for (const auto& entry : std::filesystem::directory_iterator(getFolderMacroPath())) {
                 if (entry.is_regular_file()) {
                     if (entry.path().extension() == ".re4") {
                         if (GDH::Utils::isOnlyAsciiPath(entry)) 
@@ -661,7 +661,7 @@ $execute {
         }
         
         if (ImGuiH::Button("Save", {ImGui::GetContentRegionAvail().x / 3, NULL})) {
-            std::filesystem::path savePath = folderMacroPath / (engine.replay_name + ".re4");
+            std::filesystem::path savePath = getFolderMacroPath() / (engine.replay_name + ".re4");
             if (std::filesystem::exists(savePath)) {
                 ImGui::OpenPopup("Save Overwrite Warning");
             } else {
@@ -776,7 +776,7 @@ $execute {
             ImGui::EndChild();
 
             if (ImGuiH::Button("Open Folder", {ImGui::GetContentRegionAvail().x, NULL})) {
-                geode::utils::file::openFolder(folderMacroPath);
+                geode::utils::file::openFolder(getFolderMacroPath());
             }
             
             if (ImGuiH::Button("Close", {ImGui::GetContentRegionAvail().x, NULL})) {
