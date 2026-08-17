@@ -1,3 +1,9 @@
+# v5.1.0-beta.4 - Hotfix
+- Fixed Cheat Indicator (Mobile)
+- Fixed Autosave (Mobile)
+- Optimized Labels
+- Added Macro Buff (Experimental)
+
 # v5.1.0-beta.3
 - Added Cheat Indicator
 - Fixed Keybinds
