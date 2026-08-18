@@ -28,6 +28,16 @@ class $modify(PlayLayer) {
 
         return true;
     }
+
+    void setupHasCompleted() {
+        PlayLayer::setupHasCompleted();
+
+        auto& recorder = GDH::Recorder::get();
+        if (recorder.isRecording()) {
+            if (m_percentageLabel) m_percentageLabel->setVisible(false);
+            if (m_progressBar) m_progressBar->setVisible(false);
+        }
+    }
 };
 
 class $modify(LevelInfoLayer) {
@@ -87,10 +97,17 @@ class $modify(FMODAudioEngine) {
 };
 
 class $modify(UILayer) {
-    void toggleMenuVisibility(bool visible) {
-        if (GDH::Recorder::get().isRecording()) 
-            return UILayer::toggleMenuVisibility(false);
-        
+    void toggleMenuVisibility(bool visible) {        
         UILayer::toggleMenuVisibility(visible);
+
+        if (GDH::Recorder::get().isRecording()) {
+            this->m_pauseBtn->getNormalImage()->setVisible(false);
+
+            for (auto child : this->getChildrenExt()) {                    
+                if (geode::cast::typeinfo_cast<GJUINode*>(child)) {
+                    static_cast<cocos2d::CCNode*>(child)->setVisible(false);
+                }
+            }
+        }
     }
 };

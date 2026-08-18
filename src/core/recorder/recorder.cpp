@@ -1,6 +1,7 @@
 #include "recorder.hpp"
 #include "audio_recorder.hpp"
 #include "../config.hpp"
+#include "../gui.hpp"
 
 #ifdef GEODE_IS_WINDOWS
 #include "subprocess.hpp"
@@ -9,7 +10,6 @@
 #ifdef GEODE_IS_ANDROID
 #include "h264_encoder.hpp"
 #include "log_overlay.hpp"
-#include "../gui.hpp"
 #endif
 
 using namespace GDH;
@@ -22,6 +22,15 @@ void Recorder::start() {
     #ifdef GEODE_IS_WINDOWS
     compile_command();
     #endif
+    
+    auto& gui = GDH::Gui::get();
+    auto& hack = gui.getWindow("Cosmetic").findHackByName("Hide Achievements");
+    if (!hack.getEnabled()) hack.enable();
+
+    if (auto pl = PlayLayer::get()) {
+        if (pl->m_percentageLabel) pl->m_percentageLabel->setVisible(false);
+        if (pl->m_progressBar) pl->m_progressBar->setVisible(false);
+    }
 
     last_frame_time = 0;
     extra_time = 0;
