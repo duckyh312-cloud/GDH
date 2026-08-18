@@ -63,26 +63,6 @@ void Recorder::setupResolution() {
         static_cast<float>(width) / newDesignResolution.width, 
         static_cast<float>(height) / newDesignResolution.height
     );
-
-    auto resetUIElements = []() {
-        if (auto pl = PlayLayer::get()) {
-            const auto& savedPositions = pl->m_uiObjectPositions;
-
-            std::for_each(
-                geode::cocos::CCArrayExt<GameObject*>(pl->m_objects).begin(),
-                geode::cocos::CCArrayExt<GameObject*>(pl->m_objects).end(),
-                [&savedPositions](GameObject* obj) {
-                    if (!obj) return;
-                    auto posIt = savedPositions.find(obj->m_uniqueID);
-                    if (posIt != savedPositions.end()) obj->setStartPos(posIt->second);
-                }
-            );
-
-            pl->positionUIObjects();
-        }
-    };
-
-    resetUIElements();
 }
 
 #ifdef GEODE_IS_WINDOWS

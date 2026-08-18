@@ -3,7 +3,7 @@
 - Fixed Autosave (Mobile)
 - Optimized Labels
 - Added Macro Buff (Experimental)
-- Hide only controls and buttons while recording, not the whole UI
+- Recorder Fixes
 
 # v5.1.0-beta.3
 - Added Cheat Indicator
