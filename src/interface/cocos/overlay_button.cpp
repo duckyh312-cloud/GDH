@@ -1,6 +1,5 @@
 #include "overlay_button.hpp"
 #include "../../core/config.hpp"
-#include "hacks_layer.hpp"
 #include <Geode/modify/MenuLayer.hpp>
 #include <Geode/modify/GameManager.hpp>
 
@@ -28,11 +27,13 @@ bool OverlayButton::init(const char* file) {
 
     auto& config = Config::get();
     m_scale = config.get<float>("ui_icon.scale", 0.5f);
-    m_minOpacity = config.get<float>("ui_icon.minOpacity", 0.80f);
-
+    
     m_sprite = CCSprite::create(file);
     m_sprite->setScale(m_scale);
+
+    float m_minOpacity = config.get<float>("ui_icon.minOpacity", 0.80f);
     m_sprite->setOpacity(m_minOpacity * 255);
+
     m_sprite->setPosition({
         config.get<float>("ui_icon.x", 80.f),
         config.get<float>("ui_icon.y", 80.f)
@@ -43,7 +44,33 @@ bool OverlayButton::init(const char* file) {
     setZOrder(1000);
     setPosition({0, 0});
     scheduleUpdate();
+
+    bool isVisible = config.get<bool>("ui_icon.visible", true);
+    this->setVisible(isVisible);
+
     return true;
+}
+
+void OverlayButton::setSizeScale(float scale) {
+    m_scale = scale;
+    if (m_sprite) {
+        m_sprite->setScale(m_scale);
+    }
+    Config::get().set<float>("ui_icon.scale", m_scale);
+}
+
+void OverlayButton::setVisible(bool visible) {
+    CCMenu::setVisible(visible);
+
+    if (auto dispatcher = CCDirector::sharedDirector()->getTouchDispatcher()) {
+        if (visible) {
+            dispatcher->addTargetedDelegate(this, -1000, true);
+        } else {
+            dispatcher->removeDelegate(this);
+        }
+    }
+
+    Config::get().set<bool>("ui_icon.visible", visible);
 }
 
 void OverlayButton::update(float dt) {
@@ -58,12 +85,14 @@ void OverlayButton::update(float dt) {
 }
 
 bool OverlayButton::ccTouchBegan(CCTouch* t, CCEvent*) {
+    if (!isVisible()) return false;
+
     CCPoint tp = convertToNodeSpace(t->getLocation());
     if (ccpDistance(tp, m_sprite->getPosition()) > radius()) return false;
 
     m_moved = false;
     m_sprite->stopAllActions();
-    m_sprite->runAction(CCScaleTo::create(0.08f, m_scale * 0.85f)); // press scale
+    m_sprite->runAction(CCScaleTo::create(0.08f, m_scale * 0.85f));
     m_sprite->runAction(CCFadeTo::create(0.08f, 255));
     return true;
 }
@@ -82,6 +111,8 @@ void OverlayButton::ccTouchMoved(CCTouch* t, CCEvent*) {
 void OverlayButton::ccTouchEnded(CCTouch*, CCEvent*) {
     m_sprite->stopAllActions();
     m_sprite->runAction(CCEaseBackOut::create(CCScaleTo::create(0.25f, m_scale)));
+
+    float m_minOpacity = Config::get().get<float>("ui_icon.minOpacity", 0.80f);
     m_sprite->runAction(CCSequence::create(
         CCDelayTime::create(0.8f),
         CCFadeTo::create(0.3f, m_minOpacity * 255),
@@ -103,6 +134,8 @@ void OverlayButton::registerWithTouchDispatcher() {
 }
 
 #ifdef GEODE_IS_ANDROID
+#include "hacks_layer.hpp"
+
 static bool inited = false;
 class $modify(CocosInitMenuLayer, MenuLayer) {
     bool init() {

@@ -16,11 +16,12 @@ class $modify(StartposSwitcherPlayLayer, PlayLayer) {
         std::vector<StartPosObject*> m_startPositions;
         int m_selectedStartpos = -1;
         cocos2d::CCMenu* startposSwitcherUI = nullptr;
+        cocos2d::CCLabelBMFont* switcherLabel = nullptr;
 
         ~Fields() {
             auto& kb = GDH::Keybinds::get();
-            kb.removeCallback("startpos_switcher::left_key");
-            kb.removeCallback("startpos_switcher::right_key");
+            kb.removeCallback("startpos_switcher::left");
+            kb.removeCallback("startpos_switcher::right");
         }
     };
 
@@ -32,19 +33,37 @@ class $modify(StartposSwitcherPlayLayer, PlayLayer) {
         hack.addHookPtr(self.getHook("PlayLayer::createObjectsFromSetupFinished").unwrap());
 
         hack.setCustomWindowImGui([
-            resetCamera_key = hack.formatAdditionalSetting("reset_camera")
+            resetCamera_key = hack.formatAdditionalSetting("reset_camera"),
+            minOpacity_key = hack.formatAdditionalSetting("min_opacity"),
+            maxOpacity_key = hack.formatAdditionalSetting("max_opacity")
         ] {
             ImGuiWidgetConfig::Checkbox("Reset Camera", resetCamera_key, false);
+            ImGuiWidgetConfig::DragInt("##Min Opacity", minOpacity_key, 1.f, 0, 255, 100, "Min Opacity: %d");
+            ImGuiWidgetConfig::DragInt("##Max Opacity", maxOpacity_key, 1.f, 0, 255, 200, "Max Opacity: %d");
             ImGuiWidgetConfig::DrawCustomKeybindButton("startpos_switcher::left", "Left Switch", geode::Keybind(cocos2d::KEY_Q, KeyboardModifier::None));
             ImGuiWidgetConfig::DrawCustomKeybindButton("startpos_switcher::right", "Right Switch", geode::Keybind(cocos2d::KEY_E, KeyboardModifier::None));
         });
 
         hack.setCustomWindowCocos([
-            resetCamera_key = hack.formatAdditionalSetting("reset_camera")
+            resetCamera_key = hack.formatAdditionalSetting("reset_camera"),
+            minOpacity_key = hack.formatAdditionalSetting("min_opacity"),
+            maxOpacity_key = hack.formatAdditionalSetting("max_opacity")
         ](cocos2d::CCNode* popupNode) {
             auto* popup = static_cast<HackSettingsPopup*>(popupNode);
             popup->addConfigToggle("Reset Camera", resetCamera_key, false);
+            popup->addConfigIntInput("Min Opacity (0 - 255)", minOpacity_key, 0, 255, 100);
+            popup->addConfigIntInput("Max Opacity (0 - 255)", maxOpacity_key, 0, 255, 200);
         });
+    }
+
+    void updateSwitcherUI() {
+        auto fields = m_fields.self();
+        if (fields->switcherLabel && !fields->m_startPositions.empty()) {
+            fields->switcherLabel->setString(
+                fmt::format("{}/{}", fields->m_selectedStartpos + 1, fields->m_startPositions.size()).c_str()
+            );
+        }
+        delayOpacityUI();
     }
 
     void switchStartPos(int incBy, bool direction = true) {
@@ -86,7 +105,23 @@ class $modify(StartposSwitcherPlayLayer, PlayLayer) {
                 pl->togglePracticeMode(true);
             }
         }
+    }
 
+    void delayOpacityUI() {
+        auto fields = m_fields.self();
+        if (fields->startposSwitcherUI) {
+            auto& config = Config::get();
+            GLubyte maxOpacity = static_cast<GLubyte>(config.get<int>("level.startpos_switcher::max_opacity", 200));
+            GLubyte minOpacity = static_cast<GLubyte>(config.get<int>("level.startpos_switcher::min_opacity", 100));
+
+            fields->startposSwitcherUI->stopAllActions();
+            fields->startposSwitcherUI->setOpacity(maxOpacity);
+            fields->startposSwitcherUI->runAction(CCSequence::create(
+                CCDelayTime::create(2.f),
+                CCFadeTo::create(0.3f, minOpacity),
+                nullptr
+            ));
+        }
     }
 
     void addObject(GameObject* obj) {
@@ -124,31 +159,31 @@ class $modify(StartposSwitcherPlayLayer, PlayLayer) {
             auto win_size = director->getWinSize();
             float bottom = director->getScreenBottom();
 
-            auto label = cocos2d::CCLabelBMFont::create(fmt::format("{}/{}", fields->m_selectedStartpos+1, fields->m_startPositions.size()).c_str(), "bigFont.fnt");
-            label->setScale(0.5f);
-            label->setPosition(win_size.width / 2, 20.f);
-            label->setOpacity(100);
-            label->setID("startposSwitcherLabels"_spr);
+            fields->switcherLabel = cocos2d::CCLabelBMFont::create(
+                fmt::format("{}/{}", fields->m_selectedStartpos + 1, fields->m_startPositions.size()).c_str(), 
+                "bigFont.fnt"
+            );
+            fields->switcherLabel->setScale(0.5f);
+            fields->switcherLabel->setPosition(win_size.width / 2, 20.f);
+            fields->switcherLabel->setID("startposSwitcherLabels"_spr);
 
             auto left_arrow = cocos2d::CCSprite::createWithSpriteFrameName("GJ_arrow_02_001.png");
             left_arrow->setScale(0.5f);
-            auto left_arrowClick = geode::cocos::CCMenuItemExt::createSpriteExtra(left_arrow, [this, label, fields](CCMenuItemSpriteExtra* sender) {
+            auto left_arrowClick = geode::cocos::CCMenuItemExt::createSpriteExtra(left_arrow, [this](CCMenuItemSpriteExtra* sender) {
                 switchStartPos(-1);
-                label->setCString(fmt::format("{}/{}", fields->m_selectedStartpos+1, fields->m_startPositions.size()).c_str());
+                updateSwitcherUI();
             });
             left_arrowClick->setPosition(win_size.width / 2 - 50, bottom + left_arrowClick->getScaledContentHeight());
-            left_arrowClick->setOpacity(100);
             left_arrowClick->setID("startposSwitcherLeftArrowClick"_spr);
 
             auto right_arrow = cocos2d::CCSprite::createWithSpriteFrameName("GJ_arrow_02_001.png");  
             right_arrow->setScale(0.5f);
             right_arrow->setFlipX(true);
-            auto right_arrowClick = geode::cocos::CCMenuItemExt::createSpriteExtra(right_arrow, [this, label, fields](CCMenuItemSpriteExtra* sender) {
+            auto right_arrowClick = geode::cocos::CCMenuItemExt::createSpriteExtra(right_arrow, [this](CCMenuItemSpriteExtra* sender) {
                 switchStartPos(1);
-                label->setCString(fmt::format("{}/{}", fields->m_selectedStartpos+1, fields->m_startPositions.size()).c_str());
-            });       
+                updateSwitcherUI();
+            });        
             right_arrowClick->setPosition(win_size.width / 2 + 50, bottom + right_arrowClick->getScaledContentHeight());
-            right_arrowClick->setOpacity(100);
             right_arrowClick->setID("startpos_switcher_rightArrowClick"_spr);
 
             fields->startposSwitcherUI = cocos2d::CCMenu::create();
@@ -158,19 +193,23 @@ class $modify(StartposSwitcherPlayLayer, PlayLayer) {
 
             fields->startposSwitcherUI->addChild(left_arrowClick);
             fields->startposSwitcherUI->addChild(right_arrowClick);
-            fields->startposSwitcherUI->addChild(label);
+            fields->startposSwitcherUI->addChild(fields->switcherLabel);
 
             m_uiLayer->addChild(fields->startposSwitcherUI);
+
+            delayOpacityUI();
 
             auto& kb = GDH::Keybinds::get();
             kb.addCallback("startpos_switcher::left", geode::Keybind(cocos2d::KEY_Q, KeyboardModifier::None), [this](bool repeat) {
                 if (repeat) return;
                 switchStartPos(-1);
+                updateSwitcherUI();
             });
 
             kb.addCallback("startpos_switcher::right", geode::Keybind(cocos2d::KEY_E, KeyboardModifier::None), [this](bool repeat) {
                 if (repeat) return;
                 switchStartPos(1);
+                updateSwitcherUI();
             });
         }
     }
@@ -187,12 +226,4 @@ class $modify(StartposSwitcherPlayLayer, PlayLayer) {
             recorder.delay = 0;
         }      
     }
-
-    // void togglePracticeMode(bool practiceMode) {
-    //     auto fields = m_fields.self();
-    //     if (fields->startposSwitcherUI) {
-    //         fields->startposSwitcherUI->setVisible(!practiceMode);
-    //     }
-    //     PlayLayer::togglePracticeMode(practiceMode);
-    // }
 };

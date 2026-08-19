@@ -6,7 +6,6 @@ class OverlayButton : public cocos2d::CCMenu {
     cocos2d::CCSprite* m_sprite = nullptr;
     cocos2d::CCPoint m_target;
     float m_scale = 0.60f;
-    float m_minOpacity = 0.60f;
     bool m_moved = false;
 
     bool init(const char* file);
@@ -26,4 +25,8 @@ public:
     static OverlayButton* create(const char* file);
     static OverlayButton* get(const char* file = "GDH_buttonUI.png"_spr);
     void setCallback(geode::Function<void()>&& cb) { m_callback = std::move(cb); }
+    void setVisible(bool visible) override;
+    
+    void setSizeScale(float scale);
+    float getSizeScale() const { return m_scale; }
 };

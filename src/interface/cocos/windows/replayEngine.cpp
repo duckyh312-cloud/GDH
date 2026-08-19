@@ -156,6 +156,7 @@ protected:
         nameInput = geode::TextInput::create(170.f, "video_name", "GoogleSans.fnt"_spr);
         nameInput->setPosition({245.f, 140.f});
         nameInput->setString(recorder.videoName);
+        nameInput->setFilter("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789.");
         nameInput->setCallback([&recorder](const std::string& text) { recorder.videoName = text; });
         menu->addChild(nameInput);
 

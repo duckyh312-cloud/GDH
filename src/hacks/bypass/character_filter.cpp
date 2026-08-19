@@ -12,9 +12,8 @@ class $modify(CharacterFilterCCTextInputNode, CCTextInputNode) {
         hack.addHookPtr(self.getHook("CCTextInputNode::updateLabel").unwrap());
     }
 
-    void updateLabel(gd::string str)
-    {
+    void updateLabel(gd::string str) {
         this->setAllowedChars("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~ ");
-        CCTextInputNode::updateLabel(str);
+        CCTextInputNode::updateLabel(std::move(str));
     }
 };
