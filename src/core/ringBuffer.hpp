@@ -1,8 +1,8 @@
 #pragma once
 
 #include <vector>
-#include <functional>
-#include <algorithm>
+#include <concepts>
+#include <utility>
 
 template <typename T>
 class RingBuffer {
@@ -13,43 +13,39 @@ private:
     size_t m_maxSize = 0;
     bool m_isFull = false;
 
-    std::function<void(T&)> m_onOverwrite = nullptr;
-    std::function<void(T&)> m_onClear = nullptr;
+    size_t next_index(size_t index) const noexcept {
+        size_t next = index + 1;
+        return (next == m_maxSize) ? 0 : next;
+    }
 
 public:
     RingBuffer() = default;
     
-    RingBuffer(size_t size, 
-               std::function<void(T&)> onOverwrite = nullptr, 
-               std::function<void(T&)> onClear = nullptr) {
-        init(size, onOverwrite, onClear);
+    explicit RingBuffer(size_t size) {
+        init(size);
     }
 
-    void init(size_t size, 
-              std::function<void(T&)> onOverwrite = nullptr, 
-              std::function<void(T&)> onClear = nullptr) {
-        clear();
+    void init(size_t size) {
         m_maxSize = size;
         m_buffer.resize(size);
-        m_onOverwrite = onOverwrite;
-        m_onClear = onClear;
-        m_head = 0;
-        m_tail = 0;
-        m_isFull = false;
+        clear();
     }
 
-    void push(const T& item) {
-        if (m_maxSize == 0 || m_buffer.empty()) return;
+    template <typename Item, typename OnOverwrite = void(*)(T&)>
+    void push(Item&& item, OnOverwrite&& onOverwrite = nullptr) {
+        if (m_maxSize == 0) return;
 
         if (m_isFull) {
-            if (m_onOverwrite) {
-                m_onOverwrite(m_buffer[m_head]);
+            if constexpr (!std::is_same_v<std::decay_t<OnOverwrite>, std::nullptr_t>) {
+                if (onOverwrite) {
+                    onOverwrite(m_buffer[m_head]);
+                }
             }
-            m_tail = (m_tail + 1) % m_maxSize;
+            m_tail = next_index(m_tail);
         }
 
-        m_buffer[m_head] = item;
-        m_head = (m_head + 1) % m_maxSize;
+        m_buffer[m_head] = std::forward<Item>(item);
+        m_head = next_index(m_head);
 
         if (m_head == m_tail) {
             m_isFull = true;
@@ -59,14 +55,8 @@ public:
     bool pop_back(T& outItem) {
         if (empty()) return false;
 
-        if (m_head == 0) {
-            m_head = m_maxSize - 1;
-        } else {
-            m_head--;
-        }
-
-        outItem = m_buffer[m_head];
-        m_buffer[m_head] = T();
+        m_head = (m_head == 0) ? (m_maxSize - 1) : (m_head - 1);
+        outItem = std::move(m_buffer[m_head]);
         m_isFull = false;
         return true;
     }
@@ -78,38 +68,51 @@ public:
         return true;
     }
 
-    bool empty() const {
+    [[nodiscard]] bool empty() const noexcept {
         return (m_head == m_tail && !m_isFull);
     }
 
-    bool full() const {
+    [[nodiscard]] bool full() const noexcept {
         return m_isFull;
     }
 
-    size_t size() const {
+    [[nodiscard]] size_t size() const noexcept {
         if (m_isFull) return m_maxSize;
         if (m_head >= m_tail) return m_head - m_tail;
         return m_maxSize + m_head - m_tail;
     }
 
-    void clear() {
-        if (m_onClear) {
-            for (auto& item : m_buffer) {
-                m_onClear(item);
+    template <typename OnClear = void(*)(T&)>
+    void clear(OnClear&& onClear = nullptr) {
+        if constexpr (!std::is_same_v<std::decay_t<OnClear>, std::nullptr_t>) {
+            if (onClear) {
+                for_each(onClear);
             }
         }
-        std::fill(m_buffer.begin(), m_buffer.end(), T());
         m_head = 0;
         m_tail = 0;
         m_isFull = false;
     }
 
-    void for_each(const std::function<void(const T&)>& action) const {
+    template <typename F>
+        requires std::invocable<F, T&>
+    void for_each(F&& f) {
         size_t count = size();
         size_t current = m_tail;
         for (size_t i = 0; i < count; ++i) {
-            action(m_buffer[current]);
-            current = (current + 1) % m_maxSize;
+            f(m_buffer[current]);
+            current = next_index(current);
+        }
+    }
+
+    template <typename F>
+        requires std::invocable<F, const T&>
+    void for_each(F&& f) const {
+        size_t count = size();
+        size_t current = m_tail;
+        for (size_t i = 0; i < count; ++i) {
+            f(m_buffer[current]);
+            current = next_index(current);
         }
     }
 };

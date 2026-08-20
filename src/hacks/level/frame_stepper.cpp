@@ -21,11 +21,11 @@ static int g_framesToAdvance = 0;
 
 bool FrameStepper::g_back = false;
 
-static RingBuffer<CheckpointObject*> g_checkpoints(240, [](CheckpointObject* cp) {
+static const auto release_cp = [](CheckpointObject* cp) {
     if (cp) cp->release();
-}, [](CheckpointObject* cp) {
-    if (cp) cp->release();
-});
+};
+
+static RingBuffer<CheckpointObject*> g_checkpoints(240);
 
 class $modify(FrameStepperCCScheduler, cocos2d::CCScheduler) {
     static void onModify(auto& self) {
@@ -128,24 +128,21 @@ class $modify(FrameStepperGJBaseGameLayer, GJBaseGameLayer) {
         auto framesLength = static_cast<size_t>(config.get<int>("frame_stepper::back_frames_length", 240));
 
         if (g_lastFramesLength != framesLength) {
-            g_checkpoints.init(framesLength, [](CheckpointObject* cp) {
-                if (cp) cp->release();
-            }, [](CheckpointObject* cp) {
-                if (cp) cp->release();
-            });
+            g_checkpoints.clear(release_cp);
+            g_checkpoints.init(framesLength);
             g_lastFramesLength = framesLength;
         }
 
         auto cp = pl->createCheckpoint();
         cp->retain(); 
-        g_checkpoints.push(cp);
+        g_checkpoints.push(cp, release_cp);
     }
 };
 
 class $modify(FrameStepperPlayLayer, PlayLayer) {
     struct Fields {
         ~Fields() {
-            g_checkpoints.clear();
+            g_checkpoints.clear(release_cp);
         }
 
         cocos2d::CCMenu* m_stepperMenu = nullptr;
@@ -181,7 +178,7 @@ class $modify(FrameStepperPlayLayer, PlayLayer) {
             m_isTestMode = true;
         }
         else {
-            g_checkpoints.clear();
+            g_checkpoints.clear(release_cp);
         }
 
         PlayLayer::resetLevel();
@@ -194,7 +191,7 @@ class $modify(FrameStepperPlayLayer, PlayLayer) {
 
     void storeCheckpoint(CheckpointObject *checkpoint) {
         PlayLayer::storeCheckpoint(checkpoint);
-        g_checkpoints.clear();
+        g_checkpoints.clear(release_cp);
     }
     
     #ifdef GEODE_IS_ANDROID

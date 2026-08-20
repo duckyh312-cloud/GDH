@@ -191,8 +191,8 @@ void updateHitboxes(GJBaseGameLayer* layer, cocos2d::CCDrawNode* drawNode) {
     if (layer->m_gameState.m_isDualMode) drawPlayer(layer->m_player2);
 
     if (config.get<bool>("level.show_hitboxes::draw_trail", false)) {
-        auto renderTrail = [drawNode, size](const RingBuffer<cocos2d::CCRect>& trail, cocos2d::ccColor4F const& color) {
-            trail.for_each([drawNode, size, &color](const cocos2d::CCRect& rect) {
+        auto renderTrail = [drawNode, size](const RingBuffer<cocos2d::CCRect>& trail, const cocos2d::ccColor4F& color) {
+            trail.for_each([drawNode, size, &color](const auto& rect) {
                 drawRect(drawNode, rect, {0.f, 0.f, 0.f, 0.f}, size, color);
             });
         };
