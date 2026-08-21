@@ -493,6 +493,9 @@ class $modify(ImGuiInitMenuLayer, MenuLayer) {
                 }
             );
 
+            auto mod = geode::Mod::get();
+            ImGuiCocos::get().setForceLegacy(mod->getSettingValue<bool>("legacy-render"));
+
             ImGuiCocos::get().setup([] {
                 auto& config = Config::get();
                 ImGuiIO &io = ImGui::GetIO();

@@ -37,7 +37,7 @@ void Recorder::start() {
     after_end_extra_time = 0;
     frame_has_data = false;
 
-    current_frame.resize(width * height * 3, 0);
+    current_frame.resize(width * height * 4, 0);
     texture.init(width, height);
 
     setupResolution();
@@ -69,7 +69,7 @@ void Recorder::setupResolution() {
 void Recorder::startWindowsEncoder() {
     std::thread([this]() {
         auto process = subprocess::Popen(command, !console);
-        std::vector<uint8_t> local_frame(width * height * 3, 0);
+        std::vector<uint8_t> local_frame(width * height * 4, 0);
 
         while (is_recording || frame_has_data) {
             std::unique_lock<std::mutex> u_lock(lock);
@@ -162,7 +162,7 @@ void Recorder::startAndroidEncoder() {
             )->show();
         });
 
-        std::vector<uint8_t> local_frame(width * height * 3, 0);
+        std::vector<uint8_t> local_frame(width * height * 4, 0);
 
         while (is_recording || frame_has_data) {
             std::unique_lock<std::mutex> u_lock(lock);
@@ -251,7 +251,7 @@ void Recorder::handle_recording(float dt) {
 }
 
 void Recorder::compile_command() {
-    command = fmt::format("ffmpeg.exe -y -f rawvideo -pix_fmt rgb24 -s {}x{} -r {} -i -", width, height, fps);
+    command = fmt::format("ffmpeg.exe -y -f rawvideo -pix_fmt rgba -s {}x{} -r {} -i -", width, height, fps);
 
     if (!codec.empty()) command += fmt::format(" -c:v {}", codec);
     if (!bitrate.empty()) command += fmt::format(" -b:v {}", bitrate);

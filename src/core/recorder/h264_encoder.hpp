@@ -74,7 +74,7 @@ public:
 
         av_opt_set(enc_ctx_->priv_data, "preset", preset.c_str(), 0);
 
-        sws_ctx_ = sws_getContext(width_, height_, AV_PIX_FMT_RGB24,
+        sws_ctx_ = sws_getContext(width_, height_, AV_PIX_FMT_RGBA,
                                   width_, height_, AV_PIX_FMT_YUV420P,
                                   SWS_FAST_BILINEAR, nullptr, nullptr, nullptr);
         if (!sws_ctx_) {
@@ -144,7 +144,7 @@ public:
             cleanup();
             return;
         }
-        rgb_frame_->format = AV_PIX_FMT_RGB24;
+        rgb_frame_->format = AV_PIX_FMT_RGBA;
         rgb_frame_->width = width_;
         rgb_frame_->height = height_;
         if (av_frame_get_buffer(rgb_frame_, 0) < 0) {
@@ -226,7 +226,7 @@ public:
         if (!is_valid_ || !fmt_ctx_ || !header_written_ || rgb_frame_ == nullptr) return;
 
         av_image_fill_arrays(rgb_frame_->data, rgb_frame_->linesize, 
-                             rgb_data.data(), AV_PIX_FMT_RGB24, width_, height_, 1);
+                             rgb_data.data(), AV_PIX_FMT_RGBA, width_, height_, 1);
 
         uint8_t* flipped_data[4] = { rgb_frame_->data[0] + rgb_frame_->linesize[0] * (height_ - 1), 0, 0, 0 };
         int flipped_linesize[4] = { -rgb_frame_->linesize[0], 0, 0, 0 };

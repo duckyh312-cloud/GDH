@@ -182,6 +182,11 @@ namespace ImGuiH {
         }
     }
 
+    inline bool isLegacyRender() {
+        static const bool isLegacy = geode::Mod::get()->getSettingValue<bool>("legacy-render");
+        return isLegacy;
+    }
+
     void ApplyNativeGuiColors() {
         auto* colors = ImGui::GetStyle().Colors;
         
@@ -298,9 +303,6 @@ namespace ImGuiH {
             ImGuiH::DragFloat("Custom Drag Float", &fVal1, 0.01f, 0.0f, 1.0f);
             ImGuiH::DragInt("Custom Drag Int", &iVal1, 1, 0, 100);
 
-            // static float nativeF = 25.0f;
-            // ImGui::SliderFloat("Native Slider", &nativeF, 0.0f, 100.0f);
-
             static int comboIdx = 0;
             const char* items[] = { "Apple", "Banana", "Cherry", "Kiwi" };
             ImGui::Combo("Native Combo", &comboIdx, items, IM_ARRAYSIZE(items));
@@ -407,18 +409,26 @@ namespace ImGuiH {
         style.ScrollbarSize = 12.f * scale;
         style.GrabMinSize = 12.f * scale;
 
-        style.WindowRounding = 12.0f * scale;
-        style.ChildRounding = 6.0f * scale;
-        style.FrameRounding = 20.0f * scale;
-        style.PopupRounding = 12.f * scale;
-        style.ScrollbarRounding = 12.f * scale;
-        style.GrabRounding = 12.f * scale;
-        style.TabRounding = 6.f * scale;
+        const bool legacy = isLegacyRender();
+
+        if (legacy) {
+            style.AntiAliasedFill = false;
+            style.AntiAliasedLines = false;
+            style.AntiAliasedLinesUseTex = false;
+        }
+
+        style.WindowRounding    = legacy ? 0.0f : 12.0f * scale;
+        style.ChildRounding     = legacy ? 0.0f : 6.0f * scale;
+        style.FrameRounding     = legacy ? 0.0f : 20.0f * scale;
+        style.PopupRounding     = legacy ? 0.0f : 12.0f * scale;
+        style.ScrollbarRounding = legacy ? 0.0f : 12.0f * scale;
+        style.GrabRounding      = legacy ? 0.0f : 12.0f * scale;
+        style.TabRounding       = legacy ? 0.0f : 6.0f * scale;
         
         style.WindowBorderSize = 0;
-        style.WindowTitleAlign = ImVec2(0.50, 0.50);
+        style.WindowTitleAlign = ImVec2(0.50f, 0.50f);
         style.WindowMenuButtonPosition = ImGuiDir_Right;
-    }
+    }   
 
     static inline void SetColorHSV(Color cid, ImVec4 hsv) {
         float r, g, b; ImGui::ColorConvertHSVtoRGB(hsv.x, hsv.y, hsv.z, r, g, b);
@@ -450,6 +460,18 @@ namespace ImGuiH {
 
     bool Button(const char* label, const ImVec2& size_arg)
     {
+        if (isLegacyRender()) {
+            ImGui::PushStyleColor(ImGuiCol_Button, colorTable[Color::Button_Background]);
+            ImGui::PushStyleColor(ImGuiCol_ButtonHovered, colorTable[Color::Button_Background_Hover]);
+            ImGui::PushStyleColor(ImGuiCol_ButtonActive, colorTable[Color::Button_Background_Active]);
+            ImGui::PushStyleColor(ImGuiCol_Text, colorTable[Color::Button_Foreground]);
+
+            bool ret = ImGui::Button(label, size_arg);
+
+            ImGui::PopStyleColor(4);
+            return ret;
+        }
+
         struct ButtonState { float th, tHeld; };
         static std::unordered_map<ImGuiID, ButtonState> s_states;
 
@@ -530,6 +552,24 @@ namespace ImGuiH {
 
     bool Checkbox(const char* label, bool* v)
     {
+        if (isLegacyRender()) {
+            const ImVec4 frameBg    = *v ? colorTable[Color::Checkbox_Background_On]        : colorTable[Color::Checkbox_Background_Off];
+            const ImVec4 frameBgHov = *v ? colorTable[Color::Checkbox_Background_On_Hover]  : colorTable[Color::Checkbox_Background_Off_Hover];
+            const ImVec4 frameBgAct = *v ? colorTable[Color::Checkbox_Background_On_Active] : colorTable[Color::Checkbox_Background_Off_Active];
+            const ImVec4 checkCol   = *v ? colorTable[Color::Checkbox_Knob_On]              : colorTable[Color::Checkbox_Knob_Off];
+
+            ImGui::PushStyleColor(ImGuiCol_FrameBg,            frameBg);
+            ImGui::PushStyleColor(ImGuiCol_FrameBgHovered,     frameBgHov);
+            ImGui::PushStyleColor(ImGuiCol_FrameBgActive,      frameBgAct);
+            ImGui::PushStyleColor(ImGuiCol_CheckMark,          checkCol);
+            ImGui::PushStyleColor(ImGuiCol_CheckboxSelectedBg, frameBg);
+
+            bool ret = ImGui::Checkbox(label, v);
+
+            ImGui::PopStyleColor(5);
+            return ret;
+        }
+
         struct ToggleState { float t, th, tHeld; };
         static std::unordered_map<ImGuiID, ToggleState> s_states;
 
@@ -624,6 +664,23 @@ namespace ImGuiH {
 
     bool RadioButton(const char* label, bool active)
     {
+        if (isLegacyRender()) {
+            const ImVec4 frameBg    = active ? colorTable[Color::RadioButton_Ring_On]        : colorTable[Color::RadioButton_Ring_Off];
+            const ImVec4 frameBgHov = active ? colorTable[Color::RadioButton_Ring_On_Hover]  : colorTable[Color::RadioButton_Ring_Off_Hover];
+            const ImVec4 frameBgAct = active ? colorTable[Color::RadioButton_Ring_On_Active] : colorTable[Color::RadioButton_Ring_Off_Active];
+            const ImVec4 checkCol   = active ? colorTable[Color::RadioButton_Dot_On]         : colorTable[Color::RadioButton_Dot_Off];
+
+            ImGui::PushStyleColor(ImGuiCol_FrameBg,            frameBg);
+            ImGui::PushStyleColor(ImGuiCol_FrameBgHovered,     frameBgHov);
+            ImGui::PushStyleColor(ImGuiCol_FrameBgActive,      frameBgAct);
+            ImGui::PushStyleColor(ImGuiCol_CheckMark,          checkCol);
+
+            bool ret = ImGui::RadioButton(label, active);
+
+            ImGui::PopStyleColor(4);
+            return ret;
+        }
+
         struct RadioState { float t, th, tHeld; };
         static std::unordered_map<ImGuiID, RadioState> s_states;
 
@@ -1075,6 +1132,7 @@ namespace ImGuiH {
 
     void GlowWindow(ImU32 col_in, ImU32 col_out, float glow_spread)
     {
+        if (isLegacyRender()) return;
         ImGuiWindow* window = ImGui::GetCurrentWindow();
         if (window->SkipItems || ((col_in | col_out) & IM_COL32_A_MASK) == 0) 
             return;

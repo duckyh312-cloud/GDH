@@ -23,7 +23,7 @@ bool RenderTexture::init(unsigned width, unsigned height) {
 
     bool success = m_texture->initWithData(
         nullptr, 
-        kCCTexture2DPixelFormat_RGB888, 
+        kCCTexture2DPixelFormat_RGBA8888, 
         m_width, 
         m_height, 
         CCSize(static_cast<float>(m_width), static_cast<float>(m_height))
@@ -40,6 +40,13 @@ bool RenderTexture::init(unsigned width, unsigned height) {
     glGenFramebuffers(1, &m_fbo);
     glBindFramebuffer(GL_FRAMEBUFFER, m_fbo);
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, m_texture->getName(), 0);
+
+    if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
+        geode::log::error("framebuffer status is incomplete!");
+        glBindFramebuffer(GL_FRAMEBUFFER, old_fbo);
+        cleanup();
+        return false;
+    }
 
     glBindFramebuffer(GL_FRAMEBUFFER, old_fbo);
     m_initialized = true;
@@ -66,15 +73,14 @@ void RenderTexture::cleanup() {
 void RenderTexture::capture(cocos2d::CCNode* target_node, std::mutex& lock, std::condition_variable& cv, std::vector<uint8_t>& data, bool& frame_has_data) {
     if (!m_initialized || !target_node) return;
 
-    auto& recorder = GDH::Recorder::get();
-
     GLint old_fbo;
     glGetIntegerv(GL_FRAMEBUFFER_BINDING, &old_fbo);
 
     glViewport(0, 0, m_width, m_height);
     glBindFramebuffer(GL_FRAMEBUFFER, m_fbo);
 
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+    glClear(GL_COLOR_BUFFER_BIT);
 
     target_node->visit();
 
@@ -82,7 +88,8 @@ void RenderTexture::capture(cocos2d::CCNode* target_node, std::mutex& lock, std:
     
     std::unique_lock<std::mutex> u_lock(lock);
     frame_has_data = true;
-    glReadPixels(0, 0, m_width, m_height, GL_RGB, GL_UNSIGNED_BYTE, data.data());
+    
+    glReadPixels(0, 0, m_width, m_height, GL_RGBA, GL_UNSIGNED_BYTE, data.data());
     u_lock.unlock();
     cv.notify_one();
 
