@@ -180,7 +180,12 @@ void HacksTab::addHackToggle(const std::string& labelText, const std::string& ke
     updateRowAlignment(m_currentRow);
 }
 
-void HacksTab::addConfigToggle(const std::string& labelText, const std::string& key, bool defaultValue) {
+void HacksTab::addConfigToggle(
+    const std::string& labelText, 
+    const std::string& key, 
+    bool defaultValue, 
+    geode::Function<void(bool)> callback
+) {
     auto& config = Config::get();
     float columnWidth = 175.f;
 
@@ -188,9 +193,18 @@ void HacksTab::addConfigToggle(const std::string& labelText, const std::string& 
     node->setContentSize({columnWidth, 30.f});
     node->setAnchorPoint({0, 0.5f});
     
-    auto toggle = CCMenuItemExt::createTogglerWithFilename("GDH_togglerOn.png"_spr, "GDH_togglerOff.png"_spr, 0.8f, [key, defaultValue, &config](CCMenuItemToggler* sender) {
-        config.set<bool>(key, !sender->isOn());
-    });
+    auto toggle = CCMenuItemExt::createTogglerWithFilename(
+        "GDH_togglerOn.png"_spr, 
+        "GDH_togglerOff.png"_spr, 
+        0.8f, 
+        [key, callback = std::move(callback)](CCMenuItemToggler* sender) mutable {
+            bool newValue = !sender->isOn();
+            Config::get().set<bool>(key, newValue);
+            if (callback) {
+                callback(newValue);
+            }
+        }
+    );
     toggle->setPosition({25.f, 15.f});
     toggle->toggle(config.get<bool>(key, defaultValue));
     node->addChild(toggle);

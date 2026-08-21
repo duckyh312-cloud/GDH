@@ -25,4 +25,6 @@ namespace GDH { namespace Utils {
 
     uintptr_t PatternScan(uintptr_t base, uintptr_t scanSize, const std::string signature);
     bool isOnlyAsciiPath(const std::filesystem::path& p);
+
+    void checkModUpdate(geode::Function<void(bool)> callback);
 } }

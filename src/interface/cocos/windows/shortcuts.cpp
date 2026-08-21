@@ -48,7 +48,7 @@ $execute {
 
         tab->addConfigButton("Crash Game", []() {
             GDH::MaterialLayer(
-                geode::createQuickPopup("Crash Game", "Are you sure you want to crash Geometry Dash?\nUnsaved data will be lost",
+                geode::createQuickPopup("Crash Game", "Are you sure you want to crash Geometry Dash?\n<cr>Unsaved data will be lost</c>",
                 "No", "Yes",
                 [](auto, bool btn2) {
                     if (btn2) {

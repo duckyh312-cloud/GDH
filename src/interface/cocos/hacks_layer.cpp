@@ -46,6 +46,13 @@ bool HacksLayer::init() {
     panel->setContentSize({100.f, 250.f});
     m_mainLayer->addChild(panel);
 
+    m_tabsScrollLayer = geode::ScrollLayer::create({200.f, 250.f});
+    m_tabsScrollLayer->setPosition({-95.f, 5.f});
+
+    auto tabsMenu = CCMenu::create();
+    tabsMenu->setAnchorPoint({0.f, 0.f});
+    tabsMenu->setContentSize({96.f, 0.f});
+
     int i = 0;
     for (auto& win : windows) {
         auto winName = win.getName();
@@ -60,7 +67,7 @@ bool HacksLayer::init() {
             switchTab(i);
         });
         m_buttonTabs.push_back(buttonClick);
-        m_buttonMenu->addChild(buttonClick);
+        tabsMenu->addChild(buttonClick);
 
         auto tab = HacksTab::create();
         tab->setVisible(i == m_index);
@@ -85,84 +92,32 @@ bool HacksLayer::init() {
         i++;
     }
 
-    auto upSpr = cocos2d::CCSprite::create("GDH_arrow.png"_spr);
-    upSpr->setRotation(90.f);
-    upSpr->setScale(0.6f);
-    m_upArrow = CCMenuItemExt::createSpriteExtra(upSpr, [this](auto) {
-        if (m_tabOffset > 0) {
-            m_tabOffset--;
-            updateTabPositions();
+    tabsMenu->setLayout(
+        geode::ColumnLayout::create()
+            ->setGap(5.f)
+            ->setAxisReverse(true)
+            ->setAxisAlignment(geode::AxisAlignment::End)
+            ->setCrossAxisAlignment(geode::AxisAlignment::Center)
+            ->setAutoGrowAxis(true)
+    );
+    tabsMenu->updateLayout();
+
+    float contentHeight = std::max(240.f, tabsMenu->getContentHeight() + 10.f);
+    m_tabsScrollLayer->m_contentLayer->setContentSize({96.f, contentHeight});
+    tabsMenu->setPosition({107.f, 5.f});
+
+    m_tabsScrollLayer->m_contentLayer->addChild(tabsMenu);
+    m_tabsScrollLayer->moveToTop();
+    m_mainLayer->addChild(m_tabsScrollLayer);
+
+    geode::queueInMainThread([&config] {
+        if (config.get<bool>("ui.need_update", false) && config.get<bool>("ui.notify_updates", true)) {
+            GDH::MaterialLayer(FLAlertLayer::create("A new update is available!", "Please open the Geode menu and download the latest GDH update to get new features and bug fixes", "OK"))->show();
+            config.set<bool>("ui.need_update", false);
         }
     });
-    m_upArrow->setPosition({55.f, 260.f});
-    m_buttonMenu->addChild(m_upArrow);
-
-    auto downSpr = cocos2d::CCSprite::create("GDH_arrow.png"_spr);
-    downSpr->setRotation(-90.f);
-    downSpr->setScale(0.6f);
-    m_downArrow = CCMenuItemExt::createSpriteExtra(downSpr, [this](auto) {
-        if (m_tabOffset + 8 < static_cast<int>(m_buttonTabs.size())) {
-            m_tabOffset++;
-            updateTabPositions();
-        }
-    });
-    m_downArrow->setPosition({55.f, 5.f});
-    m_buttonMenu->addChild(m_downArrow);
-
-    if (m_index >= 8) {
-        m_tabOffset = std::clamp(m_index - 7, 0, std::max(0, static_cast<int>(m_buttonTabs.size()) - 8));
-    } else {
-        m_tabOffset = 0;
-    }
-
-    updateTabPositions();
 
     return true;
-}
-
-void HacksLayer::updateTabPositions() {
-    int totalTabs = static_cast<int>(m_buttonTabs.size());
-
-    if (totalTabs <= 8) {
-        if (m_upArrow) m_upArrow->setVisible(false);
-        if (m_downArrow) m_downArrow->setVisible(false);
-
-        for (int i = 0; i < totalTabs; i++) {
-            auto* button = m_buttonTabs[i];
-            if (button) {
-                button->setVisible(true);
-                button->setPosition({55.f, 235.f - i * 29.f});
-            }
-        }
-        return;
-    }
-
-    m_tabOffset = std::clamp(m_tabOffset, 0, std::max(0, totalTabs - 8));
-
-    if (m_upArrow) {
-        m_upArrow->setVisible(true);
-        m_upArrow->setEnabled(m_tabOffset > 0);
-        m_upArrow->setOpacity(m_tabOffset > 0 ? 255 : 100);
-    }
-
-    if (m_downArrow) {
-        m_downArrow->setVisible(true);
-        m_downArrow->setEnabled(m_tabOffset + 8 < totalTabs);
-        m_downArrow->setOpacity(m_tabOffset + 8 < totalTabs ? 255 : 100);
-    }
-
-    for (int i = 0; i < totalTabs; i++) {
-        auto* button = m_buttonTabs[i];
-        if (!button) continue;
-
-        if (i >= m_tabOffset && i < m_tabOffset + 8) {
-            button->setVisible(true);
-            int slot = i - m_tabOffset;
-            button->setPosition({55.f, 235.f - slot * 29.f});
-        } else {
-            button->setVisible(false);
-        }
-    }
 }
 
 void HacksLayer::switchTab(int newIndex) {
@@ -172,19 +127,11 @@ void HacksLayer::switchTab(int newIndex) {
     m_index = newIndex;
     config.set<int>("gui_mobile.index", m_index);
 
-    if (m_index < m_tabOffset) {
-        m_tabOffset = m_index;
-    } else if (m_index >= m_tabOffset + 8) {
-        m_tabOffset = m_index - 7;
-    }
-
-    updateTabPositions();
-
-    for (int i = 0; i < m_tabs.size(); i++) {
+    for (size_t i = 0; i < m_tabs.size(); i++) {
         m_tabs[i]->setVisible(i == m_index);
     }
 
-    for (int i = 0; i < m_buttonTabs.size(); i++) {
+    for (size_t i = 0; i < m_buttonTabs.size(); i++) {
         auto* button = m_buttonTabs[i];
         if (button) {
             auto* btnSprite = static_cast<ButtonSprite*>(button->getChildren()->objectAtIndex(0));

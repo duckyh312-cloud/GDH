@@ -339,7 +339,8 @@ class $modify(LabelsPlayLayer, PlayLayer) {
 
         bool disable_all = config.get<bool>("labels::disable_all", false);
         bool noclip_enabled = config.get<bool>("core.noclip", false);
-        bool safe_mode = config.get<bool>("core.safe_mode", false) || config.get<bool>("level.auto_safe_mode", false);
+        bool safe_mode = config.get<bool>("core.safe_mode", false);
+        bool auto_safe_mode = config.get<bool>("level.auto_safe_mode", false);
 
         bool indicate_when_cheating = config.get<bool>("level.cheat_indicator::indicate_when_cheating", false);
         bool is_cheating = manager.m_cheatedInCurrentAttempt;
@@ -436,12 +437,18 @@ class $modify(LabelsPlayLayer, PlayLayer) {
                     label->setText(".");
                     label->setContentHeight(12.5f);
 
-                    bool auto_safe_mode = config.get<bool>("level.auto_safe_mode", false);
-
-                    if (safe_mode || auto_safe_mode)
+                    if (safe_mode) {
                         label->setColor({255, 128, 0});
-                    else
-                        label->setColor(manager.m_cheatedInCurrentAttempt ? cocos2d::ccColor3B({255, 0, 0}) : cocos2d::ccColor3B({0, 255, 0}));
+                    } 
+                    else if (is_cheating) {
+                        if (auto_safe_mode)
+                            label->setColor({255, 128, 0});
+                        else
+                            label->setColor({255, 0, 0});
+                    } 
+                    else {
+                        label->setColor({0, 255, 0});
+                    }
 
                     label->setOpacity(255);
 

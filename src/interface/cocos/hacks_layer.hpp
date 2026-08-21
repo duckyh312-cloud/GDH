@@ -12,11 +12,8 @@ private:
     int m_index = 0;
     int m_lastIndexScroll = -1;
 
-    int m_tabOffset = 0;
-    CCMenuItemSpriteExtra* m_upArrow = nullptr;
-    CCMenuItemSpriteExtra* m_downArrow = nullptr;
+    geode::ScrollLayer* m_tabsScrollLayer = nullptr;
 
-    void updateTabPositions();
     void switchTab(int newIndex);
 public:
     ~HacksLayer();

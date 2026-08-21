@@ -21,12 +21,14 @@ using namespace geode::prelude;
 #include "../../core/utils.hpp"
 #include "../../core/labels.hpp"
 #include "../../core/keybinds.hpp"
+#include "../../core/replayEngine.hpp"
 #include "../../core/recorder/recorder.hpp"
 
 static bool g_show = false;
 
 static bool g_showThemeEditor = false;
 static bool g_reopenAfterTheme = false;
+static bool g_showUpdatePopup = false;
 
 static bool g_resetLayoutCalled = false;
 static bool g_hardRecalculation = false;
@@ -62,6 +64,12 @@ static std::vector<GDH::Layout::WindowInfo> g_fixedWindowSizes = {
 
 void onOpen() {
     GDH::Utils::updateCursorState(g_show);
+
+    auto& config = Config::get();
+    if (config.get<bool>("ui.need_update", false) && config.get<bool>("ui.notify_updates", true)) {
+        g_showUpdatePopup = true;
+        config.set<bool>("ui.need_update", false);
+    }
 }
 
 void onClose() {
@@ -184,6 +192,11 @@ void SettingsRender() {
         ToggleUI();
     }
 
+    bool notify_updates = config.get<bool>("ui.notify_updates", true);
+    if (ImGuiH::Checkbox("Notify about updates", &notify_updates)) {
+        config.set<bool>("ui.notify_updates", notify_updates);
+    }
+
     if (ImGuiH::Button("Refresh Layout", {ImGui::GetContentRegionAvail().x, 0})) {
         g_resetLayoutCalled = true;
     }
@@ -192,6 +205,25 @@ void SettingsRender() {
         g_reopenAfterTheme = true;
         if (g_showThemeEditor) g_reopenAfterRecalc = true;
         ToggleUI();
+    }
+
+    ImGuiH::SpaceSeparator();
+
+    if (ImGuiH::Button("Show Cheat Hack List", {ImGui::GetContentRegionAvail().x, 0})) {
+        auto& activeCheats = GDH::Gui::get().getActiveCheats();
+        bool replay_engine = (GDH::ReplayEngine::get().mode != state::disable);
+        
+        std::string text = "";
+        for (const auto& hackID : activeCheats)
+            text += hackID + "\n";
+
+        if (replay_engine)
+            text += "Replay Engine\n";
+
+        if (text.empty())
+            text += "No cheat hacks enabled";
+
+        ImGuiH::AddPopup(text);
     }
 
     if (ImGuiH::Button("Disable cheating hacks", {ImGui::GetContentRegionAvail().x, 0})) {
@@ -361,6 +393,43 @@ void RenderVersionBadge() {
     drawList->AddText(font, fontSize, versionTextPos, ImGui::GetColorU32(IM_COL32(213, 196, 255, 225)), versionText.c_str());
 }
 
+void notifyUpdate() {
+    if (g_showUpdatePopup) {
+        ImGui::OpenPopup("Update Available##Popup");
+        g_showUpdatePopup = false;
+    }
+
+    if (ImGui::BeginPopupModal("Update Available##Popup", NULL, ImGuiWindowFlags_AlwaysAutoResize)) {
+        auto& layout = GDH::Layout::Manager::get();
+        auto& config = Config::get();
+        bool dont_show_again = !config.get<bool>("ui.notify_updates", true);
+        
+        ImGuiH::GlowWindow(IM_COL32(71, 71, 131, 150), IM_COL32(128, 255, 128, 0), layout.multipleScale(500.f));
+        
+        float oldScale = ImGui::GetFont()->Scale;
+        ImGui::GetFont()->Scale = layout.multipleScale(32.0f) / ImGui::GetFontSize();
+        ImGui::PushFont(ImGui::GetFont());
+
+        ImGui::Text("A new update is available!\nPlease open the Geode menu and download the latest GDH update to get new features and bug fixes");
+        if (dont_show_again) {
+            ImGui::TextColored(ImColor(255, 128, 128).Value, "\nEven if you turn off this popup, please keep GDH updated\nIt's still in beta, so updating helps avoid bugs and issues from older versions :(");
+        }
+
+        ImGui::GetFont()->Scale = oldScale;
+        ImGui::PopFont();
+        
+        if (ImGuiH::Checkbox("Don't show again", &dont_show_again)) {
+            config.set<bool>("ui.notify_updates", !dont_show_again);
+        }
+
+        if (ImGuiH::Button("OK", {ImGui::GetContentRegionAvail().x, 0})) {
+            ImGui::CloseCurrentPopup();
+        }
+
+        ImGui::EndPopup();
+    }
+}
+
 void RenderMain() {
     auto& gui = GDH::Gui::get();
     auto& windows = gui.getWindows();
@@ -386,6 +455,7 @@ void RenderMain() {
 
     RenderVersionBadge();
     SettingsRender();
+    notifyUpdate();
 
     if (g_showThemeEditor) {
         ImGuiH::DrawColorEditor();

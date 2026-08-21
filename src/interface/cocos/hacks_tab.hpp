@@ -8,7 +8,7 @@ public:
     void addToggle(GDH::Hack& hck);
     
     void addHackToggle(const std::string& label, const std::string& key, bool defaultValue = false);
-    void addConfigToggle(const std::string& label, const std::string& key, bool defaultValue = false);
+    void addConfigToggle(const std::string& label, const std::string& key, bool defaultValue = false, geode::Function<void(bool)> callback = nullptr);
     void addConfigIntInput(const std::string& label, const std::string& key, int defaultValue = 0, int min = 0, int max = 100, geode::Function<void(int)> callback = nullptr);
     void addConfigFloatInput(const std::string& label, const std::string& key, float defaultValue = 0.f, float min = 0.f, float max = 100.f, geode::Function<void(float)> callback = nullptr);
     void addConfigButton(const std::string& labelText, geode::Function<void()> callback, const std::string& secondLabelText = "", geode::Function<void()> secondCallback = nullptr);

@@ -366,3 +366,28 @@ bool GDH::Utils::isOnlyAsciiPath(const std::filesystem::path& p) {
         return static_cast<unsigned char>(c) <= 127;
     });
 }
+
+void GDH::Utils::checkModUpdate(geode::Function<void(bool)> callback) {
+    static async::TaskHolder<Result<std::optional<VersionInfo>>> updateTask;
+
+    updateTask.spawn("check-updates-task", geode::Mod::get()->checkUpdates(),
+        [callback = std::move(callback)](geode::Result<std::optional<VersionInfo>> res) mutable {
+            if (!res) {
+                geode::log::debug("failed to check for updates: {}", res.unwrapErr());
+                callback(false);
+                return;
+            }
+
+            auto updateOpt = res.unwrap();
+            bool hasUpdate = updateOpt.has_value();
+
+            if (hasUpdate) {
+                geode::log::debug("new update available: {}", updateOpt.value().toVString());
+            } else {
+                geode::log::debug("mod is up to date");
+            }
+
+            callback(hasUpdate);
+        }
+    );
+}

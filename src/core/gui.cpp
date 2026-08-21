@@ -1,6 +1,7 @@
 #include "gui.hpp"
 #include "utils.hpp"
 #include "keybinds.hpp"
+#include "config.hpp"
 
 using namespace GDH;
 
@@ -176,6 +177,11 @@ class $modify(LateHacksInitMenuLayer, MenuLayer) {
 		static bool inited = false;
         if (!inited) {
             inited = true;
+
+            GDH::Utils::checkModUpdate([](bool needUpdate) {
+                Config::get().set<bool>("ui.need_update", needUpdate);
+            });
+
             auto& gui = Gui::get();
 
             gui.sortAllHacksAlphabetically();

@@ -5,6 +5,7 @@
 #include "../../core/gui.hpp"
 #include "../../core/config.hpp"
 #include "../../interface/imgui/widget_helper.hpp"
+#include "../../interface/imgui/widgetH.hpp"
 #include "../../interface/cocos/hack_settings_popup.hpp"
 #include "../../core/utils.hpp"
 #include "../../core/ringBuffer.hpp"
@@ -88,6 +89,9 @@ void updateHitboxes(GJBaseGameLayer* layer, cocos2d::CCDrawNode* drawNode) {
     auto playerRotateColor = GDH::Utils::hexToColor4F(config.get<std::string>("level.show_hitboxes::playerRotateColor", "#800000FF"));
     auto playerInnerColor = GDH::Utils::hexToColor4F(config.get<std::string>("level.show_hitboxes::playerInnerColor", "#003FFFFF"));
     auto playerColor = GDH::Utils::hexToColor4F(config.get<std::string>("level.show_hitboxes::playerColor", "#FF0000FF"));
+
+    auto trailColor = GDH::Utils::hexToColor4F(config.get<std::string>("level.show_hitboxes::trailColor", "#FFFF00FF"));
+    auto innerTrailColor = GDH::Utils::hexToColor4F(config.get<std::string>("level.show_hitboxes::innerTrailColor", "#FF0000FF"));
 
     auto size = config.get<float>("level.show_hitboxes::size", 0.25f);
     auto fillAlpha = config.get<float>("level.show_hitboxes::fill_alpha", 0.2f);
@@ -197,14 +201,11 @@ void updateHitboxes(GJBaseGameLayer* layer, cocos2d::CCDrawNode* drawNode) {
             });
         };
 
-        cocos2d::ccColor4F trailColor = {1.0f, 1.0f, 0.0f, 1.0f};
-        cocos2d::ccColor4F innerColor = {1.0f, 0.0f, 0.0f, 1.0f};
-
         renderTrail(playerTrail1, trailColor);
-        renderTrail(playerInnerTrail1, innerColor);
+        renderTrail(playerInnerTrail1, innerTrailColor);
 
         renderTrail(playerTrail2, trailColor);
-        renderTrail(playerInnerTrail2, innerColor);
+        renderTrail(playerInnerTrail2, innerTrailColor);
     }
 }
 
@@ -308,22 +309,20 @@ $execute {
         cDangerKey = hack.formatAdditionalSetting("dangerColor"),
         cPlayerRotateKey = hack.formatAdditionalSetting("playerRotateColor"),
         cPlayerInnerKey = hack.formatAdditionalSetting("playerInnerColor"),
-        cPlayerKey = hack.formatAdditionalSetting("playerColor")
+        cPlayerKey = hack.formatAdditionalSetting("playerColor"),
+        cTrailKey = hack.formatAdditionalSetting("trailColor"),
+        cInnerTrailKey = hack.formatAdditionalSetting("innerTrailColor")
     ]{
         if (ImGuiWidgetConfig::Checkbox("Show on Death", onDeathKey, false)) GDH::Gui::get().rescanActiveCheats();
         ImGuiWidgetConfig::DragFloat("##Hitbox_Size", sizeKey, 0.05f, 0, 20.f, 0.25f, "Size: %.2f");
         ImGuiWidgetConfig::DragFloat("##Hitbox_FillAlpha", fillAlphaKey, 0.01f, 0, 1.f, 0.2f, "Fill Alpha: %.2f");
 
-        ImGui::Spacing();
-        ImGui::Separator();
-        ImGui::Spacing();
+        ImGuiH::SpaceSeparator();
 
         ImGuiWidgetConfig::Checkbox("Draw Trail", drawTrailKey, false);
         ImGuiWidgetConfig::DragInt("##Trail_Length", trailLengthKey, 1, 0, 1000, 240, "Trail Length: %d");
 
-        ImGui::Spacing();
-        ImGui::Separator();
-        ImGui::Spacing();
+        ImGuiH::SpaceSeparator();
         ImGui::Text("Hitbox Colors:");
 
         ImGuiWidgetConfig::ColorEdit4Hex("Triggers", cTriggersKey, "#FF00E6FF");
@@ -332,13 +331,14 @@ $execute {
         ImGuiWidgetConfig::ColorEdit4Hex("Solid (Blocks)", cSolidKey, "#003FFFFF");
         ImGuiWidgetConfig::ColorEdit4Hex("Danger (Spikes)", cDangerKey, "#FF0000FF");
         
-        ImGui::Spacing();
-        ImGui::Separator();
-        ImGui::Spacing();
+        ImGuiH::SpaceSeparator();
         ImGui::Text("Player:");
         ImGuiWidgetConfig::ColorEdit4Hex("Player Rotated Box", cPlayerRotateKey, "#800000FF");
         ImGuiWidgetConfig::ColorEdit4Hex("Player Inner Box", cPlayerInnerKey, "#003FFFFF");
         ImGuiWidgetConfig::ColorEdit4Hex("Player Box", cPlayerKey, "#FF0000FF");
+
+        ImGuiWidgetConfig::ColorEdit4Hex("Trail Color", cTrailKey, "#FFFF00FF");
+        ImGuiWidgetConfig::ColorEdit4Hex("Inner Trail Color", cInnerTrailKey, "#FF0000FF");
     });
 
     hack.setCustomWindowCocos([
@@ -355,7 +355,9 @@ $execute {
         cDangerKey = hack.formatAdditionalSetting("dangerColor"),
         cPlayerRotateKey = hack.formatAdditionalSetting("playerRotateColor"),
         cPlayerInnerKey = hack.formatAdditionalSetting("playerInnerColor"),
-        cPlayerKey = hack.formatAdditionalSetting("playerColor")
+        cPlayerKey = hack.formatAdditionalSetting("playerColor"),
+        cTrailKey = hack.formatAdditionalSetting("trailColor"),
+        cInnerTrailKey = hack.formatAdditionalSetting("innerTrailColor")
     ](cocos2d::CCNode* popupNode){
         auto* popup = static_cast<HackSettingsPopup*>(popupNode);
         popup->addConfigToggle("Show on Death", onDeathKey, false, [](bool enabled) { GDH::Gui::get().rescanActiveCheats(); });
@@ -366,6 +368,8 @@ $execute {
 
         popup->addConfigToggle("Draw Trail", drawTrailKey, false);
         popup->addConfigIntInput("Trail Length", trailLengthKey, 0, 1000, 240);
+        popup->addConfigColor4Hex("Trail Color", cTrailKey, "#FFFF00FF");
+        popup->addConfigColor4Hex("Inner Trail Color", cInnerTrailKey, "#FF0000FF");
 
         popup->addSeparator();
 

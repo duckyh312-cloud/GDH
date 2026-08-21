@@ -13,13 +13,13 @@ class $modify(HidePauseMenuPauseLayer, PauseLayer) {
         hack.setHandler([](bool enabled) {
             if (auto scene = cocos2d::CCScene::get()) {
                 auto pauseLayer = scene->getChildByType<PauseLayer*>(0);
-                if (pauseLayer) pauseLayer->setVisible(!enabled);
+                if (pauseLayer) pauseLayer->setScale(enabled ? 0.f : 1.f);
             }
         });
     }
     
     void customSetup() {
-        this->setVisible(false);
+        this->setScale(0.f);
         PauseLayer::customSetup();
     }
 };
