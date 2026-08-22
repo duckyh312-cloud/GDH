@@ -25,8 +25,6 @@ namespace TrajectoryManager {
 
     static bool is_simulating = false;
     static bool simulation_dead = false;
-    static bool p1_holding = false;
-    static bool p2_holding = false;
 
     static float dt_step = 0.0f;
     static cocos2d::CCDrawNode* draw_node = nullptr;
@@ -81,6 +79,17 @@ namespace TrajectoryManager {
 
         bool isSecondPlayer = (sourcePlayer == layer->m_player2);
         simPlayer->copyAttributes(sourcePlayer);
+        
+        if (isJumpInput) {
+            simPlayer->pushButton(PlayerButton::Jump);
+        }
+
+        simPlayer->m_playEffects = false;
+        simPlayer->m_hasNoEffects = true;
+
+        simPlayer->setPosition(sourcePlayer->m_position);
+        simPlayer->setRotation(sourcePlayer->getRotation());
+
         simPlayer->m_gravityMod = sourcePlayer->m_gravityMod;
         simPlayer->m_isSideways = sourcePlayer->m_isSideways;
 
@@ -90,40 +99,45 @@ namespace TrajectoryManager {
         simPlayer->m_dashY = sourcePlayer->m_dashY;
         simPlayer->m_dashAngle = sourcePlayer->m_dashAngle;
 
-        bool isCurrentlyHolding = isSecondPlayer ? p2_holding : p1_holding;
-        if (isCurrentlyHolding) {
-            isJumpInput ? simPlayer->pushButton(PlayerButton::Jump) : simPlayer->releaseButton(PlayerButton::Jump);
+        if (!isJumpInput) {
+            simPlayer->releaseButton(PlayerButton::Jump);
+            simPlayer->m_jumpBuffered = false;
         }
 
-        simPlayer->m_isOnGround = sourcePlayer->m_isOnGround;
         simPlayer->setVisible(false);
+        
+        simPlayer->m_isOnGround = sourcePlayer->m_isOnGround;
         simulation_dead = false;
-
+        
         auto& config = Config::get();
         int iterations = config.get<int>("level.show_trajectory::iterations", 300);
 
         auto jumpColor = GDH::Utils::hexToColor4F(config.get<std::string>("level.show_trajectory::jumpColor", "#E900FFFF"));
         auto normalColor = GDH::Utils::hexToColor4F(config.get<std::string>("level.show_trajectory::normalColor", "#00FFFFFF"));
-
+        
         auto playerInnerColor = GDH::Utils::hexToColor4F(config.get<std::string>("level.show_hitboxes::playerInnerColor", "#003FFFFF"));
         auto playerColor = GDH::Utils::hexToColor4F(config.get<std::string>("level.show_hitboxes::playerColor", "#FF0000FF"));
-
+        
         cocos2d::ccColor4F lineColor = isJumpInput ? jumpColor : normalColor;
-        bool inputApplied = false;
-
+        bool spiderFix = false;
+        
         for (int i = 0; i < iterations; ++i) {
             cocos2d::CCPoint currentPos = simPlayer->getPosition();
             clearCollisionLogs(simPlayer);
 
-            layer->checkCollisions(simPlayer, dt_step, false);
-            if (simulation_dead) break;
-
-            if (!inputApplied && !isCurrentlyHolding) {
-                inputApplied = true;
-                isJumpInput ? simPlayer->pushButton(PlayerButton::Jump) : simPlayer->releaseButton(PlayerButton::Jump);
+            // not sure, needs investigating
+            if (!spiderFix && layer->m_gameState.m_isFreeMode && simPlayer->m_isSpider && isJumpInput) {
+                spiderFix = true;
+                simPlayer->spiderTestJumpInternal(false);
             }
 
+            if (simulation_dead) break;
+
             simPlayer->update(dt_step);
+            if (layer->checkCollisions(simPlayer, dt_step, false) == 1) {
+                simulation_dead = true;
+            }
+
             draw_node->drawSegment(currentPos, simPlayer->getPosition(), 0.65f, lineColor);
         }
 
@@ -145,6 +159,8 @@ namespace TrajectoryManager {
         is_simulating = true;
         draw_node->clear();
 
+        GJGameState state = layer->m_gameState;
+
         if (layer->m_player1) {
             simulatePath(layer, dummy_jump, layer->m_player1, true);
             simulatePath(layer, dummy_normal, layer->m_player1, false);
@@ -154,7 +170,6 @@ namespace TrajectoryManager {
             simulatePath(layer, dummy_jump, layer->m_player2, true);
             simulatePath(layer, dummy_normal, layer->m_player2, false);
         }
-
         is_simulating = false;
     }
 
@@ -216,7 +231,6 @@ class $modify(ShowTrajectoryBaseGameLayer, GJBaseGameLayer) {
         auto& hack = gui.getWindow("Level").findHackByName("Show Trajectory");       
         
         // hack.addHookPtr(self.getHook("GJBaseGameLayer::updateCamera").unwrap());
-        hack.addHookPtr(self.getHook("GJBaseGameLayer::handleButton").unwrap());
         hack.addHookPtr(self.getHook("GJBaseGameLayer::canBeActivatedByPlayer").unwrap());
         hack.addHookPtr(self.getHook("GJBaseGameLayer::collisionCheckObjects").unwrap());
         hack.addHookPtr(self.getHook("GJBaseGameLayer::flipGravity").unwrap());
@@ -229,37 +243,71 @@ class $modify(ShowTrajectoryBaseGameLayer, GJBaseGameLayer) {
         
         GJBaseGameLayer::updateCamera(dt);
     }
-    void handleButton(bool down, int button, bool isPlayer1) {
-        auto& holding = isPlayer1 ? TrajectoryManager::p1_holding : TrajectoryManager::p2_holding;
-        if (button == 1) holding = down;
-
-        GJBaseGameLayer::handleButton(down, button, isPlayer1);
-    }
 
     bool canBeActivatedByPlayer(PlayerObject* player, EffectGameObject* object) {
         if (TrajectoryManager::is_simulating) return false;
         return GJBaseGameLayer::canBeActivatedByPlayer(player, object);
     }
 
-    void collisionCheckObjects(PlayerObject* object, gd::vector<GameObject*>* objects, int objectCount, float dt) {
-        if (TrajectoryManager::is_simulating) {
-            gd::vector<GameObject*> solidPhysicsOnly;
-            solidPhysicsOnly.reserve(objectCount);
-            
-            for (int i = 0; i < objectCount; ++i) {
-                auto obj = objects->at(i);
-                if (!obj) continue;
-                if (obj->m_objectType == GameObjectType::Solid ||
-                    obj->m_objectType == GameObjectType::Hazard ||
-                    obj->m_objectType == GameObjectType::AnimatedHazard ||
-                    obj->m_objectType == GameObjectType::Slope) {
-                    solidPhysicsOnly.push_back(obj);
-                }
-            }
-            GJBaseGameLayer::collisionCheckObjects(object, &solidPhysicsOnly, static_cast<int>(solidPhysicsOnly.size()), dt);
+    void collisionCheckObjects(PlayerObject* player, gd::vector<GameObject*>* objects, int objectCount, float dt) {
+        if (!TrajectoryManager::is_simulating) {
+            GJBaseGameLayer::collisionCheckObjects(player, objects, objectCount, dt);
             return;
         }
-        GJBaseGameLayer::collisionCheckObjects(object, objects, objectCount, dt);
+
+        if (!player || !objects || objectCount <= 0) return;
+
+        auto addCollisionObject = [](GameObject* obj, gd::vector<GameObject*>& vec, int& count, int& index) {
+            if (count < index) {
+                vec.at(count) = obj;
+            } else {
+                vec.push_back(obj);
+                index++;
+            }
+            count++;
+        };
+
+        const CCRect playerRect = player->getObjectRect();
+
+        for (int i = 0; i < objectCount; ++i) {
+            GameObject* object = objects->at(i);
+
+            if (!object || object->m_isGroupDisabled || object->m_isDisabled || object == m_anticheatSpike) {
+                continue;
+            }
+
+            const auto type = object->m_objectType;
+
+            if (type == GameObjectType::Solid || type == GameObjectType::Breakable) {
+                addCollisionObject(object, m_solidCollisionObjects, m_solidCollisionObjectsCount, m_solidCollisionObjectsIndex);
+                continue;
+            }
+
+            if (type == GameObjectType::Hazard || type == GameObjectType::AnimatedHazard) {
+                addCollisionObject(object, m_hazardCollisionObjects, m_hazardCollisionObjectsCount, m_hazardCollisionObjectsIndex);
+                continue;
+            }
+
+            if (type == GameObjectType::Slope) {
+                const cocos2d::CCRect slopeRect = object->getObjectRect(2.0f, 2.0f);
+                if (!playerRect.intersectsRect(slopeRect)) continue;
+
+                const bool needsFix = !m_levelSettings->m_fixRadiusCollision || object->m_objectRadius <= 0.0;
+                if (object->m_shouldUseOuterOb && needsFix) {
+                    OBB2D* box = object->getOrientedBox();
+                    player->updateOrientedBox();
+                    
+                    OBB2D* playerBox = static_cast<GameObject*>(player)->getOrientedBox();
+                    if (!box->overlaps1Way(playerBox)) continue;
+                }
+
+                if (!player->m_isSideways) {
+                    player->collidedWithSlopeInternal(dt, object, false);
+                } else {
+                    player->handleRotatedCollisionInternal(dt, object, {0.0f, 0.0f, 0.0f, 0.0f}, false, false, true);
+                }
+            }
+        }
     }
 
     void flipGravity(PlayerObject* object, bool flip, bool noEffects) {

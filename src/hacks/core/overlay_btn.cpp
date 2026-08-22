@@ -9,16 +9,9 @@
 #include "../../interface/cocos/overlay_button.hpp"
 
 class $modify(OverlayButtonVisiblityPL, PlayLayer) {
-    struct Fields {
-        ~Fields() {
-            OverlayButton::get()->setVisible(true);
-        }
-    };
-
     bool init(GJGameLevel* level, bool useReplay, bool dontCreateObjects) {
         if (!PlayLayer::init(level, useReplay, dontCreateObjects)) return false;
 
-        m_fields.self();
         if (Config::get().get<bool>("ui_icon.hide_on_game", true))
             OverlayButton::get()->setVisible(false);
 
@@ -40,16 +33,9 @@ class $modify(OverlayButtonVisiblityPL, PlayLayer) {
 };
 
 class $modify(OverlayButtonVisiblityLEL, LevelEditorLayer) {
-    struct Fields {
-        ~Fields() {
-            OverlayButton::get()->setVisible(true);
-        }
-    };
-
     bool init(GJGameLevel* level, bool noUI) {
         if (!LevelEditorLayer::init(level, noUI)) return false;
 
-        m_fields.self();
         if (Config::get().get<bool>("ui_icon.hide_on_editor", false))
             OverlayButton::get()->setVisible(false);
 
