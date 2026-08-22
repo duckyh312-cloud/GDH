@@ -275,44 +275,37 @@ void GDH::Utils::setReverb(float decayTime) {
     reverb_dsp->setParameterFloat(FMOD_DSP_SFXREVERB_DECAYTIME, std::clamp(decayTime, 100.0f, 20000.0f));
 }
 
-cocos2d::ccColor3B GDH::Utils::hexToColor(const std::string& hexStr) {
-    std::string cleanHex = hexStr;
-    if (!cleanHex.empty() && cleanHex[0] == '#') {
-        cleanHex = cleanHex.substr(1);
-    }
-    
-    unsigned int hexValue = 0xFFFFFF;
-    std::stringstream ss;
-    ss << std::hex << cleanHex;
-    ss >> hexValue;
+cocos2d::ccColor3B GDH::Utils::hexToColor(std::string_view hexStr) {
+    if (hexStr.empty()) return { 255, 255, 255 };
+    if (hexStr[0] == '#') hexStr.remove_prefix(1);
 
-    unsigned char r = (hexValue >> 16) & 0xFF;
-    unsigned char g = (hexValue >> 8) & 0xFF;
-    unsigned char b = hexValue & 0xFF;
+    uint32_t hexValue = 0xFFFFFF;
+    std::from_chars(hexStr.data(), hexStr.data() + hexStr.size(), hexValue, 16);
 
-    return { r, g, b };
+    return {
+        static_cast<GLubyte>((hexValue >> 16) & 0xFF),
+        static_cast<GLubyte>((hexValue >> 8) & 0xFF),
+        static_cast<GLubyte>(hexValue & 0xFF)
+    };
 }
 
-cocos2d::ccColor4F GDH::Utils::hexToColor4F(const std::string& hexStr) {
-    std::string cleanHex = hexStr;
-    if (!cleanHex.empty() && cleanHex[0] == '#') {
-        cleanHex = cleanHex.substr(1);
+cocos2d::ccColor4F GDH::Utils::hexToColor4F(std::string_view hexStr) {
+    if (hexStr.empty()) return {1.f, 1.f, 1.f, 1.f};
+    if (hexStr[0] == '#') hexStr.remove_prefix(1);
+
+    uint32_t hexValue = 0;
+    auto [ptr, ec] = std::from_chars(hexStr.data(), hexStr.data() + hexStr.size(), hexValue, 16);
+    
+    if (hexStr.length() == 6) {
+        hexValue = (hexValue << 8) | 0xFF;
     }
-    if (cleanHex.length() == 6) {
-        cleanHex += "FF";
-    }
 
-    unsigned int hexValue = 0xFFFFFFFF;
-    std::stringstream ss;
-    ss << std::hex << cleanHex;
-    ss >> hexValue;
-
-    float r = ((hexValue >> 24) & 0xFF) / 255.0f;
-    float g = ((hexValue >> 16) & 0xFF) / 255.0f;
-    float b = ((hexValue >> 8) & 0xFF) / 255.0f;
-    float a = (hexValue & 0xFF) / 255.0f;
-
-    return { r, g, b, a };
+    return {
+        ((hexValue >> 24) & 0xFF) / 255.0f,
+        ((hexValue >> 16) & 0xFF) / 255.0f,
+        ((hexValue >> 8)  & 0xFF) / 255.0f,
+        (hexValue & 0xFF)         / 255.0f
+    };
 }
 
 struct PatternByte {

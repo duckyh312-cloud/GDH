@@ -26,9 +26,7 @@ class $modify(SafeModePlayLayer, PlayLayer) {
         PlayLayer::resetLevel();
 
         if (Config::get().get("core.safe_mode", false)) {
-            geode::log::debug("{}", m_level->m_attempts);
             m_level->m_attempts = m_level->m_attempts - 1;
-            geode::log::debug("{}", m_level->m_attempts);
         }
     }
 

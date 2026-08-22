@@ -102,8 +102,8 @@ namespace TrajectoryManager {
         auto& config = Config::get();
         int iterations = config.get<int>("level.show_trajectory::iterations", 300);
 
-        auto jumpColor = GDH::Utils::hexToColor4F(config.get<std::string>("level.show_trajectory::jumpColor", "#00ff00FF"));
-        auto normalColor = GDH::Utils::hexToColor4F(config.get<std::string>("level.show_trajectory::normalColor", "#ff0000FF"));
+        auto jumpColor = GDH::Utils::hexToColor4F(config.get<std::string>("level.show_trajectory::jumpColor", "#E900FFFF"));
+        auto normalColor = GDH::Utils::hexToColor4F(config.get<std::string>("level.show_trajectory::normalColor", "#00FFFFFF"));
 
         auto playerInnerColor = GDH::Utils::hexToColor4F(config.get<std::string>("level.show_hitboxes::playerInnerColor", "#003FFFFF"));
         auto playerColor = GDH::Utils::hexToColor4F(config.get<std::string>("level.show_hitboxes::playerColor", "#FF0000FF"));
@@ -174,7 +174,13 @@ class $modify(ShowTrajectoryPlayLayer, PlayLayer) {
     };
     
     static void onModify(auto& self) {
+        auto& gui = GDH::Gui::get();
+        auto& hack = gui.getWindow("Level").findHackByName("Show Trajectory");       
+        
         (void) self.setHookPriority("PlayLayer::destroyPlayer", geode::Priority::Early); 
+        hack.addHookPtr(self.getHook("PlayLayer::destroyPlayer").unwrap());
+
+        hack.addHookPtr(self.getHook("PlayLayer::playEndAnimationToPos").unwrap());
     }
 
     bool init(GJGameLevel* level, bool useReplay, bool dontCreateObjects) {
@@ -205,6 +211,18 @@ class $modify(ShowTrajectoryPlayLayer, PlayLayer) {
 };
 
 class $modify(ShowTrajectoryBaseGameLayer, GJBaseGameLayer) {
+    static void onModify(auto& self) {
+        auto& gui = GDH::Gui::get();
+        auto& hack = gui.getWindow("Level").findHackByName("Show Trajectory");       
+        
+        // hack.addHookPtr(self.getHook("GJBaseGameLayer::updateCamera").unwrap());
+        hack.addHookPtr(self.getHook("GJBaseGameLayer::handleButton").unwrap());
+        hack.addHookPtr(self.getHook("GJBaseGameLayer::canBeActivatedByPlayer").unwrap());
+        hack.addHookPtr(self.getHook("GJBaseGameLayer::collisionCheckObjects").unwrap());
+        hack.addHookPtr(self.getHook("GJBaseGameLayer::flipGravity").unwrap());
+        hack.addHookPtr(self.getHook("GJBaseGameLayer::playerTouchedRing").unwrap());
+    }
+
     void updateCamera(float dt) {
         if (auto pl = PlayLayer::get()) 
             TrajectoryManager::runTrajectorySimulation(pl);
@@ -256,6 +274,17 @@ class $modify(ShowTrajectoryBaseGameLayer, GJBaseGameLayer) {
 };
 
 class $modify(ShowTrajectoryPlayerObject, PlayerObject) {
+    static void onModify(auto& self) {
+        auto& gui = GDH::Gui::get();
+        auto& hack = gui.getWindow("Level").findHackByName("Show Trajectory");       
+        
+        hack.addHookPtr(self.getHook("PlayerObject::update").unwrap());
+        hack.addHookPtr(self.getHook("PlayerObject::stopDashing").unwrap());
+        hack.addHookPtr(self.getHook("PlayerObject::playSpiderDashEffect").unwrap());
+        hack.addHookPtr(self.getHook("PlayerObject::ringJump").unwrap());
+        hack.addHookPtr(self.getHook("PlayerObject::incrementJumps").unwrap());
+    }
+
     void update(float dt) {
         PlayerObject::update(dt);
         if (!TrajectoryManager::is_simulating) {
@@ -294,6 +323,13 @@ class $modify(ShowTrajectoryPlayerObject, PlayerObject) {
 };
 
 class $modify(ShowTrajectoryEffectGameObject, EffectGameObject) {
+    static void onModify(auto& self) {
+        auto& gui = GDH::Gui::get();
+        auto& hack = gui.getWindow("Level").findHackByName("Show Trajectory");       
+        
+        hack.addHookPtr(self.getHook("EffectGameObject::triggerObject").unwrap());
+    }
+
     void triggerObject(GJBaseGameLayer* layer, int uniqueID, const gd::vector<int>* remapKeys) {
         if (TrajectoryManager::is_simulating) return;
         EffectGameObject::triggerObject(layer, uniqueID, remapKeys);
@@ -301,6 +337,13 @@ class $modify(ShowTrajectoryEffectGameObject, EffectGameObject) {
 };
 
 class $modify(ShowTrajectoryGameObject, GameObject) {
+    static void onModify(auto& self) {
+        auto& gui = GDH::Gui::get();
+        auto& hack = gui.getWindow("Level").findHackByName("Show Trajectory");       
+        
+        hack.addHookPtr(self.getHook("GameObject::playShineEffect").unwrap());
+    }
+
     void playShineEffect() {
         if (TrajectoryManager::is_simulating) return;
         GameObject::playShineEffect();
@@ -308,17 +351,16 @@ class $modify(ShowTrajectoryGameObject, GameObject) {
 };
 
 class $modify(ShowTrajectoryHardStreak, HardStreak) {
+    static void onModify(auto& self) {
+        auto& gui = GDH::Gui::get();
+        auto& hack = gui.getWindow("Level").findHackByName("Show Trajectory");       
+        
+        hack.addHookPtr(self.getHook("HardStreak::addPoint").unwrap());
+    }
+
     void addPoint(cocos2d::CCPoint point) {
         if (TrajectoryManager::is_simulating) return;
         HardStreak::addPoint(point);
-    }
-};
-
-class $modify(ShowTrajectoryLevelEditorLayer, LevelEditorLayer) {
-    bool init(GJGameLevel* level, bool noUI) {
-        if (!LevelEditorLayer::init(level, noUI)) return false;
-        TrajectoryManager::reset();
-        return true;
     }
 };
 
@@ -341,8 +383,8 @@ $execute {
         ImGui::Spacing();
         ImGui::Text("Line Colors:");
 
-        ImGuiWidgetConfig::ColorEdit4Hex("Jump Trajectory", cJumpKey, "#00ff00FF");
-        ImGuiWidgetConfig::ColorEdit4Hex("Normal Trajectory", cNormalKey, "#ff0000FF");
+        ImGuiWidgetConfig::ColorEdit4Hex("Jump Trajectory", cJumpKey, "#E900FFFF");
+        ImGuiWidgetConfig::ColorEdit4Hex("Normal Trajectory", cNormalKey, "#00FFFFFF");
     });
 
     hack.setCustomWindowCocos([
@@ -357,7 +399,7 @@ $execute {
 
         popup->addSeparator();
 
-        popup->addConfigColor4Hex("Jump Trajectory", cJumpKey, "#00ff00FF");
-        popup->addConfigColor4Hex("Normal Trajectory", cNormalKey, "#ff0000FF");
+        popup->addConfigColor4Hex("Jump Trajectory", cJumpKey, "#E900FFFF");
+        popup->addConfigColor4Hex("Normal Trajectory", cNormalKey, "#00FFFFFF");
     });
 }

@@ -60,6 +60,8 @@ void OverlayButton::setSizeScale(float scale) {
 }
 
 void OverlayButton::setVisible(bool visible) {
+    if (isVisible() == visible) return;
+    
     CCMenu::setVisible(visible);
 
     if (auto dispatcher = CCDirector::sharedDirector()->getTouchDispatcher()) {
