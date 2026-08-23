@@ -151,7 +151,7 @@ void HacksTab::prepareNewRow() {
     m_scrollLayer->m_contentLayer->addChild(m_currentRow);
 }
 
-void HacksTab::addHackToggle(const std::string& labelText, const std::string& key, bool defaultValue) {
+void HacksTab::addHackToggle(const std::string& labelText, const std::string& key, bool defaultValue, geode::Function<void(bool)> callback) {
     auto& config = Config::get();
     float columnWidth = 175.f;
 
@@ -159,11 +159,15 @@ void HacksTab::addHackToggle(const std::string& labelText, const std::string& ke
     node->setContentSize({columnWidth, 30.f});
     node->setAnchorPoint({0, 0.5f});
     
-    auto toggle = CCMenuItemExt::createTogglerWithFilename("GDH_togglerOn.png"_spr, "GDH_togglerOff.png"_spr, 0.8f, [key](CCMenuItemToggler* sender) {
+    auto toggle = CCMenuItemExt::createTogglerWithFilename("GDH_togglerOn.png"_spr, "GDH_togglerOff.png"_spr, 0.8f, [key, callback = std::move(callback)](CCMenuItemToggler* sender) mutable {
         auto& gui = GDH::Gui::get();
         auto* hack = gui.findHackByIDGlobal(key);
         if (hack != nullptr)
             hack->toggle();
+        
+        if (callback) {
+            callback(hack->getEnabled());
+        }
     });
     toggle->setPosition({25.f, 15.f});
     toggle->toggle(config.get<bool>(key, defaultValue));

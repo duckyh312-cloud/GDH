@@ -103,7 +103,9 @@ $execute {
             gui.rescanActiveCheats();
 
         ImGui::SameLine();
-        ImGuiWidgetConfig::HackCheckbox("##Speedhack_Enabled", "invisible.speedhack", false);
+        if (ImGuiWidgetConfig::HackCheckbox("##Speedhack_Enabled", "invisible.speedhack", false)) {
+            gui.rescanActiveCheats();
+        }
 
         ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x - layout.multipleScale(52.f));
         if (ImGuiWidgetConfig::DragInt("##Pitch_Shifter_Value", "invisible.pitch_shifter::value", 1.f, -24, 24, 0, "Pitch: %d ST")) {

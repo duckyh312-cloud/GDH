@@ -1,5 +1,6 @@
 #pragma once
 #include <Geode/Geode.hpp>
+#include "Geode/utils/general.hpp"
 #include "utils.hpp"
 
 namespace GDH { namespace Shortcuts {
@@ -61,5 +62,9 @@ namespace GDH { namespace Shortcuts {
     inline void triggerCrash() {
         volatile int* ptr = nullptr;
         *ptr = 0;
+    }
+
+    inline void restart() {
+        geode::utils::game::restart(true);
     }
 } }

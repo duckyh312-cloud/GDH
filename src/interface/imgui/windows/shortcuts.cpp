@@ -41,6 +41,7 @@ $execute {
     kb.addCallback("shortcut::gdh_appdata", geode::Keybind(), [](bool r) { if (!r && areShortcutsEnabled()) GDH::Shortcuts::openGDHAppDataFolder(); });
     kb.addCallback("shortcut::crash_game", geode::Keybind(), [](bool r) { if (!r && areShortcutsEnabled()) GDH::Shortcuts::triggerCrash(); });
     kb.addCallback("shortcut::disable_cheat_hacks", geode::Keybind(), [](bool r) { if (!r && areShortcutsEnabled()) GDH::Gui::get().disableCheats(); });
+    kb.addCallback("shortcut::restart_game", geode::Keybind(), [](bool r) { if (!r && areShortcutsEnabled()) GDH::Shortcuts::restart(); });
 
     kb.addCallback("keybinds::speedhack", geode::Keybind(), [](bool r) { if (!r && areFramerateEnabled()) {
         if (r) return;
@@ -127,7 +128,7 @@ $execute {
         if (ImGuiH::Button("Crash Game", {width, 0.f})) {
             ImGui::OpenPopup("Crash the Game");
         }
-
+        
         if (ImGui::BeginPopupModal("Crash the Game", 0, ImGuiWindowFlags_AlwaysAutoResize)) {
             ImGuiH::GlowWindow(IM_COL32(255, 128, 128, 150), IM_COL32(255, 128, 128, 0), layout.multipleScale(500.f));
             ImGui::Text("Are you sure you want to crash Geometry Dash?");
@@ -142,6 +143,10 @@ $execute {
             }
 
             ImGui::EndPopup();
+        }
+
+        if (ImGuiH::Button("Restart Game", {width, 0.f})) {
+            GDH::Shortcuts::restart();
         }
     });
 }

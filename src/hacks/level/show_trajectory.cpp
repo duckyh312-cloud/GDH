@@ -13,6 +13,7 @@
 #include "../../interface/imgui/widget_helper.hpp"
 #include "../../interface/cocos/hack_settings_popup.hpp"
 #include "../../core/utils.hpp"
+#include "../../core/checkpointData.hpp"
 #include "imgui.h"
 
 using namespace geode::prelude;
@@ -77,15 +78,18 @@ namespace TrajectoryManager {
     static void simulatePath(PlayLayer* layer, PlayerObject* simPlayer, PlayerObject* sourcePlayer, bool isJumpInput) {
         if (!layer || !simPlayer || !sourcePlayer) return;
 
-        bool isSecondPlayer = (sourcePlayer == layer->m_player2);
+        auto& config = Config::get();
+        bool performanceMode = config.get<bool>("level.show_trajectory::performance", true);
+        bool disableCollisions = config.get<bool>("level.show_trajectory::no_collisions", false);
+        int stepMultiplier = config.get<int>("level.show_trajectory::step_multiplier", 1);
+        if (stepMultiplier < 1) stepMultiplier = 1;
+
         simPlayer->copyAttributes(sourcePlayer);
-        
-        if (isJumpInput) {
-            simPlayer->pushButton(PlayerButton::Jump);
-        }
+        GDH::PracticeFix::copyPlayerState(sourcePlayer, simPlayer);
 
         simPlayer->m_playEffects = false;
         simPlayer->m_hasNoEffects = true;
+        simPlayer->m_maybeReducedEffects = performanceMode;
 
         simPlayer->setPosition(sourcePlayer->m_position);
         simPlayer->setRotation(sourcePlayer->getRotation());
@@ -93,48 +97,51 @@ namespace TrajectoryManager {
         simPlayer->m_gravityMod = sourcePlayer->m_gravityMod;
         simPlayer->m_isSideways = sourcePlayer->m_isSideways;
 
-        // dashing stuff
         simPlayer->m_isDashing = sourcePlayer->m_isDashing;
         simPlayer->m_dashX = sourcePlayer->m_dashX;
         simPlayer->m_dashY = sourcePlayer->m_dashY;
         simPlayer->m_dashAngle = sourcePlayer->m_dashAngle;
+        simPlayer->m_isOnGround = sourcePlayer->m_isOnGround;
 
-        if (!isJumpInput) {
+        if (isJumpInput) {
+            if (sourcePlayer->m_isSpider) {
+                if (sourcePlayer->m_isOnGround || sourcePlayer->m_jumpBuffered) {
+                    simPlayer->spiderTestJump(false);
+                }
+            } else {
+                simPlayer->pushButton(PlayerButton::Jump);
+            }
+        } else {
             simPlayer->releaseButton(PlayerButton::Jump);
             simPlayer->m_jumpBuffered = false;
         }
 
         simPlayer->setVisible(false);
-        
-        simPlayer->m_isOnGround = sourcePlayer->m_isOnGround;
         simulation_dead = false;
-        
-        auto& config = Config::get();
-        int iterations = config.get<int>("level.show_trajectory::iterations", 300);
+
+        int iterations = config.get<int>("level.show_trajectory::iterations", 150);
+        int effectiveIterations = iterations / stepMultiplier;
+        if (effectiveIterations < 1) effectiveIterations = 1;
 
         auto jumpColor = GDH::Utils::hexToColor4F(config.get<std::string>("level.show_trajectory::jumpColor", "#E900FFFF"));
         auto normalColor = GDH::Utils::hexToColor4F(config.get<std::string>("level.show_trajectory::normalColor", "#00FFFFFF"));
-        
+
         auto playerInnerColor = GDH::Utils::hexToColor4F(config.get<std::string>("level.show_hitboxes::playerInnerColor", "#003FFFFF"));
         auto playerColor = GDH::Utils::hexToColor4F(config.get<std::string>("level.show_hitboxes::playerColor", "#FF0000FF"));
-        
+
         cocos2d::ccColor4F lineColor = isJumpInput ? jumpColor : normalColor;
-        bool spiderFix = false;
-        
-        for (int i = 0; i < iterations; ++i) {
+
+        float effectiveDt = dt_step * static_cast<float>(stepMultiplier);
+
+        for (int i = 0; i < effectiveIterations; ++i) {
             cocos2d::CCPoint currentPos = simPlayer->getPosition();
             clearCollisionLogs(simPlayer);
 
-            // not sure, needs investigating
-            if (!spiderFix && layer->m_gameState.m_isFreeMode && simPlayer->m_isSpider && isJumpInput) {
-                spiderFix = true;
-                simPlayer->spiderTestJumpInternal(false);
-            }
-
             if (simulation_dead) break;
 
-            simPlayer->update(dt_step);
-            if (layer->checkCollisions(simPlayer, dt_step, false) == 1) {
+            simPlayer->update(effectiveDt);
+
+            if (!disableCollisions && layer->checkCollisions(simPlayer, effectiveDt, false) == 1) {
                 simulation_dead = true;
             }
 
@@ -158,8 +165,6 @@ namespace TrajectoryManager {
 
         is_simulating = true;
         draw_node->clear();
-
-        GJGameState state = layer->m_gameState;
 
         if (layer->m_player1) {
             simulatePath(layer, dummy_jump, layer->m_player1, true);
@@ -187,14 +192,13 @@ class $modify(ShowTrajectoryPlayLayer, PlayLayer) {
             TrajectoryManager::reset();
         }
     };
-    
+
     static void onModify(auto& self) {
         auto& gui = GDH::Gui::get();
         auto& hack = gui.getWindow("Level").findHackByName("Show Trajectory");       
-        
+
         (void) self.setHookPriority("PlayLayer::destroyPlayer", geode::Priority::Early); 
         hack.addHookPtr(self.getHook("PlayLayer::destroyPlayer").unwrap());
-
         hack.addHookPtr(self.getHook("PlayLayer::playEndAnimationToPos").unwrap());
     }
 
@@ -229,8 +233,7 @@ class $modify(ShowTrajectoryBaseGameLayer, GJBaseGameLayer) {
     static void onModify(auto& self) {
         auto& gui = GDH::Gui::get();
         auto& hack = gui.getWindow("Level").findHackByName("Show Trajectory");       
-        
-        // hack.addHookPtr(self.getHook("GJBaseGameLayer::updateCamera").unwrap());
+
         hack.addHookPtr(self.getHook("GJBaseGameLayer::canBeActivatedByPlayer").unwrap());
         hack.addHookPtr(self.getHook("GJBaseGameLayer::collisionCheckObjects").unwrap());
         hack.addHookPtr(self.getHook("GJBaseGameLayer::flipGravity").unwrap());
@@ -240,7 +243,7 @@ class $modify(ShowTrajectoryBaseGameLayer, GJBaseGameLayer) {
     void updateCamera(float dt) {
         if (auto pl = PlayLayer::get()) 
             TrajectoryManager::runTrajectorySimulation(pl);
-        
+
         GJBaseGameLayer::updateCamera(dt);
     }
 
@@ -252,6 +255,10 @@ class $modify(ShowTrajectoryBaseGameLayer, GJBaseGameLayer) {
     void collisionCheckObjects(PlayerObject* player, gd::vector<GameObject*>* objects, int objectCount, float dt) {
         if (!TrajectoryManager::is_simulating) {
             GJBaseGameLayer::collisionCheckObjects(player, objects, objectCount, dt);
+            return;
+        }
+
+        if (Config::get().get<bool>("level.show_trajectory::no_collisions", false)) {
             return;
         }
 
@@ -296,7 +303,7 @@ class $modify(ShowTrajectoryBaseGameLayer, GJBaseGameLayer) {
                 if (object->m_shouldUseOuterOb && needsFix) {
                     OBB2D* box = object->getOrientedBox();
                     player->updateOrientedBox();
-                    
+
                     OBB2D* playerBox = static_cast<GameObject*>(player)->getOrientedBox();
                     if (!box->overlaps1Way(playerBox)) continue;
                 }
@@ -325,7 +332,7 @@ class $modify(ShowTrajectoryPlayerObject, PlayerObject) {
     static void onModify(auto& self) {
         auto& gui = GDH::Gui::get();
         auto& hack = gui.getWindow("Level").findHackByName("Show Trajectory");       
-        
+
         hack.addHookPtr(self.getHook("PlayerObject::update").unwrap());
         hack.addHookPtr(self.getHook("PlayerObject::stopDashing").unwrap());
         hack.addHookPtr(self.getHook("PlayerObject::playSpiderDashEffect").unwrap());
@@ -342,7 +349,7 @@ class $modify(ShowTrajectoryPlayerObject, PlayerObject) {
             }
         }
     }
-    
+
     void stopDashing() {
         if (!TrajectoryManager::is_simulating)
             return PlayerObject::stopDashing();
@@ -353,7 +360,7 @@ class $modify(ShowTrajectoryPlayerObject, PlayerObject) {
         PlayerObject::stopDashing();
         m_playEffects = orig;
     }
-    
+
     void playSpiderDashEffect(cocos2d::CCPoint from, cocos2d::CCPoint to) {
         if (TrajectoryManager::is_simulating) return;
         PlayerObject::playSpiderDashEffect(from, to);
@@ -374,7 +381,7 @@ class $modify(ShowTrajectoryEffectGameObject, EffectGameObject) {
     static void onModify(auto& self) {
         auto& gui = GDH::Gui::get();
         auto& hack = gui.getWindow("Level").findHackByName("Show Trajectory");       
-        
+
         hack.addHookPtr(self.getHook("EffectGameObject::triggerObject").unwrap());
     }
 
@@ -388,7 +395,7 @@ class $modify(ShowTrajectoryGameObject, GameObject) {
     static void onModify(auto& self) {
         auto& gui = GDH::Gui::get();
         auto& hack = gui.getWindow("Level").findHackByName("Show Trajectory");       
-        
+
         hack.addHookPtr(self.getHook("GameObject::playShineEffect").unwrap());
     }
 
@@ -402,7 +409,7 @@ class $modify(ShowTrajectoryHardStreak, HardStreak) {
     static void onModify(auto& self) {
         auto& gui = GDH::Gui::get();
         auto& hack = gui.getWindow("Level").findHackByName("Show Trajectory");       
-        
+
         hack.addHookPtr(self.getHook("HardStreak::addPoint").unwrap());
     }
 
@@ -422,15 +429,26 @@ $execute {
         cJumpKey = hack.formatAdditionalSetting("jumpColor"),
         cNormalKey = hack.formatAdditionalSetting("normalColor"),
         cPlayerKey = hack.formatAdditionalSetting("playerColor"),
-        cPlayerInnerKey = hack.formatAdditionalSetting("playerInnerColor")
+        cPlayerInnerKey = hack.formatAdditionalSetting("playerInnerColor"),
+        performanceKey = hack.formatAdditionalSetting("performance"),
+        noCollisionsKey = hack.formatAdditionalSetting("no_collisions"),
+        stepMultiplierKey = hack.formatAdditionalSetting("step_multiplier")
     ]{
-        ImGuiWidgetConfig::DragInt("##Trajectory_Iterations", iterationsKey, 1, 10, 2000, 300, "Iterations: %d");
+        ImGuiWidgetConfig::DragInt("##Trajectory_Iterations", iterationsKey, 1, 10, 2000, 150, "Iterations: %d");
+        ImGuiWidgetConfig::DragInt("##Trajectory_StepMultiplier", stepMultiplierKey, 1, 1, 10, 1, "Inaccuracy Multiplier: %dx");
 
         ImGui::Spacing();
         ImGui::Separator();
         ImGui::Spacing();
-        ImGui::Text("Line Colors:");
 
+        ImGuiWidgetConfig::Checkbox("Performance Mode", performanceKey, true);
+        ImGuiWidgetConfig::Checkbox("Disable Collisions", noCollisionsKey, false);
+
+        ImGui::Spacing();
+        ImGui::Separator();
+        ImGui::Spacing();
+
+        ImGui::Text("Line Colors:");
         ImGuiWidgetConfig::ColorEdit4Hex("Jump Trajectory", cJumpKey, "#E900FFFF");
         ImGuiWidgetConfig::ColorEdit4Hex("Normal Trajectory", cNormalKey, "#00FFFFFF");
     });
@@ -440,10 +458,17 @@ $execute {
         cJumpKey = hack.formatAdditionalSetting("jumpColor"),
         cNormalKey = hack.formatAdditionalSetting("normalColor"),
         cPlayerKey = hack.formatAdditionalSetting("playerColor"),
-        cPlayerInnerKey = hack.formatAdditionalSetting("playerInnerColor")
+        cPlayerInnerKey = hack.formatAdditionalSetting("playerInnerColor"),
+        performanceKey = hack.formatAdditionalSetting("performance"),
+        noCollisionsKey = hack.formatAdditionalSetting("no_collisions"),
+        stepMultiplierKey = hack.formatAdditionalSetting("step_multiplier")
     ](cocos2d::CCNode* popupNode){
         auto* popup = static_cast<HackSettingsPopup*>(popupNode);
-        popup->addConfigIntInput("Iterations", iterationsKey, 10, 2000, 300);
+        popup->addConfigIntInput("Iterations", iterationsKey, 10, 2000, 150);
+        popup->addConfigIntInput("Inaccuracy Multiplier (1 - 10)", stepMultiplierKey, 1, 10, 1);
+
+        popup->addConfigToggle("Performance Mode", performanceKey, true);
+        popup->addConfigToggle("Disable Collisions", noCollisionsKey, false);
 
         popup->addSeparator();
 

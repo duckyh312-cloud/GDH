@@ -286,6 +286,7 @@ void KeybindsRender() {
         ImGuiWidgetConfig::DrawCustomKeybindButton("shortcut::appdata", "AppData");
         ImGuiWidgetConfig::DrawCustomKeybindButton("shortcut::gdh_appdata", "GDH AppData");
         ImGuiWidgetConfig::DrawCustomKeybindButton("shortcut::crash_game", "Crash Game");
+        ImGuiWidgetConfig::DrawCustomKeybindButton("shortcut::restart_game", "Restart Game");
         ImGuiWidgetConfig::DrawCustomKeybindButton("shortcut::disable_cheat_hacks", "Disable cheat hacks");
         ImGui::EndPopup();
     }
