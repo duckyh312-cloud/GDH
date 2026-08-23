@@ -18,20 +18,34 @@ class $modify(AccuratePercentagePlayLayer, PlayLayer) {
 
         hack.setCustomWindowImGui([
             decimalsKey = hack.formatAdditionalSetting("demicals"),
-            showMillisecondsKey = hack.formatAdditionalSetting("showMilliseconds")
+            showMillisecondsKey = hack.formatAdditionalSetting("showMilliseconds"),
+            betterCalcKey = hack.formatAdditionalSetting("betterCalculation")
         ]{
             ImGuiWidgetConfig::InputInt("Demicals", decimalsKey, 2);
+            ImGuiWidgetConfig::Checkbox("Better Calculation", betterCalcKey, true);
             ImGuiWidgetConfig::Checkbox("Show time in Milliseconds", showMillisecondsKey, true);
         });
 
         hack.setCustomWindowCocos([
             decimalsKey = hack.formatAdditionalSetting("demicals"),
-            showMillisecondsKey = hack.formatAdditionalSetting("showMilliseconds")
+            showMillisecondsKey = hack.formatAdditionalSetting("showMilliseconds"),
+            betterCalcKey = hack.formatAdditionalSetting("betterCalculation")
         ](cocos2d::CCNode* popupNode) {
             auto* popup = static_cast<HackSettingsPopup*>(popupNode);
             popup->addConfigIntInput("Demicals", decimalsKey, 1, 10, 2);
+            popup->addConfigToggle("Better Calculation", betterCalcKey, true);
             popup->addConfigToggle("Show time in Milliseconds", showMillisecondsKey, true);
         });
+    }
+
+    double customGetProgress() {
+        auto& config = Config::get();
+        bool betterCalc = config.get<bool>("cosmetic.accurate_percentage::betterCalculation", true);
+
+        if (betterCalc)
+            return GDH::Utils::getRealProgress(this);
+
+        return getCurrentPercent();
     }
 
     void updateProgressbar() {
@@ -39,14 +53,29 @@ class $modify(AccuratePercentagePlayLayer, PlayLayer) {
         if (m_percentageLabel == nullptr) return;
 
         auto& config = Config::get();
+
         if (m_level->isPlatformer()) {
             bool showMilliseconds = config.get<bool>("cosmetic.accurate_percentage::showMilliseconds", true);
             m_percentageLabel->setString(GDH::Utils::formatTime(m_timePlayed, showMilliseconds).c_str());
-        }
+        } 
         else {
-            float percentage = getCurrentPercent();
+            double percent = customGetProgress();
             int decimals = config.get<int>("cosmetic.accurate_percentage::demicals", 2);
-            m_percentageLabel->setString(fmt::format("{:.{}f}%", percentage, decimals).c_str());
+
+            if (decimals > 0) {
+                m_percentageLabel->setString(fmt::format("{:.{}f}%", percent, decimals).c_str());
+            } else {
+                m_percentageLabel->setString(fmt::format("{}%", static_cast<int>(std::floor(percent))).c_str());
+            }
+
+            bool betterCalc = config.get<bool>("cosmetic.accurate_percentage::betterCalculation", true);
+            if (betterCalc && m_progressFill) {
+                m_progressFill->setTextureRect({
+                    0, 0,
+                    static_cast<float>(m_progressWidth * percent / 100.0),
+                    m_progressHeight
+                });
+            }
         }
     }
 };

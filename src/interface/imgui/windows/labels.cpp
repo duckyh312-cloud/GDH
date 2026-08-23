@@ -22,7 +22,9 @@ std::array<float, 4> g_newLabelColor = { 1.0f, 1.0f, 1.0f, 0.30f };
 
 const std::vector<std::pair<const char*, const char*>> g_labelTemplates = {
     {"Attempts", "Attempt {attempt}"},
+    {"Best Run", "Best Run: {best_run}"},
     {"CPS Counter", "{cps}/{cps_high}/{clicks}"},
+    {"CPS Counter (P2)", "{p2::cps}/{p2::cps_high}/{p2::clicks}"},
     {"Custom text", "Edit me!"},
     {"Date", "{date}"},
     {"Death Counter", "{deaths} Deaths"},
@@ -34,8 +36,8 @@ const std::vector<std::pair<const char*, const char*>> g_labelTemplates = {
     {"Level progress", "{progress:2}%"},
     {"Noclip Accuracy (%)", "{noclip_accuracy}%"},
     {"Normal Percent", "{normal_percent}%"},
-    {"Player 1 Information", "{p1::x}{\\n}{p1::y}{\\n}{p1::y_vel}"},
-    {"Player 2 Information", "{p2::x}{\\n}{p2::y}{\\n}{p2::y_vel}"},
+    {"Player 1 Information", "{p1::x}{\\n}{p1::y}{\\n}{p1::y_vel}{\\n}P1Flip: {p1::is_upside_down}"},
+    {"Player 2 Information", "{p2::x}{\\n}{p2::y}{\\n}{p2::y_vel}{\\n}P2Flip: {p2::is_upside_down}"},
     {"Practice Percent", "{practice_percent}%"},
     {"Rainbow Text", "Rainbow Text!!"},
     {"Replay Engine State", "{re_state}"},

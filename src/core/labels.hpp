@@ -93,11 +93,27 @@ namespace GDH {
             void load();
             
             bool m_cheatedInCurrentAttempt = false;
+
+            float m_bestRunStart = 0.0f;
+            float m_bestRunEnd = 0.0f;
+            void resetBestRun() {
+                m_bestRunStart = 0.0f;
+                m_bestRunEnd = 0.0f;
+            }
+
+            void updateBestRun(float start, float end) {
+                if (end < start) return;
+
+                if (end > m_bestRunEnd) {
+                    m_bestRunStart = start;
+                    m_bestRunEnd = end;
+                }
+            }
         private:
             Manager() = default;
         };
-    } // namespace Labels
-} // namespace GDH
+    }
+}
 
 class NoclipAccuracy {
 public:    
@@ -165,37 +181,52 @@ public:
     CpsCounter(const CpsCounter&) = delete;
     CpsCounter& operator=(const CpsCounter&) = delete;
 
-    std::queue<std::chrono::steady_clock::time_point> clicks;
+    std::queue<float> clicks;
+    std::queue<float> p2_clicks;
 
-    int cps = 0;
-    int highscore = 0;
-    int overall = 0;
-    
+    float current_time = 0.f;
+
+    int cps = 0, highscore = 0, overall = 0;
+    int p2_cps = 0, p2_highscore = 0, p2_overall = 0;
+
+    bool p1_push = false;
+    bool p2_push = false;
+
     void reset() {
-        cps = 0;
-        highscore = 0;
-        overall = 0;
-        std::queue<std::chrono::steady_clock::time_point>().swap(clicks);
+        cps = highscore = overall = 0;
+        p2_cps = p2_highscore = p2_overall = 0;
+        p1_push = p2_push = false;
+        current_time = 0.f;
+
+        std::queue<float>().swap(clicks);
+        std::queue<float>().swap(p2_clicks);
     }
-    
-    void click() {
-        overall++;
-        clicks.push(std::chrono::steady_clock::now());
-    }
-    
-    void update() {
-        auto one_second_ago = std::chrono::steady_clock::now() - std::chrono::seconds(1);
-        
-        while (!clicks.empty() && clicks.front() < one_second_ago) {
-            clicks.pop();
+
+    void click(bool isPlayer1) {
+        if (isPlayer1) {
+            p1_push = true;
+            overall++;
+            clicks.push(current_time);
+        } else {
+            p2_push = true;
+            p2_overall++;
+            p2_clicks.push(current_time);
         }
+    }
+
+    void update(float dt) {
+        current_time += dt;
+
+        while (!clicks.empty() && (current_time - clicks.front() > 1.0f)) clicks.pop();
+        while (!p2_clicks.empty() && (current_time - p2_clicks.front() > 1.0f)) p2_clicks.pop();
 
         cps = static_cast<int>(clicks.size());
+        p2_cps = static_cast<int>(p2_clicks.size());
 
-        if (highscore < cps) {
-            highscore = cps;
-        }
+        highscore = std::max(highscore, cps);
+        p2_highscore = std::max(p2_highscore, p2_cps);
     }
+
 private:
     CpsCounter() = default;
 };

@@ -1,5 +1,6 @@
 #include <Geode/Geode.hpp>
 #include <Geode/modify/PlayLayer.hpp>
+#include <Geode/modify/PlayerObject.hpp>
 #include <Geode/modify/LevelEditorLayer.hpp>
 #include <Geode/modify/GJBaseGameLayer.hpp>
 #include "../../core/gui.hpp"
@@ -71,6 +72,75 @@ static void drawOrientedOrRect(GJBaseGameLayer* layer, cocos2d::CCDrawNode* draw
 static RingBuffer<cocos2d::CCRect> playerTrail1, playerTrail2;
 static RingBuffer<cocos2d::CCRect> playerInnerTrail1, playerInnerTrail2;
 static size_t lastMaxLength = 0;
+static GameObject* deathObject = nullptr;
+
+static void drawSingleObject(GJBaseGameLayer* layer, cocos2d::CCDrawNode* drawNode, GameObject* obj,
+                             float size, float fillAlpha,
+                             const cocos2d::ccColor4F& triggersColor, const cocos2d::ccColor4F& otherColor,
+                             const cocos2d::ccColor4F& passableColor, const cocos2d::ccColor4F& solidColor,
+                             const cocos2d::ccColor4F& dangerColor) 
+{
+    if (!obj) return;
+    if (obj->m_objectType == GameObjectType::Decoration || !obj->m_isActivated || obj->m_isGroupDisabled)
+        return;
+
+    auto getFillColor = [fillAlpha](cocos2d::ccColor4F color) -> cocos2d::ccColor4F {
+        return { color.r, color.g, color.b, fillAlpha };
+    };
+
+    switch (obj->m_objectType) {
+        default: {
+            if (obj == layer->m_player1 || obj == layer->m_player2) break;
+            bool isSpeedPortal = obj->m_objectID == 200 || obj->m_objectID == 201 || obj->m_objectID == 202 || obj->m_objectID == 203 || obj->m_objectID == 1334;
+            if (obj->m_objectType == GameObjectType::Modifier && !isSpeedPortal) {
+                if (static_cast<EffectGameObject*>(obj)->m_isTouchTriggered)
+                    drawOrientedOrRect(layer, drawNode, obj, getFillColor(triggersColor), size, triggersColor);
+                break;
+            }
+            drawOrientedOrRect(layer, drawNode, obj, getFillColor(otherColor), size, otherColor);
+            break;
+        }
+        case GameObjectType::Solid: {
+            bool p = obj->m_isPassable;
+            drawRect(drawNode, obj->getObjectRect(), getFillColor(p ? passableColor : solidColor), size, p ? passableColor : solidColor);
+            break;
+        }
+        case GameObjectType::Slope: {
+            auto rect = obj->getObjectRect();
+            cocos2d::CCPoint verts[3] = {
+                {rect.getMinX(), rect.getMinY()},
+                {rect.getMinX(), rect.getMaxY()},
+                {rect.getMaxX(), rect.getMinY()},
+            };
+
+            cocos2d::CCPoint const tr{rect.getMaxX(), rect.getMaxY()};
+            switch (obj->m_slopeDirection) {
+                case 0: case 7: verts[1] = tr; break;
+                case 1: case 5: verts[0] = tr; break;
+                case 3: case 6: verts[2] = tr; break;
+                default: break;
+            }
+            
+            bool const p = obj->m_isPassable;
+            drawNode->drawPolygon(verts, 3, getFillColor(p ? passableColor : solidColor), size, p ? passableColor : solidColor);
+            
+            break;
+        }
+        case GameObjectType::AnimatedHazard:
+        case GameObjectType::Hazard: {
+            if (obj == layer->m_anticheatSpike) break;
+            float const radius = std::max(obj->m_scaleX, obj->m_scaleY) * obj->m_objectRadius;
+
+            if (radius > 0)
+                drawNode->drawCircle(obj->getPosition(), radius, getFillColor(dangerColor), size, dangerColor, 16);
+            else
+                drawOrientedOrRect(layer, drawNode, obj, getFillColor(dangerColor), size, dangerColor);
+
+            break;
+        }
+        case GameObjectType::CollisionObject: break;
+    }
+}
 
 void updateHitboxes(GJBaseGameLayer* layer, cocos2d::CCDrawNode* drawNode) {
     if (!drawNode) return;
@@ -78,7 +148,11 @@ void updateHitboxes(GJBaseGameLayer* layer, cocos2d::CCDrawNode* drawNode) {
 
     auto& config = Config::get();
     if (!config.get<bool>("level.show_hitboxes", false)) return;
-    if (config.get<bool>("level.show_hitboxes::show_on_death", false) && !layer->m_isEditor && !layer->m_playerDied) return;
+
+    bool showOnDeath = config.get<bool>("level.show_hitboxes::show_on_death", false);
+    bool showDeathObject = config.get<bool>("level.show_hitboxes::show_death_object", false);
+
+    if (showOnDeath && !layer->m_isEditor && !layer->m_playerDied) return;
 
     auto triggersColor = GDH::Utils::hexToColor4F(config.get<std::string>("level.show_hitboxes::triggersColor", "#FF00E6FF"));
     auto otherColor = GDH::Utils::hexToColor4F(config.get<std::string>("level.show_hitboxes::otherColor", "#00FF00FF"));
@@ -100,76 +174,46 @@ void updateHitboxes(GJBaseGameLayer* layer, cocos2d::CCDrawNode* drawNode) {
         return { color.r, color.g, color.b, fillAlpha };
     };
 
-    if (!layer->m_sections.empty()) {
-        int rightBound = std::min(layer->m_rightSectionIndex, static_cast<int>(layer->m_sections.size()) - 1);
-        for (int i = layer->m_leftSectionIndex; i <= rightBound; ++i) {
-            auto* leftSection = layer->m_sections[i];
-            if (!leftSection) continue;
-            int topBound = std::min(layer->m_topSectionIndex, static_cast<int>(leftSection->size()) - 1);
-            auto* sizeRow = layer->m_sectionSizes[i];
-            for (int j = layer->m_bottomSectionIndex; j <= topBound; ++j) {
-                auto* section = leftSection->at(j);
-                if (!section) continue;
-                int sectionSize = sizeRow->at(j);
-                auto* data = section->data();
-                for (int k = 0; k < sectionSize; ++k) {
-                    auto* obj = data[k];
-                    if (!obj) continue;
-
-                    if (obj->m_objectType == GameObjectType::Decoration || !obj->m_isActivated || obj->m_isGroupDisabled)
-                        continue;
-
-                    switch (obj->m_objectType) {
-                        default: {
-                            if (obj == layer->m_player1 || obj == layer->m_player2) break;
-                            bool isSpeedPortal = obj->m_objectID == 200 || obj->m_objectID == 201 || obj->m_objectID == 202 || obj->m_objectID == 203 || obj->m_objectID == 1334;
-                            if (obj->m_objectType == GameObjectType::Modifier && !isSpeedPortal) {
-                                if (static_cast<EffectGameObject*>(obj)->m_isTouchTriggered)
-                                    drawOrientedOrRect(layer, drawNode, obj, getFillColor(triggersColor), size, triggersColor);
-                                break;
-                            }
-                            drawOrientedOrRect(layer, drawNode, obj, getFillColor(otherColor), size, otherColor);
-                            break;
-                        }
-                        case GameObjectType::Solid: {
-                            bool p = obj->m_isPassable;
-                            drawRect(drawNode, obj->getObjectRect(), getFillColor(p ? passableColor : solidColor), size, p ? passableColor : solidColor);
-                            break;
-                        }
-                        case GameObjectType::Slope: {
-                            auto rect = obj->getObjectRect();
-                            cocos2d::CCPoint verts[3] = {
-                                {rect.getMinX(), rect.getMinY()},
-                                {rect.getMinX(), rect.getMaxY()},
-                                {rect.getMaxX(), rect.getMinY()},
-                            };
-
-                            cocos2d::CCPoint const tr{rect.getMaxX(), rect.getMaxY()};
-                            switch (obj->m_slopeDirection) {
-                                case 0: case 7: verts[1] = tr; break;
-                                case 1: case 5: verts[0] = tr; break;
-                                case 3: case 6: verts[2] = tr; break;
-                                default: break;
-                            }
-                            
-                            bool const p = obj->m_isPassable;
-                            drawNode->drawPolygon(verts, 3, getFillColor(p ? passableColor : solidColor), size, p ? passableColor : solidColor);
-                            
-                            break;
-                        }
-                        case GameObjectType::AnimatedHazard:
-                        case GameObjectType::Hazard: {
-                            if (obj == layer->m_anticheatSpike) break;
-                            float const radius = std::max(obj->m_scaleX, obj->m_scaleY) * obj->m_objectRadius;
-
-                            if (radius > 0)
-                                drawNode->drawCircle(obj->getPosition(), radius, getFillColor(dangerColor), size, dangerColor, 16);
-                            else
-                                drawOrientedOrRect(layer, drawNode, obj, getFillColor(dangerColor), size, dangerColor);
-
-                            break;
-                        }
-                        case GameObjectType::CollisionObject: break;
+    if (showDeathObject && layer->m_playerDied) {
+        if (deathObject) {
+            drawSingleObject(layer, drawNode, deathObject, size, fillAlpha, triggersColor, otherColor, passableColor, solidColor, dangerColor);
+        }
+    } else if (showOnDeath && layer->m_playerDied) {
+        if (!layer->m_sections.empty()) {
+            int rightBound = std::min(layer->m_rightSectionIndex, static_cast<int>(layer->m_sections.size()) - 1);
+            for (int i = layer->m_leftSectionIndex; i <= rightBound; ++i) {
+                auto* leftSection = layer->m_sections[i];
+                if (!leftSection) continue;
+                int topBound = std::min(layer->m_topSectionIndex, static_cast<int>(leftSection->size()) - 1);
+                auto* sizeRow = layer->m_sectionSizes[i];
+                for (int j = layer->m_bottomSectionIndex; j <= topBound; ++j) {
+                    auto* section = leftSection->at(j);
+                    if (!section) continue;
+                    int sectionSize = sizeRow->at(j);
+                    auto* data = section->data();
+                    for (int k = 0; k < sectionSize; ++k) {
+                        auto* obj = data[k];
+                        drawSingleObject(layer, drawNode, obj, size, fillAlpha, triggersColor, otherColor, passableColor, solidColor, dangerColor);
+                    }
+                }
+            }
+        }
+    } else if (!showOnDeath) {
+        if (!layer->m_sections.empty()) {
+            int rightBound = std::min(layer->m_rightSectionIndex, static_cast<int>(layer->m_sections.size()) - 1);
+            for (int i = layer->m_leftSectionIndex; i <= rightBound; ++i) {
+                auto* leftSection = layer->m_sections[i];
+                if (!leftSection) continue;
+                int topBound = std::min(layer->m_topSectionIndex, static_cast<int>(leftSection->size()) - 1);
+                auto* sizeRow = layer->m_sectionSizes[i];
+                for (int j = layer->m_bottomSectionIndex; j <= topBound; ++j) {
+                    auto* section = leftSection->at(j);
+                    if (!section) continue;
+                    int sectionSize = sizeRow->at(j);
+                    auto* data = section->data();
+                    for (int k = 0; k < sectionSize; ++k) {
+                        auto* obj = data[k];
+                        drawSingleObject(layer, drawNode, obj, size, fillAlpha, triggersColor, otherColor, passableColor, solidColor, dangerColor);
                     }
                 }
             }
@@ -239,10 +283,39 @@ class $modify(ShowHitboxesGJBaseGameLayer, GJBaseGameLayer) {
     }
 };
 
+static GameObject* currentCheckingObject = nullptr;
+class $modify(ShowHitboxesPlayerObject, PlayerObject) {
+    bool collidedWithObjectInternal(float dt, GameObject* object, cocos2d::CCRect rect, bool skipCheck) {
+        currentCheckingObject = object;
+        bool result = PlayerObject::collidedWithObjectInternal(dt, object, rect, skipCheck);
+        currentCheckingObject = nullptr;
+
+        return result;
+    }
+};
+
 class $modify(ShowHitboxesPlayLayer, PlayLayer) {
+    // static void onModify(auto& self) {
+    //     auto& gui = GDH::Gui::get();
+    //     auto& hack = gui.getWindow("Level").findHackByName("Show Hitboxes");       
+
+    //     (void) self.setHookPriority("PlayLayer::destroyPlayer", geode::Priority::VeryEarly); 
+    // }
+
     struct Fields {
         cocos2d::CCDrawNode* m_drawNode = nullptr;
     };
+
+    void destroyPlayer(PlayerObject* player, GameObject* object) override {
+        PlayLayer::destroyPlayer(player, object);
+        if (m_anticheatSpike == object) return;
+        if (object != nullptr) {
+            deathObject = object;
+        }
+        else if (currentCheckingObject != nullptr) {
+            deathObject = currentCheckingObject;
+        }
+    }
 
     void createObjectsFromSetupFinished() {
         PlayLayer::createObjectsFromSetupFinished();
@@ -259,6 +332,7 @@ class $modify(ShowHitboxesPlayLayer, PlayLayer) {
         playerTrail2.clear();
         playerInnerTrail1.clear();
         playerInnerTrail2.clear();
+        deathObject = nullptr;
 
         PlayLayer::resetLevel();
     }
@@ -297,6 +371,7 @@ $execute {
 
     hack.setCustomWindowImGui([
         onDeathKey = hack.formatAdditionalSetting("show_on_death"),
+        showDeathObjKey = hack.formatAdditionalSetting("show_death_object"),
         sizeKey = hack.formatAdditionalSetting("size"),
         fillAlphaKey = hack.formatAdditionalSetting("fill_alpha"),
         drawTrailKey = hack.formatAdditionalSetting("draw_trail"),
@@ -314,6 +389,7 @@ $execute {
         cInnerTrailKey = hack.formatAdditionalSetting("innerTrailColor")
     ]{
         if (ImGuiWidgetConfig::Checkbox("Show on Death", onDeathKey, false)) GDH::Gui::get().rescanActiveCheats();
+        if (ImGuiWidgetConfig::Checkbox("Show Death Object", showDeathObjKey, false)) GDH::Gui::get().rescanActiveCheats();
         ImGuiWidgetConfig::DragFloat("##Hitbox_Size", sizeKey, 0.05f, 0, 20.f, 0.25f, "Size: %.2f");
         ImGuiWidgetConfig::DragFloat("##Hitbox_FillAlpha", fillAlphaKey, 0.01f, 0, 1.f, 0.2f, "Fill Alpha: %.2f");
 
@@ -343,6 +419,7 @@ $execute {
 
     hack.setCustomWindowCocos([
         onDeathKey = hack.formatAdditionalSetting("show_on_death"),
+        showDeathObjKey = hack.formatAdditionalSetting("show_death_object"),
         sizeKey = hack.formatAdditionalSetting("size"),
         fillAlphaKey = hack.formatAdditionalSetting("fill_alpha"),
         drawTrailKey = hack.formatAdditionalSetting("draw_trail"),
@@ -361,6 +438,7 @@ $execute {
     ](cocos2d::CCNode* popupNode){
         auto* popup = static_cast<HackSettingsPopup*>(popupNode);
         popup->addConfigToggle("Show on Death", onDeathKey, false, [](bool enabled) { GDH::Gui::get().rescanActiveCheats(); });
+        popup->addConfigToggle("Show Death Object", showDeathObjKey, false, [](bool enabled) { GDH::Gui::get().rescanActiveCheats(); });
         popup->addConfigFloatInput("Size", sizeKey, 0, 20.f, 0.25f);
         popup->addConfigFloatInput("Fill Alpha", fillAlphaKey, 0, 1.f, 0.2f);
 
@@ -386,8 +464,8 @@ $execute {
         popup->addConfigColor4Hex("Player Box", cPlayerKey, "#FF0000FF");
     });
 
-    hack.setCustomCheatingCheck([&config, onDeathKey = hack.formatAdditionalSetting("show_on_death")]() {
-        if (config.get<bool>(onDeathKey, false)) return false;
+    hack.setCustomCheatingCheck([&config, onDeathKey = hack.formatAdditionalSetting("show_on_death"), showDeathObjKey = hack.formatAdditionalSetting("show_death_object")]() {
+        if (config.get<bool>(onDeathKey, false) || (!config.get<bool>("level.show_hitboxes::draw_trail", false) && config.get<bool>(showDeathObjKey, false))) return false;
         return true;
     });
 }

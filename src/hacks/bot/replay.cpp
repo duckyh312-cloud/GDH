@@ -233,6 +233,14 @@ class $modify(ReplayPauseLayer, PauseLayer) {
 };
 
 class $modify(ReplayPlayLayer, PlayLayer) {
+    static void onModify(auto& self) {
+        auto& gui = GDH::Gui::get();
+        auto& tps = gui.getWindow("Invisible").findHackByName("TPS");       
+        tps.addHookPtr(self.getHook("PlayLayer::updateProgressbar").unwrap());
+        tps.addHookPtr(self.getHook("PlayLayer::destroyPlayer").unwrap());
+        tps.addHookPtr(self.getHook("PlayLayer::levelComplete").unwrap());
+    }
+
     bool init(GJGameLevel* level, bool useReplay, bool dontCreateObjects) {
         if (!PlayLayer::init(level, useReplay, dontCreateObjects)) return false;
         
@@ -244,7 +252,7 @@ class $modify(ReplayPlayLayer, PlayLayer) {
         return true;
     }
 
-    void resetLevel() {
+    void resetLevel() override {
         auto &config = Config::get();
         auto &engine = GDH::ReplayEngine::get();
 
@@ -278,6 +286,45 @@ class $modify(ReplayPlayLayer, PlayLayer) {
         auto& engine = GDH::ReplayEngine::get();
         if (engine.mode == state::record) engine.handle_reset(true);
         PlayLayer::pauseGame(unfocused);
+    }
+
+    int recalculateProgress() {
+        auto& config = Config::get();
+        float value = config.get<float>("invisible.tps::value", 240.f);
+
+        auto timestamp = m_level->m_timestamp;
+        auto currentProgress = m_gameState.m_currentProgress;
+
+        if (timestamp > 0 && value != 240.f) {
+            double progress = GDH::Utils::getRealProgress(this);
+            m_gameState.m_currentProgress = (timestamp * progress * 0.02);
+        }
+        return currentProgress;
+    }
+
+    void updateProgressbar() {
+        auto recurrentProgress = recalculateProgress();
+        PlayLayer::updateProgressbar();
+        m_gameState.m_currentProgress = recurrentProgress;
+    }
+
+    void destroyPlayer(PlayerObject* player, GameObject* object) override {
+        auto recurrentProgress = recalculateProgress();
+        PlayLayer::destroyPlayer(player, object);
+        m_gameState.m_currentProgress = recurrentProgress;
+    }
+
+    void levelComplete() {
+        auto& config = Config::get();
+        float value = config.get<float>("invisible.tps::value", 240.f);
+
+        auto old_timestamp = m_gameState.m_commandIndex;
+        if (value != 240.f) {
+            auto ticks = static_cast<unsigned int>(std::round(m_gameState.m_levelTime * 480));
+            m_gameState.m_commandIndex = ticks;
+        }
+        PlayLayer::levelComplete();
+        m_gameState.m_commandIndex = old_timestamp;
     }
 };
 

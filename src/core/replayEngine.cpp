@@ -140,7 +140,7 @@ void ReplayEngine::handle_commands(GJBaseGameLayer* self) {
         #endif
 
         if (m_inputFrames[m_inputIndex].down)
-            CpsCounter::get().click();
+            CpsCounter::get().click(!m_inputFrames[m_inputIndex].isPlayer2);
         
         customHandleButton(self, m_inputFrames[m_inputIndex].down, static_cast<PlayerButton>(m_inputFrames[m_inputIndex].button), isPlayer1);
         m_inputIndex++;

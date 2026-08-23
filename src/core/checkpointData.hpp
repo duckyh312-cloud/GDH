@@ -1,7 +1,7 @@
 #include <Geode/Geode.hpp>
 
 struct checkpoint_data {
-    cocos2d::CCNode* m_mainLayer;
+    // cocos2d::CCNode* m_mainLayer;
     bool m_wasTeleported;
     bool m_fixGravityBug;
     bool m_reverseSync;
@@ -311,7 +311,7 @@ namespace GDH { namespace PracticeFix {
         checkpoint_data state;
         if (player == nullptr) return state;
 
-        state.m_mainLayer = player->m_mainLayer;
+        // state.m_mainLayer = player->m_mainLayer;
         state.m_wasTeleported = player->m_wasTeleported;
         state.m_fixGravityBug = player->m_fixGravityBug;
         state.m_reverseSync = player->m_reverseSync;
@@ -639,7 +639,7 @@ namespace GDH { namespace PracticeFix {
     inline void apply(PlayerObject* player, const checkpoint_data& state, std::array<bool, 3>& releasedClicks) {
         if (player == nullptr) return;
         
-        player->m_mainLayer = state.m_mainLayer;
+        // player->m_mainLayer = state.m_mainLayer;
         player->m_wasTeleported = state.m_wasTeleported;
         player->m_fixGravityBug = state.m_fixGravityBug;
         player->m_reverseSync = state.m_reverseSync;

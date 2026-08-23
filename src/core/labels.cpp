@@ -13,7 +13,6 @@ using namespace GDH::Labels;
 
 static std::chrono::steady_clock::time_point g_sessionStart;
 static float g_rainbowHue = 0.0f;
-static bool m_push = false;
 
 static const std::unordered_set<int> g_robtopLevels = {
     1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22,
@@ -76,6 +75,7 @@ $execute {
 
 bool renderVariable(geode::utils::StringBuffer<> &stream, std::string_view var_name) {
     auto pl = PlayLayer::get();
+    bool isDualAnd2P = pl && pl->m_gameState.m_isDualMode && pl->m_level && pl->m_level->m_twoPlayerMode;
 
     if (var_name == "time_24") {
         stream.append(fmt::format("{:%T}", geode::localtime(std::time(nullptr))));
@@ -89,6 +89,15 @@ bool renderVariable(geode::utils::StringBuffer<> &stream, std::string_view var_n
         stream.append(CpsCounter::get().cps);
     } else if (var_name == "cps_high") {
         stream.append(CpsCounter::get().highscore);
+    } else if (var_name == "p2::clicks") {
+        if (!isDualAnd2P) return false;
+        stream.append(CpsCounter::get().p2_overall);
+    } else if (var_name == "p2::cps") {
+        if (!isDualAnd2P) return false;
+        stream.append(CpsCounter::get().p2_cps);
+    } else if (var_name == "p2::cps_high") {
+        if (!isDualAnd2P) return false;
+        stream.append(CpsCounter::get().p2_highscore);
     } else if (var_name == "testmode") {
         stream.append(pl ? (pl->m_isTestMode ? "Testmode" : "") : "");
     } else if (var_name == "attempt") {
@@ -106,7 +115,7 @@ bool renderVariable(geode::utils::StringBuffer<> &stream, std::string_view var_n
     } else if (var_name == "level_id") {
         stream.append(pl ? pl->m_level->m_levelID : 0);
     } else if (var_name == "normal_percent") {
-        stream.append(pl ? pl->m_level->getNormalPercent() : 0);
+        stream.append(pl ? GDH::Utils::getRealProgress(pl) : 0);
     } else if (var_name == "practice_percent") {
         stream.append(pl ? pl->m_level->m_practicePercent : 0);
     } else if (var_name == "noclip_accuracy") {
@@ -150,15 +159,23 @@ bool renderVariable(geode::utils::StringBuffer<> &stream, std::string_view var_n
         stream.append(fmt::format("P1Y: {}", pl ? pl->m_player1->m_position.y : 0.f));
     } else if (var_name == "p1::y_vel") {
         stream.append(fmt::format("P1YVEL: {}", pl ? pl->m_player1->m_yVelocity : 0.0));
+    } else if (var_name == "p1::is_upside_down") {
+        stream.append(fmt::format("{}", (pl && pl->m_player1) ? pl->m_player1->m_isUpsideDown : false));
     } else if (var_name == "p2::x") {
-        if (!pl || !pl->m_gameState.m_isDualMode || !pl->m_player2) return false;
+        if (!isDualAnd2P || !pl->m_player2) return false;
         stream.append(fmt::format("P2X: {}", pl->m_player2->m_position.x));
     } else if (var_name == "p2::y") {
-        if (!pl || !pl->m_gameState.m_isDualMode || !pl->m_player2) return false;
+        if (!isDualAnd2P || !pl->m_player2) return false;
         stream.append(fmt::format("P2Y: {}", pl->m_player2->m_position.y));
     } else if (var_name == "p2::y_vel") {
-        if (!pl || !pl->m_gameState.m_isDualMode || !pl->m_player2) return false;
+        if (!isDualAnd2P || !pl->m_player2) return false;
         stream.append(fmt::format("P2YVEL: {}", pl->m_player2->m_yVelocity));
+    } else if (var_name == "p2::is_upside_down") {
+        if (!isDualAnd2P || !pl->m_player2) return false;
+        stream.append(fmt::format("{}", pl->m_player2->m_isUpsideDown));
+    } else if (var_name == "best_run") {
+        auto& mgr = GDH::Labels::Manager::get();
+        stream.append(fmt::format("{:.0f}% - {:.0f}%", mgr.m_bestRunStart, mgr.m_bestRunEnd));
     } else if (var_name == "\\n") {
         stream.append("\n");
     } else {
@@ -285,6 +302,7 @@ class $modify(LabelsPlayLayer, PlayLayer) {
     struct Fields {
         cocos2d::CCMenu* labelsMenu = nullptr;
         std::unordered_map<Corner, std::vector<geode::Label*>> labelObjs;
+        float startPercent = 0.0f;
     };
 
     bool init(GJGameLevel *level, bool useReplay, bool dontCreateObjects) {
@@ -308,14 +326,20 @@ class $modify(LabelsPlayLayer, PlayLayer) {
         m_fields->labelObjs[Corner::Bottom_Right] = {};
 
         g_sessionStart = std::chrono::steady_clock::now();
+        m_fields->startPercent = GDH::Utils::getRealProgress(this);
+
         return true;
     }
 
     void destroyPlayer(PlayerObject* player, GameObject* obj) {
         if (m_anticheatSpike && obj == m_anticheatSpike)
             return PlayLayer::destroyPlayer(player, obj);
-
+        
         PlayLayer::destroyPlayer(player, obj);
+
+        float currentEnd = GDH::Utils::getRealProgress(this);
+        GDH::Labels::Manager::get().updateBestRun(m_fields->startPercent, currentEnd);
+
         NoclipAccuracy::get().handle_death();
     }
 
@@ -323,12 +347,32 @@ class $modify(LabelsPlayLayer, PlayLayer) {
         PlayLayer::resetLevel();
         CpsCounter::get().reset();
         NoclipAccuracy::get().handle_reset();
+
+        float currentStart = GDH::Utils::getRealProgress(this);
+
+        if (std::abs(m_fields->startPercent - currentStart) > 0.01f) {
+            GDH::Labels::Manager::get().resetBestRun();
+            m_fields->startPercent = currentStart;
+        }
+
+        auto& mgr = GDH::Labels::Manager::get();
+        if (mgr.m_bestRunStart == 0.0f && mgr.m_bestRunEnd == 0.0f) {
+            mgr.m_bestRunStart = currentStart;
+            mgr.m_bestRunEnd = currentStart;
+        }
+    }
+
+    void levelComplete() {
+        GDH::Labels::Manager::get().updateBestRun(m_fields->startPercent, 100.0f);
+        PlayLayer::levelComplete();
     }
 
     void postUpdate(float dt) {
         PlayLayer::postUpdate(dt);
         g_rainbowHue += 0.125f * dt;
         if (g_rainbowHue > 1.0f) g_rainbowHue -= 1.0f;
+
+        CpsCounter::get().update(dt);
     }
     
     void updateProgressbar() {
@@ -359,8 +403,6 @@ class $modify(LabelsPlayLayer, PlayLayer) {
         }
 
         if (disable_all) return;
-
-        CpsCounter::get().update();
 
         auto windowSize = cocos2d::CCDirector::sharedDirector()->getWinSize();
         
@@ -397,9 +439,18 @@ class $modify(LabelsPlayLayer, PlayLayer) {
                         label->setColor({static_cast<GLubyte>(r * 255), static_cast<GLubyte>(g * 255), static_cast<GLubyte>(b * 255)});
                     } 
                     else if (labelObj.cps) {
-                        m_push ? label->setColor({0, 255, 0}) 
-                        : label->setColor({static_cast<GLubyte>(labelObj.color[0] * 255),
-                            static_cast<GLubyte>(labelObj.color[1] * 255),static_cast<GLubyte>(labelObj.color[2] * 255)});
+                        bool isP2Label = labelObj.text.find("p2::") != std::string::npos;
+                        bool isPressed = isP2Label ? CpsCounter::get().p2_push : CpsCounter::get().p1_push;
+
+                        if (isPressed) {
+                            label->setColor({0, 255, 0});
+                        } else {
+                            label->setColor({
+                                static_cast<GLubyte>(labelObj.color[0] * 255),
+                                static_cast<GLubyte>(labelObj.color[1] * 255),
+                                static_cast<GLubyte>(labelObj.color[2] * 255)
+                            });
+                        }
                     }
                     else if (labelObj.noclip) {
                         NoclipAccuracy::get().prevDied ? label->setColor({255, 0, 0}) 
@@ -494,9 +545,18 @@ class $modify(LabelsPlayLayer, PlayLayer) {
 class $modify(LabelsGJBaseGameLayer, GJBaseGameLayer) {
     void handleButton(bool down, int button, bool isPlayer1) {
         GJBaseGameLayer::handleButton(down, button, isPlayer1);
-        m_push = down;
-        if (down) {
-            CpsCounter::get().click();
+
+        if (button == 1) {
+            bool swapControls = GameManager::sharedState()->getGameVariable("0010");
+            bool isDualAnd2P = m_gameState.m_isDualMode && m_level && m_level->m_twoPlayerMode;
+            bool isP1 = isDualAnd2P ? (swapControls ? !isPlayer1 : isPlayer1) : true;
+
+            if (down) {
+                CpsCounter::get().click(isP1);
+            } else {
+                if (isP1) CpsCounter::get().p1_push = false;
+                else CpsCounter::get().p2_push = false;
+            }
         }
     }
 

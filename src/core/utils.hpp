@@ -12,7 +12,7 @@ namespace GDH { namespace Utils {
     std::string formatTime(double sec, bool ms);
     void updateCursorState(bool show);
     void UncompleteLevel();
-
+    double getRealProgress(GJBaseGameLayer* layer);
     float easeInOut(float t);
     void hsvToRgb(float h, float s, float v, float &r, float &g, float &b);
 

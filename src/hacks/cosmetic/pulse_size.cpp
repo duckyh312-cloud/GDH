@@ -58,8 +58,8 @@ class $modify(PulseSizePlayLayer, PlayLayer) {
         }
         else {
             auto fmod = FMODAudioEngine::get();
-            m_audioEffectsLayer->m_audioScale = 0.5f;
-            fmod->m_pulse1 = 0.5f;
+            m_audioEffectsLayer->m_audioScale = config.get<float>("cosmetic.pulse_size::value", 0.5f);
+            fmod->m_pulse1 = config.get<float>("cosmetic.pulse_size::value", 0.5f);
         }
 
         PlayLayer::updateVisibility(dt);

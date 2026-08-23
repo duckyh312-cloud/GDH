@@ -52,7 +52,7 @@ class $modify(WavePulseSizeHardStreak, HardStreak) {
                 m_pulseSize = value;
         }
         else {
-            m_pulseSize = 2.f;
+            m_pulseSize = config.get<float>("cosmetic.wave_pulse_size::value", 0.5f);
         }
 
         HardStreak::updateStroke(p0);

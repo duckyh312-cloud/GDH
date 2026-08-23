@@ -34,7 +34,9 @@ protected:
 
         std::vector<std::pair<std::string, std::string>> templates = {
             {"Attempts", "Attempt {attempt}"},
+            {"Best Run", "Best Run: {best_run}"},
             {"CPS Counter", "{cps}/{cps_high}/{clicks}"},
+            {"CPS Counter (P2)", "{p2::cps}/{p2::cps_high}/{p2::clicks}"},
             {"Cheat Indicator", ""},
             {"Custom text", "Edit me!"},
             {"Date", "{date}"},
@@ -48,8 +50,8 @@ protected:
             {"Noclip Accuracy (%)", "{noclip_accuracy}%"},
             {"Normal Percent", "{normal_percent}%"},
             {"Practice Percent", "{practice_percent}%"},
-            {"Player 1 Information", "{p1::x}{\\n}{p1::y}{\\n}{p1::y_vel}"},
-            {"Player 2 Information", "{p2::x}{\\n}{p2::y}{\\n}{p2::y_vel}"},
+            {"Player 1 Information", "{p1::x}{\\n}{p1::y}{\\n}{p1::y_vel}{\\n}P1Flip: {p1::is_upside_down}"},
+            {"Player 2 Information", "{p2::x}{\\n}{p2::y}{\\n}{p2::y_vel}{\\n}P2Flip: {p2::is_upside_down}"},
             {"Rainbow Text", "Rainbow Text!!"},
             {"Replay Engine State", "{re_state}"},
             {"Session time", "{session_time}"},

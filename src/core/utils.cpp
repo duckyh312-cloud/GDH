@@ -174,6 +174,17 @@ void GDH::Utils::UncompleteLevel() {
     level->m_isCompletionLegitimate = true;
 }
 
+double GDH::Utils::getRealProgress(GJBaseGameLayer* layer) {
+    const auto level = layer->m_level;
+    const auto timestamp = level->m_timestamp;
+    
+    const double rawPercent = (timestamp > 0)
+        ? (layer->m_gameState.m_levelTime * 240.0 / timestamp * 100.0)
+        : (layer->m_player1->getPositionX() * 100.0 / layer->m_levelLength);
+    
+    return std::clamp(rawPercent, 0.0, 100.0);
+}
+
 float GDH::Utils::easeInOut(float x) {
     return -(cosf(M_PI * x) - 1) / 2;
 }

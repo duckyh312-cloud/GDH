@@ -837,12 +837,81 @@ $execute {
         cleanButtonClick->setPosition({222, 163});
         engineTab->addChild(cleanButtonClick);
 
-        auto recorderButton = ButtonSprite::create("Recorder", 65, true, "GoogleSans.fnt"_spr, "GDH_button_01.png"_spr, 30.f, 0.7f);
-        auto recorderButtonClick = CCMenuItemExt::createSpriteExtra(recorderButton, [&engine, infoLabel](CCMenuItemSpriteExtra* sender) {
-            RecorderLayer::create()->show();
+        auto importButton = CCSprite::create("GDH_importBtn.png"_spr);
+        importButton->setScale(0.65f);
+
+        auto importButtonClick = CCMenuItemExt::createSpriteExtra(importButton, [&engine](CCMenuItemSpriteExtra* sender) {
+            geode::async::spawn(
+                geode::utils::file::pick(
+                    geode::utils::file::PickMode::OpenFile,
+                    geode::utils::file::FilePickOptions{
+                        .filters = { { "Replay File", { "re4" } } }
+                    }
+                ),
+                [&engine](geode::utils::file::PickResult res) {
+                    if (!res) return;
+                    auto pathOpt = std::move(res).unwrapOr(std::nullopt);
+                    if (!pathOpt) return;
+                    
+                    auto selectedPath = *pathOpt;
+                    if (!GDH::Utils::isOnlyAsciiPath(selectedPath)) {
+                        GDH::MaterialLayer(FLAlertLayer::create("Import", "Invalid path. Please remove any Cyrillic characters", "OK"))->show();
+                        return;
+                    }
+
+                    if (selectedPath.extension() != ".re4") {
+                        GDH::MaterialLayer(FLAlertLayer::create("Import", "Invalid file format. Only .re4 files are allowed", "OK"))->show();
+                        return;
+                    }
+
+                    auto destFolder = getFolderMacroPath();
+                    std::error_code ec;
+                    std::filesystem::create_directories(destFolder, ec);
+                    auto destPath = destFolder / selectedPath.filename();
+
+                    std::filesystem::copy_file(selectedPath, destPath, std::filesystem::copy_options::overwrite_existing, ec);
+                    if (ec) {
+                        GDH::MaterialLayer(FLAlertLayer::create("Import", "Failed to copy file", "OK"))->show();
+                        return;
+                    }
+
+                    std::string macroName = destPath.stem().string();
+                    GDH::MaterialLayer(FLAlertLayer::create("Import", fmt::format("Imported successfully! {}", macroName).c_str(), "OK"))->show();
+                }
+            );
         });
-        recorderButtonClick->setPosition({300.f, 20.f});
-        engineTab->addChild(recorderButtonClick);
+        importButtonClick->setPosition({315.f, 200.f});
+        engineTab->addChild(importButtonClick);
+
+        auto deleteButton = CCSprite::create("GDH_removeBtn.png"_spr);
+        deleteButton->setScale(0.65f);
+        
+        auto deleteButtonClick = CCMenuItemExt::createSpriteExtra(deleteButton, [&engine, replayNameInput](CCMenuItemSpriteExtra* sender) {
+            if (engine.replay_name.empty()) {
+                GDH::MaterialLayer(FLAlertLayer::create("Delete Macro", "No macro name specified.", "OK"))->show();
+                return;
+            }
+
+            auto popup = geode::createQuickPopup(
+                "Delete Macro",
+                fmt::format("Are you sure you want to delete <cy>{}</c>?\n<cr>This action cannot be undone!</c>", engine.replay_name),
+                "No", "Yes",
+                [&engine](auto, bool btn2) {
+                    if (btn2) {
+                        auto fileToDelete = getFolderMacroPath() / (engine.replay_name + ".re4");
+                        std::error_code ec;
+                        if (std::filesystem::exists(fileToDelete) && std::filesystem::remove(fileToDelete, ec)) {
+                            GDH::MaterialLayer(FLAlertLayer::create("Delete Macro", "Macro successfully deleted", "OK"))->show();
+                        } else {
+                            GDH::MaterialLayer(FLAlertLayer::create("Delete Macro", "Failed to delete macro file", "OK"))->show();
+                        }
+                    }
+                }
+            );
+            GDH::MaterialLayer(popup);
+        });
+        deleteButtonClick->setPosition({300.f, 90.f});
+        engineTab->addChild(deleteButtonClick);
 
         auto editorButton = ButtonSprite::create("Editor", 65, true, "GoogleSans.fnt"_spr, "GDH_button_01.png"_spr, 30.f, 0.7f);
         auto editorButtonClick = CCMenuItemExt::createSpriteExtra(editorButton, [](CCMenuItemSpriteExtra* sender) {
@@ -850,6 +919,13 @@ $execute {
         });
         editorButtonClick->setPosition({300.f, 55.f});
         engineTab->addChild(editorButtonClick);
+
+        auto recorderButton = ButtonSprite::create("Recorder", 65, true, "GoogleSans.fnt"_spr, "GDH_button_01.png"_spr, 30.f, 0.7f);
+        auto recorderButtonClick = CCMenuItemExt::createSpriteExtra(recorderButton, [&engine, infoLabel](CCMenuItemSpriteExtra* sender) {
+            RecorderLayer::create()->show();
+        });
+        recorderButtonClick->setPosition({300.f, 20.f});
+        engineTab->addChild(recorderButtonClick);
 
         auto accuracy_fix_toggle = CCMenuItemExt::createTogglerWithFilename("GDH_togglerOn.png"_spr, "GDH_togglerOff.png"_spr, 0.8f, [&config](CCMenuItemToggler* sender) {
             config.set<bool>("engine::accuracy_fix", !sender->isOn());
