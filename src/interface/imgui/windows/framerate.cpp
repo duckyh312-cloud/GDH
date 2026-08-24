@@ -36,6 +36,11 @@ $execute {
         ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x - layout.multipleScale(52.f));
         if (ImGuiWidgetConfig::DragFloat("##TPS_Value", "invisible.tps::value", 1, 1, FLT_MAX, 240.f, "%.2f TPS")) {
             auto tpsValue = config.get<float>("invisible.tps::value", 240.f);
+            if (tpsValue < 1.f) {
+                tpsValue = 1.f;
+                config.set<float>("invisible.tps::value", 1.f);
+            }
+
             bool dontShowSaved = config.get<bool>("invisible.tps_warning_dont_show_again", false);
             
             if (tpsValue < 240.f && !dontShowSaved && !hasShownThisSession) {

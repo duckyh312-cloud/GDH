@@ -148,12 +148,37 @@ void updateHitboxes(GJBaseGameLayer* layer, cocos2d::CCDrawNode* drawNode, GameO
     auto& config = Config::get();
     if (!config.get<bool>("level.show_hitboxes", false)) return;
 
+    bool showPlayer = config.get<bool>("level.show_hitboxes::show_player", true);
     bool showOnDeath = config.get<bool>("level.show_hitboxes::show_on_death", false);
     bool showDeathObject = config.get<bool>("level.show_hitboxes::show_death_object", false);
 
-    bool isDead = layer->m_playerDied || deathObject != nullptr;
+    bool realDeath = layer->m_playerDied;
+    bool collided = deathObject != nullptr;
 
-    if ((showOnDeath || showDeathObject) && !layer->m_isEditor && !isDead) return;
+    bool shouldDrawObjects = false;
+    bool shouldDrawDeathOnly = false;
+
+    if (layer->m_isEditor) {
+        shouldDrawObjects = true;
+    } else {
+        if (showOnDeath && showDeathObject) {
+            if (realDeath || collided) {
+                shouldDrawObjects = true;
+            }
+        } else if (showOnDeath) {
+            if (realDeath) {
+                shouldDrawObjects = true;
+            }
+        } else if (showDeathObject) {
+            if (realDeath || collided) {
+                shouldDrawDeathOnly = true;
+            }
+        } else {
+            shouldDrawObjects = true;
+        }
+    }
+
+    if (!shouldDrawObjects && !shouldDrawDeathOnly && !showPlayer) return;
 
     auto triggersColor = GDH::Utils::hexToColor4F(config.get<std::string>("level.show_hitboxes::triggersColor", "#FF00E6FF"));
     auto otherColor = GDH::Utils::hexToColor4F(config.get<std::string>("level.show_hitboxes::otherColor", "#00FF00FF"));
@@ -175,11 +200,9 @@ void updateHitboxes(GJBaseGameLayer* layer, cocos2d::CCDrawNode* drawNode, GameO
         return { color.r, color.g, color.b, fillAlpha };
     };
 
-    if (showDeathObject && isDead) {
-        if (deathObject) {
-            drawSingleObject(layer, drawNode, deathObject, size, fillAlpha, triggersColor, otherColor, passableColor, solidColor, dangerColor);
-        }
-    } else if ((showOnDeath && isDead) || (!showOnDeath && !showDeathObject)) {
+    if (shouldDrawDeathOnly && deathObject) {
+        drawSingleObject(layer, drawNode, deathObject, size, fillAlpha, triggersColor, otherColor, passableColor, solidColor, dangerColor);
+    } else if (shouldDrawObjects) {
         if (!layer->m_sections.empty()) {
             int rightBound = std::min(layer->m_rightSectionIndex, static_cast<int>(layer->m_sections.size()) - 1);
             for (int i = layer->m_leftSectionIndex; i <= rightBound; ++i) {
@@ -200,36 +223,46 @@ void updateHitboxes(GJBaseGameLayer* layer, cocos2d::CCDrawNode* drawNode, GameO
         }
     }
 
-    auto drawPlayer = [&](PlayerObject* player) {
-        if (!player) return;
+    bool shouldDrawPlayer = showPlayer;
 
-        if (player->m_isBall) {
-            drawRect(drawNode, player->getObjectRect(), getFillColor(playerColor), size, playerColor);
-        } else {
-            player->updateOrientedBox();
-            if (auto* ob = player->getOrientedBox()) {
-                drawNode->drawPolygon(ob->m_corners.data(), 4, getFillColor(playerRotateColor), size, playerRotateColor);
-            }
-            drawRect(drawNode, player->getObjectRect(), getFillColor(playerColor), size, playerColor);
+    if (!layer->m_isEditor) {
+        if (showOnDeath || showDeathObject) {
+            shouldDrawPlayer = showPlayer && realDeath;
         }
-        drawRect(drawNode, player->getObjectRect(0.3f, 0.3f), getFillColor(playerInnerColor), size, playerInnerColor);
-    };
+    }
 
-    drawPlayer(layer->m_player1);
-    if (layer->m_gameState.m_isDualMode) drawPlayer(layer->m_player2);
+    if (shouldDrawPlayer) {
+        auto drawPlayer = [&](PlayerObject* player) {
+            if (!player) return;
 
-    if (config.get<bool>("level.show_hitboxes::draw_trail", false)) {
-        auto renderTrail = [drawNode, size](const RingBuffer<cocos2d::CCRect>& trail, const cocos2d::ccColor4F& color) {
-            trail.for_each([drawNode, size, &color](const auto& rect) {
-                drawRect(drawNode, rect, {0.f, 0.f, 0.f, 0.f}, size, color);
-            });
+            if (player->m_isBall) {
+                drawRect(drawNode, player->getObjectRect(), getFillColor(playerColor), size, playerColor);
+            } else {
+                player->updateOrientedBox();
+                if (auto* ob = player->getOrientedBox()) {
+                    drawNode->drawPolygon(ob->m_corners.data(), 4, getFillColor(playerRotateColor), size, playerRotateColor);
+                }
+                drawRect(drawNode, player->getObjectRect(), getFillColor(playerColor), size, playerColor);
+            }
+            drawRect(drawNode, player->getObjectRect(0.3f, 0.3f), getFillColor(playerInnerColor), size, playerInnerColor);
         };
 
-        renderTrail(playerTrail1, trailColor);
-        renderTrail(playerInnerTrail1, innerTrailColor);
+        drawPlayer(layer->m_player1);
+        if (layer->m_gameState.m_isDualMode) drawPlayer(layer->m_player2);
 
-        renderTrail(playerTrail2, trailColor);
-        renderTrail(playerInnerTrail2, innerTrailColor);
+        if (config.get<bool>("level.show_hitboxes::draw_trail", false)) {
+            auto renderTrail = [drawNode, size](const RingBuffer<cocos2d::CCRect>& trail, const cocos2d::ccColor4F& color) {
+                trail.for_each([drawNode, size, &color](const auto& rect) {
+                    drawRect(drawNode, rect, {0.f, 0.f, 0.f, 0.f}, size, color);
+                });
+            };
+
+            renderTrail(playerTrail1, trailColor);
+            renderTrail(playerInnerTrail1, innerTrailColor);
+
+            renderTrail(playerTrail2, trailColor);
+            renderTrail(playerInnerTrail2, innerTrailColor);
+        }
     }
 }
 
@@ -363,6 +396,7 @@ $execute {
     auto& hack = gui.getWindow("Level").findHackByName("Show Hitboxes");   
 
     hack.setCustomWindowImGui([
+        showPlayerKey = hack.formatAdditionalSetting("show_player"),
         onDeathKey = hack.formatAdditionalSetting("show_on_death"),
         showDeathObjKey = hack.formatAdditionalSetting("show_death_object"),
         sizeKey = hack.formatAdditionalSetting("size"),
@@ -381,6 +415,7 @@ $execute {
         cTrailKey = hack.formatAdditionalSetting("trailColor"),
         cInnerTrailKey = hack.formatAdditionalSetting("innerTrailColor")
     ]{
+        ImGuiWidgetConfig::Checkbox("Show Player", showPlayerKey, true);
         if (ImGuiWidgetConfig::Checkbox("Show on Death", onDeathKey, false)) GDH::Gui::get().rescanActiveCheats();
         if (ImGuiWidgetConfig::Checkbox("Show Death Object", showDeathObjKey, false)) GDH::Gui::get().rescanActiveCheats();
         ImGuiWidgetConfig::DragFloat("##Hitbox_Size", sizeKey, 0.05f, 0, 20.f, 0.25f, "Size: %.2f");
@@ -411,6 +446,7 @@ $execute {
     });
 
     hack.setCustomWindowCocos([
+        showPlayerKey = hack.formatAdditionalSetting("show_player"),
         onDeathKey = hack.formatAdditionalSetting("show_on_death"),
         showDeathObjKey = hack.formatAdditionalSetting("show_death_object"),
         sizeKey = hack.formatAdditionalSetting("size"),
@@ -430,6 +466,7 @@ $execute {
         cInnerTrailKey = hack.formatAdditionalSetting("innerTrailColor")
     ](cocos2d::CCNode* popupNode){
         auto* popup = static_cast<HackSettingsPopup*>(popupNode);
+        popup->addConfigToggle("Show Player", showPlayerKey, true);
         popup->addConfigToggle("Show on Death", onDeathKey, false, [](bool enabled) { GDH::Gui::get().rescanActiveCheats(); });
         popup->addConfigToggle("Show Death Object", showDeathObjKey, false, [](bool enabled) { GDH::Gui::get().rescanActiveCheats(); });
         popup->addConfigFloatInput("Size", sizeKey, 0, 20.f, 0.25f);

@@ -305,6 +305,10 @@ class $modify(LabelsPlayLayer, PlayLayer) {
         float startPercent = 0.0f;
     };
 
+    static void onModify(auto& self) {
+        (void) self.setHookPriority("PlayLayer::destroyPlayer", -1500);
+    }
+
     bool init(GJGameLevel *level, bool useReplay, bool dontCreateObjects) {
         if (!PlayLayer::init(level, useReplay, dontCreateObjects)) return false;
 
@@ -334,13 +338,15 @@ class $modify(LabelsPlayLayer, PlayLayer) {
     void destroyPlayer(PlayerObject* player, GameObject* obj) {
         if (m_anticheatSpike && obj == m_anticheatSpike)
             return PlayLayer::destroyPlayer(player, obj);
-        
-        PlayLayer::destroyPlayer(player, obj);
 
         float currentEnd = GDH::Utils::getRealProgress(this);
         GDH::Labels::Manager::get().updateBestRun(m_fields->startPercent, currentEnd);
 
-        NoclipAccuracy::get().handle_death();
+        auto& config = Config::get();
+        if (config.get<bool>("core.noclip", false))
+            NoclipAccuracy::get().handle_death();
+
+        PlayLayer::destroyPlayer(player, obj);
     }
 
     void resetLevel() {

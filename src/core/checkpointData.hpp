@@ -107,8 +107,8 @@ struct checkpoint_data {
     double m_lastSpiderFlipTime;
     bool m_unkBool5;
     bool m_maybeIsVehicleGlowing;
-    bool m_switchWaveTrailColor;
-    bool m_practiceDeathEffect;
+    // bool m_switchWaveTrailColor;
+    // bool m_practiceDeathEffect;
     double m_accelerationOrSpeed;
     double m_snapDistance;
     bool m_ringJumpRelated;
@@ -431,8 +431,8 @@ namespace GDH { namespace PracticeFix {
         state.m_lastSpiderFlipTime = player->m_lastSpiderFlipTime;
         state.m_unkBool5 = player->m_unkBool5;
         state.m_maybeIsVehicleGlowing = player->m_maybeIsVehicleGlowing;
-        state.m_switchWaveTrailColor = player->m_switchWaveTrailColor;
-        state.m_practiceDeathEffect = player->m_practiceDeathEffect;
+        // state.m_switchWaveTrailColor = player->m_switchWaveTrailColor;
+        // state.m_practiceDeathEffect = player->m_practiceDeathEffect;
         state.m_accelerationOrSpeed = player->m_accelerationOrSpeed;
         state.m_snapDistance = player->m_snapDistance;
         state.m_ringJumpRelated = player->m_ringJumpRelated;
@@ -760,8 +760,8 @@ namespace GDH { namespace PracticeFix {
         player->m_lastSpiderFlipTime = state.m_lastSpiderFlipTime;
         player->m_unkBool5 = state.m_unkBool5;
         player->m_maybeIsVehicleGlowing = state.m_maybeIsVehicleGlowing;
-        player->m_switchWaveTrailColor = state.m_switchWaveTrailColor;
-        player->m_practiceDeathEffect = state.m_practiceDeathEffect;
+        // player->m_switchWaveTrailColor = state.m_switchWaveTrailColor;
+        // player->m_practiceDeathEffect = state.m_practiceDeathEffect;
         player->m_accelerationOrSpeed = state.m_accelerationOrSpeed;
         player->m_snapDistance = state.m_snapDistance;
         player->m_ringJumpRelated = state.m_ringJumpRelated;
@@ -1044,8 +1044,8 @@ namespace GDH { namespace PracticeFix {
         to->m_lastSpiderFlipTime = from->m_lastSpiderFlipTime;
         to->m_unkBool5 = from->m_unkBool5;
         to->m_maybeIsVehicleGlowing = from->m_maybeIsVehicleGlowing;
-        to->m_switchWaveTrailColor = from->m_switchWaveTrailColor;
-        to->m_practiceDeathEffect = from->m_practiceDeathEffect;
+        // to->m_switchWaveTrailColor = from->m_switchWaveTrailColor;
+        // to->m_practiceDeathEffect = from->m_practiceDeathEffect;
         to->m_accelerationOrSpeed = from->m_accelerationOrSpeed;
         to->m_snapDistance = from->m_snapDistance;
         to->m_ringJumpRelated = from->m_ringJumpRelated;

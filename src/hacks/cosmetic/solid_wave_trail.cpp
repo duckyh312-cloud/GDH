@@ -10,6 +10,7 @@ class $modify(SolidWaveTrailPlayerObject, PlayerObject) {
         auto& hack = gui.getWindow("Cosmetic").findHackByName("Solid Wave Trail");        
         
         hack.addHookPtr(self.getHook("PlayerObject::setupStreak").unwrap());
+        hack.addHookPtr(self.getHook("PlayerObject::updateStreakBlend").unwrap());
     }
 
     void setupStreak() {
@@ -25,5 +26,17 @@ class $modify(SolidWaveTrailPlayerObject, PlayerObject) {
 
         m_switchWaveTrailColor = switchWaveTrailColor;
         gm->m_playerColor = playerColor;
+
+        if (m_waveTrail) {
+            m_waveTrail->m_isSolid = true;
+        }
+    }
+
+    void updateStreakBlend(bool blend) {
+        PlayerObject::updateStreakBlend(blend);
+        if (m_waveTrail) {
+            m_waveTrail->m_isSolid = true;
+            m_waveTrail->setBlendFunc({GL_ONE, GL_ZERO});
+        }
     }
 };
