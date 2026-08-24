@@ -1,3 +1,38 @@
+# v5.1.0-beta.5
+- Fixed Cheat Indicator (false red color)
+- Fixed "Solid Wave Trail"
+- Fixed "Black Screen" recorder (Mobile)
+- Fixed Startpos Switcher UI
+- RingBuffer optimized
+- Added "Show Trajectory"
+- Added "Continue" mode for Replay Engine
+- Added "Show Death Object" (Show Hitboxes)
+- Added "Show Player" (Show Hitboxes)
+- Added Hitbox Trail Color change
+- Added "Update Notification" Popup
+- Added Icon Button Settings (Mobile)
+- Added Hide icon on game (Mobile)
+- Added Hide icon on editor (Mobile)
+- Added "Show Cheat Hack List"
+- Added Min/Max Opacity for Startpos Switcher
+- Improved Macro Buff (removing spikes that interacts with player)
+- Added "Legacy Render" for low-end devices (PC)
+- Added "No Dash Fire"
+- "Hide Pause Menu" now more friendly with other Mod Menus
+- Tabs now scrollable (insetad of arrows, mobile)
+- Added "Restart Game" shortcut (PC)
+- Added Import/Delete button for Replay Engine (Mobile)
+- Added CPS for Second Player (Label)
+- Added Player Flip in "Player Information" (Label)
+- Added Best Progesss/Time (Label)
+- Added "All Modes Platofrmer"
+- Added "Force Platformer"
+- Added "Ship Copter"
+- Added more Replay Engine Keybinds
+- Other bugfixes
+
+big thanks to community for finding and repoting bugs!
+
 # v5.1.0-beta.4 - Hotfixes
 - Fixed Cheat Indicator (Mobile)
 - Fixed Autosave (Mobile)

@@ -632,6 +632,11 @@ $execute {
                     engine.clear();
                     engine.setupHacks(state::record);
                     engine.mode = state::record;
+
+                    auto& hack = GDH::Gui::get().getWindow("Invisible").findHackByName("Lock Delta");
+                    if (!hack.getEnabled()) {
+                        ImGuiH::AddPopup("Recommended to enable Lock Delta for more accurate macro recording (in Framerate Window)");
+                    }
                 }
             }
         }
@@ -640,6 +645,16 @@ $execute {
         if (ImGuiH::RadioButton("Play", engine.mode == state::play)) {
             engine.setupHacks(state::play);
             engine.mode = state::play;
+        }
+
+
+        ImGui::SetCursorPosX(layout.multipleScale(96.f));
+
+        if (ImGuiH::RadioButton("Continue", engine.mode == state::continue_mode)) {
+            engine.setupHacks(state::continue_mode);
+            engine.mode = state::continue_mode;
+
+            ImGuiH::AddPopup("Don't forget to load the replay to continue the recording. The level will automatically switch to practice mode (and don't forget to place checkpoints!!), it'll play what you recorded and then switch back to recording mode", 15.f);
         }
         
         ImGui::Separator();
@@ -706,6 +721,11 @@ $execute {
                 engine.clear();    
                 engine.mode = state::record;
                 engine.setupHacks(state::record);
+
+                auto& hack = GDH::Gui::get().getWindow("Invisible").findHackByName("Lock Delta");
+                if (!hack.getEnabled()) {
+                    ImGuiH::AddPopup("Recommended to enable Lock Delta for more accurate macro recording (in Framerate Window)");
+                }
                 ImGui::CloseCurrentPopup();
             }
             ImGui::SameLine();

@@ -23,6 +23,7 @@ std::array<float, 4> g_newLabelColor = { 1.0f, 1.0f, 1.0f, 0.30f };
 const std::vector<std::pair<const char*, const char*>> g_labelTemplates = {
     {"Attempts", "Attempt {attempt}"},
     {"Best Run", "Best Run: {best_run}"},
+    {"Best Time", "Best Time: {best_time}"},
     {"CPS Counter", "{cps}/{cps_high}/{clicks}"},
     {"CPS Counter (P2)", "{p2::cps}/{p2::cps_high}/{p2::clicks}"},
     {"Custom text", "Edit me!"},
@@ -33,7 +34,7 @@ const std::vector<std::pair<const char*, const char*>> g_labelTemplates = {
     {"Frame", "{frame} Frame"},
     {"Level Info", "{level_name} by {level_creator}"},
     {"Level ID", "{level_id}"},
-    {"Level progress", "{progress:2}%"},
+    {"Level progress", "{progress:2}"},
     {"Noclip Accuracy (%)", "{noclip_accuracy}%"},
     {"Normal Percent", "{normal_percent}%"},
     {"Player 1 Information", "{p1::x}{\\n}{p1::y}{\\n}{p1::y_vel}{\\n}P1Flip: {p1::is_upside_down}"},

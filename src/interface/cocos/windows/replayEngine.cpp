@@ -753,24 +753,31 @@ $execute {
         infoLabel->schedule(schedule_selector(LabelInfoScheduler::customUpdate), 0.0f);
         engineTab->addChild(infoLabel);
 
+        auto turnOffOthers = [engineTab](int currentTag) {
+            int tags[] = {6767, 6969, 5252};
+            for (int tag : tags) {
+                if (tag == currentTag) continue;
+                if (auto* other = static_cast<CCMenuItemToggler*>(engineTab->getChildByTag(tag))) {
+                    if (other->isOn()) {
+                        other->toggle(false);
+                    }
+                }
+            }
+        };
+
         // Record Toggle
         auto recordToggle = CCMenuItemExt::createTogglerWithFilename("GDH_togglerOn.png"_spr, "GDH_togglerOff.png"_spr, 0.8f,
-            [&engine, infoLabel, engineTab](CCMenuItemToggler* sender) {
-                auto* playToggle = static_cast<CCMenuItemToggler*>(engineTab->getChildByTag(6969));
-                if (playToggle && !sender->isOn() && playToggle->isOn()) {
-                    playToggle->toggle(false);
-                }
-
+            [&engine, turnOffOthers](CCMenuItemToggler* sender) {
                 if (!sender->isOn()) {
+                    turnOffOthers(6767);
                     engine.clear();
                     engine.mode = state::record;
-                    engine.setupHacks(engine.mode);
                 } else {
                     engine.mode = state::disable;
-                    engine.setupHacks(engine.mode);
                 }
+                engine.setupHacks(engine.mode);
             });
-
+        
         recordToggle->setPosition({25.f, 235.f});
         recordToggle->setTag(6767);
         if (engine.mode == state::record) recordToggle->toggle(true);
@@ -779,14 +786,13 @@ $execute {
 
         // Play Toggle
         auto playToggle = CCMenuItemExt::createTogglerWithFilename("GDH_togglerOn.png"_spr, "GDH_togglerOff.png"_spr, 0.8f,
-            [&engine, infoLabel, engineTab](CCMenuItemToggler* sender) {
-                auto* recordToggle = static_cast<CCMenuItemToggler*>(engineTab->getChildByTag(6767));
-                if (recordToggle && !sender->isOn() && recordToggle->isOn()) {
-                    recordToggle->toggle(false);
+            [&engine, turnOffOthers](CCMenuItemToggler* sender) {
+                if (!sender->isOn()) {
+                    turnOffOthers(6969);
+                    engine.mode = state::play;
+                } else {
+                    engine.mode = state::disable;
                 }
-
-                engine.mode = !sender->isOn() ? state::play : state::disable;
-
                 engine.setupHacks(engine.mode);
             });
 
@@ -795,6 +801,32 @@ $execute {
         if (engine.mode == state::play) playToggle->toggle(true);
         engineTab->addChild(playToggle);
         engineTab->addChild(tab->AddTextToToggle("Play", playToggle));
+
+        // Continue Toggle
+        auto continueToggle = CCMenuItemExt::createTogglerWithFilename("GDH_togglerOn.png"_spr, "GDH_togglerOff.png"_spr, 0.8f,
+            [&engine, turnOffOthers](CCMenuItemToggler* sender) {
+                if (!sender->isOn()) {
+                    turnOffOthers(5252);
+                    engine.mode = state::continue_mode;
+                    GDH::MaterialLayer(FLAlertLayer::create(
+                        "Replay Engine", 
+                        "Don't forget to <cr>load the replay</c> to continue the recording. "
+                        "The level will automatically switch to <cg>practice mode</c> "
+                        "(and don't forget to <cy>place checkpoints!!</c>), "
+                        "it'll play what you recorded and then switch back to recording mode.", 
+                        "OK"
+                    ))->show();
+                } else {
+                    engine.mode = state::disable;
+                }
+                engine.setupHacks(engine.mode);
+            });
+
+        continueToggle->setPosition({200.f, 235.f});
+        continueToggle->setTag(5252);
+        if (engine.mode == state::continue_mode) continueToggle->toggle(true);
+        engineTab->addChild(continueToggle);
+        engineTab->addChild(tab->AddTextToToggle("Continue", continueToggle));
         
         // Replay Name Input
         auto replayNameInput = geode::TextInput::create(220.f, "Replay Name", "GoogleSans.fnt"_spr);
@@ -846,7 +878,7 @@ $execute {
                 geode::utils::file::pick(
                     geode::utils::file::PickMode::OpenFile,
                     geode::utils::file::FilePickOptions{
-                        .filters = { { "Replay File", { "re4" } } }
+                        .filters = { { "Replay Engine v4 Format", { "*.re4" } } }
                     }
                 ),
                 [&engine](geode::utils::file::PickResult res) {

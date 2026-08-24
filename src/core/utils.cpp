@@ -175,13 +175,20 @@ void GDH::Utils::UncompleteLevel() {
 }
 
 double GDH::Utils::getRealProgress(GJBaseGameLayer* layer) {
+    if (!layer || !layer->m_level) return 0.0;
+    
     const auto level = layer->m_level;
     const auto timestamp = level->m_timestamp;
     
-    const double rawPercent = (timestamp > 0)
-        ? (layer->m_gameState.m_levelTime * 240.0 / timestamp * 100.0)
-        : (layer->m_player1->getPositionX() * 100.0 / layer->m_levelLength);
-    
+    double rawPercent = 0.0;
+    if (timestamp > 0) {
+        rawPercent = (layer->m_gameState.m_levelTime * 240.0 / timestamp * 100.0);
+    } else if (layer->m_levelLength > 0.0f && layer->m_player1) {
+        rawPercent = (layer->m_player1->getPositionX() * 100.0 / layer->m_levelLength);
+    }
+
+    if (std::isnan(rawPercent) || std::isinf(rawPercent)) return 0.0;
+
     return std::clamp(rawPercent, 0.0, 100.0);
 }
 

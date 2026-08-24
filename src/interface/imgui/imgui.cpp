@@ -55,7 +55,7 @@ static std::vector<std::vector<std::string>> g_layout = {
 static std::vector<GDH::Layout::WindowInfo> g_fixedWindowSizes = {
     {"Cosmetic", 0.f, 1100.f},
     // {"Labels", 240.f, 380.f},
-    {"Replay Engine", 300.f, 200.f},
+    {"Replay Engine", 300.f, 225.f},
     {"Keybinds", 0.f, 180.f},
     {"Level", 0.f, 1080.f},
     {"Shortcuts", 180.f, 0.f},
@@ -312,7 +312,10 @@ void KeybindsRender() {
     }
 
     if (ImGui::BeginPopup("Engine Keys")) {
+        ImGuiWidgetConfig::DrawCustomKeybindButton("re::record", "Disable/Record");
         ImGuiWidgetConfig::DrawCustomKeybindButton("re::playback", "Disable/Playback");
+        ImGuiWidgetConfig::DrawCustomKeybindButton("re::save_macro_by_name", "Save Macro by Current Level Name");
+        ImGuiWidgetConfig::DrawCustomKeybindButton("re::load_macro_by_name", "Load Macro by Current Level Name");
         ImGui::EndPopup();
     }
 

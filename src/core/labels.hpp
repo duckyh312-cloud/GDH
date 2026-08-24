@@ -96,9 +96,13 @@ namespace GDH {
 
             float m_bestRunStart = 0.0f;
             float m_bestRunEnd = 0.0f;
+
+            double m_bestTime = 0.0;
+
             void resetBestRun() {
                 m_bestRunStart = 0.0f;
                 m_bestRunEnd = 0.0f;
+                m_bestTime = 0.0;
             }
 
             void updateBestRun(float start, float end) {
@@ -107,6 +111,14 @@ namespace GDH {
                 if (end > m_bestRunEnd) {
                     m_bestRunStart = start;
                     m_bestRunEnd = end;
+                }
+            }
+
+            void updateBestTime(double time) {
+                if (time <= 0.0) return;
+
+                if (m_bestTime == 0.0 || time < m_bestTime) {
+                    m_bestTime = time;
                 }
             }
         private:

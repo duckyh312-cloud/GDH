@@ -35,6 +35,7 @@ protected:
         std::vector<std::pair<std::string, std::string>> templates = {
             {"Attempts", "Attempt {attempt}"},
             {"Best Run", "Best Run: {best_run}"},
+            {"Best Time", "Best Time: {best_time}"},
             {"CPS Counter", "{cps}/{cps_high}/{clicks}"},
             {"CPS Counter (P2)", "{p2::cps}/{p2::cps_high}/{p2::clicks}"},
             {"Cheat Indicator", ""},
@@ -46,7 +47,7 @@ protected:
             {"Frame", "{frame} Frame"},
             {"Level Info", "{level_name} by {level_creator}"},
             {"Level ID", "{level_id}"},
-            {"Level progress", "{progress:2}%"},
+            {"Level progress", "{progress:2}"},
             {"Noclip Accuracy (%)", "{noclip_accuracy}%"},
             {"Normal Percent", "{normal_percent}%"},
             {"Practice Percent", "{practice_percent}%"},

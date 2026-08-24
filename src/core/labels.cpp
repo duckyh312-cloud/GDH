@@ -115,7 +115,7 @@ bool renderVariable(geode::utils::StringBuffer<> &stream, std::string_view var_n
     } else if (var_name == "level_id") {
         stream.append(pl ? pl->m_level->m_levelID : 0);
     } else if (var_name == "normal_percent") {
-        stream.append(pl ? GDH::Utils::getRealProgress(pl) : 0);
+        stream.append(pl ? pl->m_level->getNormalPercent() : 0);
     } else if (var_name == "practice_percent") {
         stream.append(pl ? pl->m_level->m_practicePercent : 0);
     } else if (var_name == "noclip_accuracy") {
@@ -134,14 +134,19 @@ bool renderVariable(geode::utils::StringBuffer<> &stream, std::string_view var_n
         auto secs = std::chrono::duration_cast<std::chrono::seconds>(dur) % 60;
         stream.append(fmt::format("{:02}:{:02}:{:02}", hours.count(), mins.count(), secs.count()));
     } else if (var_name == "progress" || var_name.starts_with("progress:")) {
-        var_name.remove_prefix(8);
-        int decimal_points = 0;
-        if (!var_name.empty()) {
-            var_name.remove_prefix(1);
-            auto parsed = geode::utils::numFromString<int>(var_name, 10);
-            if (parsed.ok()) decimal_points = *parsed;
+        if (pl && pl->m_level && pl->m_level->isPlatformer()) {
+            bool showMS = Config::get().get<bool>("cosmetic.accurate_percentage::showMilliseconds", true);
+            stream.append(GDH::Utils::formatTime(pl->m_timePlayed, showMS));
+        } else {
+            var_name.remove_prefix(8);
+            int decimal_points = 0;
+            if (!var_name.empty()) {
+                var_name.remove_prefix(1);
+                auto parsed = geode::utils::numFromString<int>(var_name, 10);
+                if (parsed.ok()) decimal_points = *parsed;
+            }
+            stream.append(fmt::format("{:.{}f}%", (pl ? GDH::Utils::getRealProgress(pl) : 0.0f), decimal_points));
         }
-        stream.append(fmt::format("{:.{}f}", (pl ? pl->getCurrentPercent() : 0.0f), decimal_points));
     } else if (var_name == "fps" || var_name.starts_with("fps:")) {
         var_name.remove_prefix(3);
         int decimal_points = 0;
@@ -174,8 +179,24 @@ bool renderVariable(geode::utils::StringBuffer<> &stream, std::string_view var_n
         if (!isDualAnd2P || !pl->m_player2) return false;
         stream.append(fmt::format("{}", pl->m_player2->m_isUpsideDown));
     } else if (var_name == "best_run") {
+        if (pl && pl->m_level && pl->m_level->isPlatformer()) {
+            return false;
+        }
+
         auto& mgr = GDH::Labels::Manager::get();
         stream.append(fmt::format("{:.0f}% - {:.0f}%", mgr.m_bestRunStart, mgr.m_bestRunEnd));
+    } else if (var_name == "best_time") {
+        if (pl && pl->m_level && !pl->m_level->isPlatformer()) {
+            return false;
+        }
+
+        auto& mgr = GDH::Labels::Manager::get();
+        if (mgr.m_bestTime <= 0.0) {
+            stream.append("N/A");
+        } else {
+            bool showMS = Config::get().get<bool>("cosmetic.accurate_percentage::showMilliseconds", true);
+            stream.append(GDH::Utils::formatTime(mgr.m_bestTime, showMS));
+        }
     } else if (var_name == "\\n") {
         stream.append("\n");
     } else {
@@ -303,6 +324,10 @@ class $modify(LabelsPlayLayer, PlayLayer) {
         cocos2d::CCMenu* labelsMenu = nullptr;
         std::unordered_map<Corner, std::vector<geode::Label*>> labelObjs;
         float startPercent = 0.0f;
+
+        ~Fields() {
+            GDH::Labels::Manager::get().resetBestRun();
+        }
     };
 
     static void onModify(auto& self) {
@@ -312,25 +337,27 @@ class $modify(LabelsPlayLayer, PlayLayer) {
     bool init(GJGameLevel *level, bool useReplay, bool dontCreateObjects) {
         if (!PlayLayer::init(level, useReplay, dontCreateObjects)) return false;
 
-        m_fields->labelsMenu = cocos2d::CCMenu::create();
-        m_fields->labelsMenu->setPosition({0, 0});
-        m_fields->labelsMenu->setID("labels-menu"_spr);
+        auto fields = m_fields.self();
+
+        fields->labelsMenu = cocos2d::CCMenu::create();
+        fields->labelsMenu->setPosition({0, 0});
+        fields->labelsMenu->setID("labels-menu"_spr);
         if (m_uiLayer) {
-            m_uiLayer->addChild(m_fields->labelsMenu, 999);
+            m_uiLayer->addChild(fields->labelsMenu, 999);
         }
 
-        m_fields->labelObjs[Corner::Top_Left] = {};
-        m_fields->labelObjs[Corner::Top_Center] = {};
-        m_fields->labelObjs[Corner::Top_Right] = {};
-        m_fields->labelObjs[Corner::Center_Left] = {};
-        m_fields->labelObjs[Corner::Center_Center] = {};
-        m_fields->labelObjs[Corner::Center_Right] = {};
-        m_fields->labelObjs[Corner::Bottom_Left] = {};
-        m_fields->labelObjs[Corner::Bottom_Center] = {};
-        m_fields->labelObjs[Corner::Bottom_Right] = {};
+        fields->labelObjs[Corner::Top_Left] = {};
+        fields->labelObjs[Corner::Top_Center] = {};
+        fields->labelObjs[Corner::Top_Right] = {};
+        fields->labelObjs[Corner::Center_Left] = {};
+        fields->labelObjs[Corner::Center_Center] = {};
+        fields->labelObjs[Corner::Center_Right] = {};
+        fields->labelObjs[Corner::Bottom_Left] = {};
+        fields->labelObjs[Corner::Bottom_Center] = {};
+        fields->labelObjs[Corner::Bottom_Right] = {};
 
         g_sessionStart = std::chrono::steady_clock::now();
-        m_fields->startPercent = GDH::Utils::getRealProgress(this);
+        fields->startPercent = GDH::Utils::getRealProgress(this);
 
         return true;
     }
@@ -339,8 +366,11 @@ class $modify(LabelsPlayLayer, PlayLayer) {
         if (m_anticheatSpike && obj == m_anticheatSpike)
             return PlayLayer::destroyPlayer(player, obj);
 
-        float currentEnd = GDH::Utils::getRealProgress(this);
-        GDH::Labels::Manager::get().updateBestRun(m_fields->startPercent, currentEnd);
+        auto fields = m_fields.self();
+        if (!m_level || !m_level->isPlatformer()) {
+            float currentEnd = GDH::Utils::getRealProgress(this);
+            GDH::Labels::Manager::get().updateBestRun(fields->startPercent, currentEnd);
+        }
 
         auto& config = Config::get();
         if (config.get<bool>("core.noclip", false))
@@ -354,22 +384,29 @@ class $modify(LabelsPlayLayer, PlayLayer) {
         CpsCounter::get().reset();
         NoclipAccuracy::get().handle_reset();
 
-        float currentStart = GDH::Utils::getRealProgress(this);
-
-        if (std::abs(m_fields->startPercent - currentStart) > 0.01f) {
-            GDH::Labels::Manager::get().resetBestRun();
-            m_fields->startPercent = currentStart;
-        }
-
+        auto fields = m_fields.self();
         auto& mgr = GDH::Labels::Manager::get();
-        if (mgr.m_bestRunStart == 0.0f && mgr.m_bestRunEnd == 0.0f) {
-            mgr.m_bestRunStart = currentStart;
-            mgr.m_bestRunEnd = currentStart;
+
+        if (!m_level || !m_level->isPlatformer()) {
+            float currentStart = GDH::Utils::getRealProgress(this);
+            if (std::abs(fields->startPercent - currentStart) > 0.01f) {
+                mgr.resetBestRun();
+                fields->startPercent = currentStart;
+            }
+            if (mgr.m_bestRunStart == 0.0f && mgr.m_bestRunEnd == 0.0f) {
+                mgr.m_bestRunStart = currentStart;
+                mgr.m_bestRunEnd = currentStart;
+            }
         }
     }
 
     void levelComplete() {
-        GDH::Labels::Manager::get().updateBestRun(m_fields->startPercent, 100.0f);
+        auto fields = m_fields.self();
+        if (m_level && m_level->isPlatformer()) {
+            GDH::Labels::Manager::get().updateBestTime(m_timePlayed);
+        } else {
+            GDH::Labels::Manager::get().updateBestRun(fields->startPercent, 100.0f);
+        }
         PlayLayer::levelComplete();
     }
 
@@ -386,6 +423,7 @@ class $modify(LabelsPlayLayer, PlayLayer) {
         
         auto& config = Config::get();
         auto& manager = GDH::Labels::Manager::get();
+        auto fields = m_fields.self();
 
         bool disable_all = config.get<bool>("labels::disable_all", false);
         bool noclip_enabled = config.get<bool>("core.noclip", false);
@@ -401,7 +439,7 @@ class $modify(LabelsPlayLayer, PlayLayer) {
 
         if (disable_all != was_disabled) {
             was_disabled = disable_all;
-            for (auto &[corner, labelVec] : m_fields->labelObjs) {
+            for (auto &[corner, labelVec] : fields->labelObjs) {
                 for (auto* label : labelVec) {
                     if (label) label->setVisible(!disable_all);
                 }
@@ -412,7 +450,7 @@ class $modify(LabelsPlayLayer, PlayLayer) {
 
         auto windowSize = cocos2d::CCDirector::sharedDirector()->getWinSize();
         
-        for (auto &[corner, labelVec] : m_fields->labelObjs) {
+        for (auto &[corner, labelVec] : fields->labelObjs) {
             float y = 0.0f, labelsHeight = 0.0f; int i = 0;
             auto cornerProps = getCornerProps(corner);
 
@@ -431,8 +469,8 @@ class $modify(LabelsPlayLayer, PlayLayer) {
                         label = geode::Label::create("", "bigFont.fnt");
                         label->setAnchorPoint(cornerProps.anchor);
                         label->setAlignment(cornerProps.align);
-                        if (m_fields->labelsMenu) {
-                            m_fields->labelsMenu->addChild(label);
+                        if (fields->labelsMenu) {
+                            fields->labelsMenu->addChild(label);
                         }
                         labelVec.push_back(label);
                     }
@@ -482,8 +520,8 @@ class $modify(LabelsPlayLayer, PlayLayer) {
                         label = geode::Label::create(".", "bigFont.fnt");
                         label->setAnchorPoint(cornerProps.anchor);
                         label->setAlignment(cornerProps.align);
-                        if (m_fields->labelsMenu) {
-                            m_fields->labelsMenu->addChild(label);
+                        if (fields->labelsMenu) {
+                            fields->labelsMenu->addChild(label);
                         }
                         labelVec.push_back(label);
                     }

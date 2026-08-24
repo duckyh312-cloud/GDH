@@ -1,7 +1,7 @@
 #pragma once
 #include <Geode/Geode.hpp>
 
-enum state { disable, record, play };
+enum state { disable, record, play, continue_mode };
 
 struct physic_data
 {

@@ -3,6 +3,7 @@
 #include <imgui_internal.h>
 #include <imgui_stdlib.h>
 #include "layout.hpp"
+#include "../../core/utils.hpp"
 #include <json.hpp>
 
 #ifdef GEODE_IS_ANDROID
@@ -364,6 +365,78 @@ namespace ImGuiH {
         ImGui::SetNextWindowSize(ImVec2(baseWidth, windowHeight));
         
         if (ImGui::Begin("Color Palette Editor", nullptr, windowFlags)) {
+            if (ImGuiH::Button("Import")) {
+                geode::async::spawn(
+                    geode::utils::file::pick(
+                        geode::utils::file::PickMode::OpenFile,
+                        geode::utils::file::FilePickOptions{
+                            .filters = { { "JSON Theme File", { "*.json" } } }
+                        }
+                    ),
+                    [](geode::utils::file::PickResult res) {
+                        if (!res) return;
+                        auto pathOpt = std::move(res).unwrapOr(std::nullopt);
+                        if (!pathOpt) return;
+
+                        auto selectedPath = *pathOpt;
+                        if (!GDH::Utils::isOnlyAsciiPath(selectedPath)) {
+                            AddPopup("Invalid path. Please remove any Cyrillic characters");
+                            return;
+                        }
+
+                        if (selectedPath.extension() != ".json") {
+                            AddPopup("Invalid file format. Only .json files are allowed");
+                            return;
+                        }
+
+                        std::error_code ec;
+                        std::filesystem::copy_file(selectedPath, themeFilePath, std::filesystem::copy_options::overwrite_existing, ec);
+                        if (ec) {
+                            AddPopup("Failed to copy theme file");
+                            return;
+                        }
+
+                        LoadTheme();
+                        AddPopup("Theme imported successfully!");
+                    }
+                );
+            }
+            ImGui::SameLine();
+
+            if (ImGuiH::Button("Export")) {
+                SaveTheme();
+                geode::async::spawn(
+                    geode::utils::file::pick(
+                        geode::utils::file::PickMode::SaveFile,
+                        geode::utils::file::FilePickOptions{
+                            .defaultPath = "theme.json",
+                            .filters = { { "JSON Theme File", { "*.json" } } }
+                        }
+                    ),
+                    [](geode::utils::file::PickResult res) {
+                        if (!res) return;
+                        auto pathOpt = std::move(res).unwrapOr(std::nullopt);
+                        if (!pathOpt) return;
+
+                        auto selectedPath = *pathOpt;
+                        if (!GDH::Utils::isOnlyAsciiPath(selectedPath)) {
+                            AddPopup("Invalid path. Please remove any Cyrillic characters");
+                            return;
+                        }
+
+                        std::error_code ec;
+                        std::filesystem::copy_file(themeFilePath, selectedPath, std::filesystem::copy_options::overwrite_existing, ec);
+                        if (ec) {
+                            AddPopup("Failed to export theme file");
+                            return;
+                        }
+
+                        AddPopup("Theme exported successfully!");
+                    }
+                );
+            }
+            ImGui::SameLine();
+
             if (ImGuiH::Button("Reset")) {
                 ImGuiH::ProccessOriginalTheme(false);
             }
@@ -1288,12 +1361,12 @@ namespace ImGuiH {
 
     static std::vector<PopupMessage> s_popups;
 
-    void AddPopup(const std::string& caption)
+    void AddPopup(const std::string& caption, float time)
     {
         #ifdef GEODE_IS_WINDOWS
         s_popups.insert(s_popups.begin(), {
             caption,
-            static_cast<float>(ImGui::GetTime()) + 5.0f,
+            static_cast<float>(ImGui::GetTime()) + time,
             0.0f,
             0.0f,
             false

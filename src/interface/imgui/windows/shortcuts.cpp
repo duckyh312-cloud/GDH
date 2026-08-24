@@ -74,13 +74,52 @@ $execute {
         ImGuiH::AddPopup(fmt::format("Speedhack: {:.2f}x", newValue));
     });
 
+    kb.addCallback("re::record", geode::Keybind(), [](bool r) {
+        if (r || !areReplayEngineEnabled()) return;
+
+        auto& engine = GDH::ReplayEngine::get();
+        engine.mode = (engine.mode == state::record) ? state::disable : state::record;
+        ImGuiH::AddPopup(fmt::format("Replay Engine: {}", (engine.mode == state::record) ? "Record" : "Disable"));
+    });
+
     kb.addCallback("re::playback", geode::Keybind(), [](bool r) {
         if (r || !areReplayEngineEnabled()) return;
 
         auto& engine = GDH::ReplayEngine::get();
         engine.mode = (engine.mode == state::play) ? state::disable : state::play;
+        ImGuiH::AddPopup(fmt::format("Replay Engine: {}", (engine.mode == state::play) ? "Play" : "Disable"));
     });
 
+    kb.addCallback("re::save_macro_by_name", geode::Keybind(), [](bool r) {
+        if (r || !areReplayEngineEnabled()) return;
+
+        auto pl = PlayLayer::get();
+        if (!pl) {
+            ImGuiH::AddPopup("Can't get a level name to save a macro");
+        }
+        else {
+            std::string level_name = pl->m_level->m_levelName;
+
+            auto& engine = GDH::ReplayEngine::get();
+            ImGuiH::AddPopup(engine.save(level_name));
+        }
+    });
+
+    kb.addCallback("re::load_macro_by_name", geode::Keybind(), [](bool r) {
+        if (r || !areReplayEngineEnabled()) return;
+
+        auto pl = PlayLayer::get();
+        if (!pl) {
+            ImGuiH::AddPopup("Can't get a level name to load a macro");
+        }
+        else {
+            std::string level_name = pl->m_level->m_levelName;
+
+            auto& engine = GDH::ReplayEngine::get();
+            ImGuiH::AddPopup(engine.load(level_name));
+        }
+    });
+    
     auto& gui = GDH::Gui::get();
     auto& window = gui.getWindow("Shortcuts");
 

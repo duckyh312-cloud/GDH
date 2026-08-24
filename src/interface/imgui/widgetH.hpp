@@ -94,6 +94,6 @@ namespace ImGuiH {
     bool BeginSmoothScroll(const char* name, bool* p_open = nullptr, ImGuiWindowFlags f = 0);
     void EndSmoothScroll();
 
-    void AddPopup(const std::string& caption);
+    void AddPopup(const std::string& caption, float time = 5.f);
     void RenderPopups();
 }

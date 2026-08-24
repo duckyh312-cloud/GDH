@@ -11,6 +11,7 @@
 #include "../../core/gui.hpp"
 #include "../../core/keybinds.hpp"
 #include "../../core/utils.hpp"
+#include "../../interface/imgui/widgetH.hpp"
 
 static float left_over = 0.f;
 
@@ -260,6 +261,13 @@ class $modify(ReplayPlayLayer, PlayLayer) {
         PlayLayer::resetLevel();
         
         engine.handle_reset();  
+
+        if (engine.mode == state::continue_mode && !m_isPracticeMode) {
+            togglePracticeMode(true);
+            #ifdef GEODE_IS_WINDOWS
+            ImGuiH::AddPopup("Continue Feature: Switching to practice mode. Don't forget to set checkpoints!");
+            #endif
+        }
     }
 
     void playEndAnimationToPos(cocos2d::CCPoint pos) {

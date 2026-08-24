@@ -6,7 +6,6 @@
 
 using namespace GDH;
 
-
 uint64_t ReplayEngine::get_frame() {
     auto gjbgl = GJBaseGameLayer::get();
     if (gjbgl) {
@@ -15,7 +14,6 @@ uint64_t ReplayEngine::get_frame() {
     }
     return 0;
 }
-
 
 void ReplayEngine::remove_actions(uint64_t currentFrame, bool pause) {
     // clearing physic frames
@@ -103,7 +101,7 @@ void ReplayEngine::handle_update(GJBaseGameLayer* self) {
                 recordPlayerFrame(self->m_player2, true);
         }
     }
-    else if (mode == state::play) {
+    else if (mode == state::play || mode == state::continue_mode) {
         while (m_physicIndex < m_physicFrames.size() && frame >= m_physicFrames[m_physicIndex].frame)
         {
             const auto& physicFrame = m_physicFrames[m_physicIndex];
@@ -120,9 +118,26 @@ void ReplayEngine::handle_update(GJBaseGameLayer* self) {
 }
 
 void ReplayEngine::handle_commands(GJBaseGameLayer* self) {
-    if (mode != state::play) return;
-    
     auto frame = get_frame();
+
+    if (mode == state::continue_mode) {
+        bool reachedEnd = (m_inputIndex >= m_inputFrames.size());
+        
+        if (reachedEnd || (!m_inputFrames.empty() && frame > m_inputFrames.back().frame)) {
+            std::erase_if(m_physicFrames, [frame](const physic_data& action) {
+                return action.frame >= frame;
+            });
+
+            mode = state::record;
+
+            #ifdef GEODE_IS_WINDOWS
+            ImGuiH::AddPopup("Switched to Record mode. Continue recording!");
+            #endif
+            return;
+        }
+    }
+
+    if (mode != state::play && mode != state::continue_mode) return;
     
     while (m_inputIndex < m_inputFrames.size() && frame >= m_inputFrames[m_inputIndex].frame)
     {
@@ -152,7 +167,7 @@ void ReplayEngine::handle_reset(bool pause) {
         int lastCheckpointFrame = get_frame();
         remove_actions(lastCheckpointFrame, pause);
     }
-    else if (mode == state::play) {
+    else if (mode == state::play || mode == state::continue_mode) {
         m_physicIndex = 0;
         m_inputIndex = 0;
     }
@@ -367,16 +382,7 @@ void ReplayEngine::setupHacks(state newMode) {
 
     for (const auto& target : targets) {
         auto& hack = gui.getWindow(target.window).findHackByName(target.name);
-        bool shouldEnable = (newMode == state::record) ? target.targetStateForRecord : target.targetStateForPlay;
+        bool shouldEnable = (newMode == state::record || newMode == state::continue_mode) ? target.targetStateForRecord : target.targetStateForPlay;
         shouldEnable ? hack.enable() : hack.disable();
     }
-
-    #ifdef GEODE_IS_WINDOWS
-    if (newMode == state::record) {
-        auto& hack = gui.getWindow("Invisible").findHackByName("Lock Delta");
-        if (!hack.getEnabled()) {
-            ImGuiH::AddPopup("Recommended to enable Lock Delta for more accurate macro recording (in Framerate Window)");
-        }
-    }
-    #endif
 }
