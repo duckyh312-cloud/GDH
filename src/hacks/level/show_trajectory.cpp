@@ -197,7 +197,7 @@ class $modify(ShowTrajectoryPlayLayer, PlayLayer) {
         auto& gui = GDH::Gui::get();
         auto& hack = gui.getWindow("Level").findHackByName("Show Trajectory");       
 
-        (void) self.setHookPriority("PlayLayer::destroyPlayer", geode::Priority::Early); 
+        (void) self.setHookPriority("PlayLayer::destroyPlayer", geode::Priority::VeryEarly); 
         hack.addHookPtr(self.getHook("PlayLayer::destroyPlayer").unwrap());
         hack.addHookPtr(self.getHook("PlayLayer::playEndAnimationToPos").unwrap());
     }

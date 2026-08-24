@@ -129,6 +129,12 @@ class $modify(NoclipPlayLayer, PlayLayer) {
         if (config.get<bool>("core.noclip::tint_on_death", false)) {
             auto fields = m_fields.self();
             fields->tint->stopAllActions();
+
+            fields->tint->setColor(
+                GDH::Utils::hexToColor(
+                    config.get<std::string>("core.noclip::tint_color", "FF00000")
+                )
+            );
             fields->tint->setOpacity(config.get<int>("core.noclip::tint_opacity", 100));
             fields->tint->runAction(cocos2d::CCFadeTo::create(config.get<float>("core.noclip::tint_fade", 0.35f), 0));
         }

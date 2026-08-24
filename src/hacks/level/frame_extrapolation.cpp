@@ -8,8 +8,7 @@ using namespace geode::prelude;
 
 GUI_HACK_CREATE("Level", "Frame Extrapolation", "Extrapolates frames for visual updates beyond 240fps (unstable, needs testing)", false);
 
-class $modify(FrameExtrapolationGJBaseGameLayer, GJBaseGameLayer)
-{
+class $modify(FrameExtrapolationGJBaseGameLayer, GJBaseGameLayer) {
     static void onModify(auto& self) {
         auto& gui = GDH::Gui::get();
         auto& hack = gui.getWindow("Level").findHackByName("Frame Extrapolation");

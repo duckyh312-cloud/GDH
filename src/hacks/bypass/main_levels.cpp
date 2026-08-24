@@ -5,7 +5,7 @@
 
 GUI_HACK_CREATE("Bypass", "Main Levels", "Unlocks all main levels", false);
 
-class $modify(MyGameLevelManager, GameLevelManager) {
+class $modify(MainLevelsGameLevelManager, GameLevelManager) {
     static void onModify(auto& self) {
         auto& gui = GDH::Gui::get();
         auto& hack = gui.getWindow("Bypass").findHackByName("Main Levels");        
@@ -22,7 +22,7 @@ class $modify(MyGameLevelManager, GameLevelManager) {
     }
 };
 
-class $modify(MyLevelAreaInnerLayer, LevelAreaInnerLayer) {
+class $modify(MainLevelsAreaInnerLayer, LevelAreaInnerLayer) {
     static void onModify(auto& self) {
         auto& gui = GDH::Gui::get();
         auto& hack = gui.getWindow("Bypass").findHackByName("Main Levels");        

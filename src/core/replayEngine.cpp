@@ -321,26 +321,58 @@ void ReplayEngine::customHandleButton(GJBaseGameLayer* self, bool down, PlayerBu
     }
 }
 
-void ReplayEngine::setupHacks(bool isRecord) {
+void ReplayEngine::setupHacks(state newMode) {
     auto& gui = GDH::Gui::get();
 
-    auto ToggleHack = [&gui](const char* windowName, const char* hackName, bool enabled) {
-        auto& hack = gui.getWindow(windowName).findHackByName(hackName);
-        enabled ? hack.enable() : hack.disable();
+    struct HackTarget {
+        std::string window;
+        std::string name;
+        bool targetStateForRecord;
+        bool targetStateForPlay;
     };
 
-    ToggleHack("Invisible", "TPS", true);
-    ToggleHack("Level", "Click Between Steps", false);
-    ToggleHack("Level", "Click On Steps", false);
-    ToggleHack("Level", "Click Between Frames", false);
+    std::vector<HackTarget> targets = {
+        {"Invisible", "TPS", true, true},
+        {"Level", "Click Between Steps", false, false},
+        {"Level", "Click On Steps", false, false},
+        {"Level", "Click Between Frames", false, false},
+        {"Level", "Practice Fix",  true, false},
+        {"Level", "Respawn Lag Fix", true, false},
+        {"Level", "Frame Extrapolation", false, false},
+        {"Cosmetic", "No Mirror", true, false}
+    };
 
-    if (isRecord) {
-        ToggleHack("Level", "Practice Fix", true);
-        ToggleHack("Level", "Respawn Lag Fix", true);
+    if (newMode == state::disable) {
+        if (!m_savedHackStates.empty()) {
+            for (const auto& target : targets) {
+                std::string key = std::string(target.window) + "::" + target.name;
+                if (m_savedHackStates.contains(key)) {
+                    auto& hack = gui.getWindow(target.window).findHackByName(target.name);
+                    bool originalState = m_savedHackStates[key];
+                    originalState ? hack.enable() : hack.disable();
+                }
+            }
+            m_savedHackStates.clear();
+        }
+        return;
+    }
+
+    if (m_savedHackStates.empty()) {
+        for (const auto& target : targets) {
+            std::string key = std::string(target.window) + "::" + target.name;
+            auto& hack = gui.getWindow(target.window).findHackByName(target.name);
+            m_savedHackStates[key] = hack.getEnabled();
+        }
+    }
+
+    for (const auto& target : targets) {
+        auto& hack = gui.getWindow(target.window).findHackByName(target.name);
+        bool shouldEnable = (newMode == state::record) ? target.targetStateForRecord : target.targetStateForPlay;
+        shouldEnable ? hack.enable() : hack.disable();
     }
 
     #ifdef GEODE_IS_WINDOWS
-    if (isRecord) {
+    if (newMode == state::record) {
         auto& hack = gui.getWindow("Invisible").findHackByName("Lock Delta");
         if (!hack.getEnabled()) {
             ImGuiH::AddPopup("Recommended to enable Lock Delta for more accurate macro recording (in Framerate Window)");

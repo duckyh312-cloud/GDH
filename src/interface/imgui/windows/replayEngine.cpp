@@ -620,6 +620,7 @@ $execute {
 
         if (ImGuiH::RadioButton("Disable", engine.mode == state::disable)) {
             engine.mode = state::disable;
+            engine.setupHacks(state::disable);
         }
         ImGui::SameLine();
         
@@ -629,7 +630,7 @@ $execute {
                     ImGui::OpenPopup("Record Overwrite Warning");
                 } else {
                     engine.clear();
-                    engine.setupHacks(true);
+                    engine.setupHacks(state::record);
                     engine.mode = state::record;
                 }
             }
@@ -637,7 +638,7 @@ $execute {
         ImGui::SameLine();
         
         if (ImGuiH::RadioButton("Play", engine.mode == state::play)) {
-            engine.setupHacks(false);
+            engine.setupHacks(state::play);
             engine.mode = state::play;
         }
         
@@ -702,9 +703,9 @@ $execute {
             ImGui::Text("You currently have actions stored in the buffer.\nStarting a new recording will clear your current unsaved active macro.\n\nAre you sure you want to proceed?");
             ImGuiH::SpaceSeparator();
             if (ImGuiH::Button("Yes, Overwrite", {ImGui::GetContentRegionAvail().x / 2, 0})) {
-                engine.clear();
-                engine.setupHacks(true);
+                engine.clear();    
                 engine.mode = state::record;
+                engine.setupHacks(state::record);
                 ImGui::CloseCurrentPopup();
             }
             ImGui::SameLine();

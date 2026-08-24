@@ -764,9 +764,10 @@ $execute {
                 if (!sender->isOn()) {
                     engine.clear();
                     engine.mode = state::record;
-                    engine.setupHacks(true);
+                    engine.setupHacks(engine.mode);
                 } else {
                     engine.mode = state::disable;
+                    engine.setupHacks(engine.mode);
                 }
             });
 
@@ -786,7 +787,7 @@ $execute {
 
                 engine.mode = !sender->isOn() ? state::play : state::disable;
 
-                engine.setupHacks(false);
+                engine.setupHacks(engine.mode);
             });
 
         playToggle->setPosition({123.f, 235.f});
@@ -910,7 +911,7 @@ $execute {
             );
             GDH::MaterialLayer(popup);
         });
-        deleteButtonClick->setPosition({300.f, 90.f});
+        deleteButtonClick->setPosition({280.f, 200.f});
         engineTab->addChild(deleteButtonClick);
 
         auto editorButton = ButtonSprite::create("Editor", 65, true, "GoogleSans.fnt"_spr, "GDH_button_01.png"_spr, 30.f, 0.7f);

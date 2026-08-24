@@ -87,7 +87,7 @@ class $modify(LockDeltaCCScheduler, cocos2d::CCScheduler) {
     }
 };
 
-class $modify(LockDeltalayLayer, PlayLayer) {
+class $modify(LockDeltaPlayLayer, PlayLayer) {
     static void onModify(auto& self) {
         auto& gui = GDH::Gui::get();
         auto& hack = gui.getWindow("Invisible").findHackByName("Lock Delta");

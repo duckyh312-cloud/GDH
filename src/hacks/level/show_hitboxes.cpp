@@ -72,7 +72,6 @@ static void drawOrientedOrRect(GJBaseGameLayer* layer, cocos2d::CCDrawNode* draw
 static RingBuffer<cocos2d::CCRect> playerTrail1, playerTrail2;
 static RingBuffer<cocos2d::CCRect> playerInnerTrail1, playerInnerTrail2;
 static size_t lastMaxLength = 0;
-static GameObject* deathObject = nullptr;
 
 static void drawSingleObject(GJBaseGameLayer* layer, cocos2d::CCDrawNode* drawNode, GameObject* obj,
                              float size, float fillAlpha,
@@ -142,7 +141,7 @@ static void drawSingleObject(GJBaseGameLayer* layer, cocos2d::CCDrawNode* drawNo
     }
 }
 
-void updateHitboxes(GJBaseGameLayer* layer, cocos2d::CCDrawNode* drawNode) {
+void updateHitboxes(GJBaseGameLayer* layer, cocos2d::CCDrawNode* drawNode, GameObject* deathObject = nullptr) {
     if (!drawNode) return;
     drawNode->clear();
 
@@ -152,7 +151,9 @@ void updateHitboxes(GJBaseGameLayer* layer, cocos2d::CCDrawNode* drawNode) {
     bool showOnDeath = config.get<bool>("level.show_hitboxes::show_on_death", false);
     bool showDeathObject = config.get<bool>("level.show_hitboxes::show_death_object", false);
 
-    if (showOnDeath && !layer->m_isEditor && !layer->m_playerDied) return;
+    bool isDead = layer->m_playerDied || deathObject != nullptr;
+
+    if ((showOnDeath || showDeathObject) && !layer->m_isEditor && !isDead) return;
 
     auto triggersColor = GDH::Utils::hexToColor4F(config.get<std::string>("level.show_hitboxes::triggersColor", "#FF00E6FF"));
     auto otherColor = GDH::Utils::hexToColor4F(config.get<std::string>("level.show_hitboxes::otherColor", "#00FF00FF"));
@@ -174,11 +175,11 @@ void updateHitboxes(GJBaseGameLayer* layer, cocos2d::CCDrawNode* drawNode) {
         return { color.r, color.g, color.b, fillAlpha };
     };
 
-    if (showDeathObject && layer->m_playerDied) {
+    if (showDeathObject && isDead) {
         if (deathObject) {
             drawSingleObject(layer, drawNode, deathObject, size, fillAlpha, triggersColor, otherColor, passableColor, solidColor, dangerColor);
         }
-    } else if (showOnDeath && layer->m_playerDied) {
+    } else if ((showOnDeath && isDead) || (!showOnDeath && !showDeathObject)) {
         if (!layer->m_sections.empty()) {
             int rightBound = std::min(layer->m_rightSectionIndex, static_cast<int>(layer->m_sections.size()) - 1);
             for (int i = layer->m_leftSectionIndex; i <= rightBound; ++i) {
@@ -192,28 +193,7 @@ void updateHitboxes(GJBaseGameLayer* layer, cocos2d::CCDrawNode* drawNode) {
                     int sectionSize = sizeRow->at(j);
                     auto* data = section->data();
                     for (int k = 0; k < sectionSize; ++k) {
-                        auto* obj = data[k];
-                        drawSingleObject(layer, drawNode, obj, size, fillAlpha, triggersColor, otherColor, passableColor, solidColor, dangerColor);
-                    }
-                }
-            }
-        }
-    } else if (!showOnDeath) {
-        if (!layer->m_sections.empty()) {
-            int rightBound = std::min(layer->m_rightSectionIndex, static_cast<int>(layer->m_sections.size()) - 1);
-            for (int i = layer->m_leftSectionIndex; i <= rightBound; ++i) {
-                auto* leftSection = layer->m_sections[i];
-                if (!leftSection) continue;
-                int topBound = std::min(layer->m_topSectionIndex, static_cast<int>(leftSection->size()) - 1);
-                auto* sizeRow = layer->m_sectionSizes[i];
-                for (int j = layer->m_bottomSectionIndex; j <= topBound; ++j) {
-                    auto* section = leftSection->at(j);
-                    if (!section) continue;
-                    int sectionSize = sizeRow->at(j);
-                    auto* data = section->data();
-                    for (int k = 0; k < sectionSize; ++k) {
-                        auto* obj = data[k];
-                        drawSingleObject(layer, drawNode, obj, size, fillAlpha, triggersColor, otherColor, passableColor, solidColor, dangerColor);
+                        drawSingleObject(layer, drawNode, data[k], size, fillAlpha, triggersColor, otherColor, passableColor, solidColor, dangerColor);
                     }
                 }
             }
@@ -295,26 +275,35 @@ class $modify(ShowHitboxesPlayerObject, PlayerObject) {
 };
 
 class $modify(ShowHitboxesPlayLayer, PlayLayer) {
-    // static void onModify(auto& self) {
-    //     auto& gui = GDH::Gui::get();
-    //     auto& hack = gui.getWindow("Level").findHackByName("Show Hitboxes");       
-
-    //     (void) self.setHookPriority("PlayLayer::destroyPlayer", geode::Priority::VeryEarly); 
-    // }
-
     struct Fields {
         cocos2d::CCDrawNode* m_drawNode = nullptr;
+        GameObject* m_deathObject = nullptr;
     };
 
+    static void onModify(auto& self) {
+        (void) self.setHookPriority("PlayLayer::destroyPlayer", geode::Priority::Early); 
+    }
+
     void destroyPlayer(PlayerObject* player, GameObject* object) override {
-        PlayLayer::destroyPlayer(player, object);
-        if (m_anticheatSpike == object) return;
+        if (m_anticheatSpike == object) {
+            PlayLayer::destroyPlayer(player, object);
+            return;
+        }
+
+        auto fields = m_fields.self();
         if (object != nullptr) {
-            deathObject = object;
+            fields->m_deathObject = object;
         }
         else if (currentCheckingObject != nullptr) {
-            deathObject = currentCheckingObject;
+            fields->m_deathObject = currentCheckingObject;
         }
+
+        bool noclip = Config::get().get<bool>("core.noclip", false);
+        if (noclip) {
+            return;
+        }
+
+        PlayLayer::destroyPlayer(player, object);
     }
 
     void createObjectsFromSetupFinished() {
@@ -324,7 +313,9 @@ class $modify(ShowHitboxesPlayLayer, PlayLayer) {
 
     void updateVisibility(float dt) override {
         PlayLayer::updateVisibility(dt);
-        updateHitboxes(this, m_fields->m_drawNode);
+
+        auto fields = m_fields.self();
+        updateHitboxes(this, m_fields->m_drawNode, fields->m_deathObject);
     }
 
     void resetLevel() override {
@@ -332,7 +323,9 @@ class $modify(ShowHitboxesPlayLayer, PlayLayer) {
         playerTrail2.clear();
         playerInnerTrail1.clear();
         playerInnerTrail2.clear();
-        deathObject = nullptr;
+
+        auto fields = m_fields.self();
+        fields->m_deathObject = nullptr;
 
         PlayLayer::resetLevel();
     }
@@ -465,7 +458,7 @@ $execute {
     });
 
     hack.setCustomCheatingCheck([&config, onDeathKey = hack.formatAdditionalSetting("show_on_death"), showDeathObjKey = hack.formatAdditionalSetting("show_death_object")]() {
-        if (config.get<bool>(onDeathKey, false) || (!config.get<bool>("level.show_hitboxes::draw_trail", false) && config.get<bool>(showDeathObjKey, false))) return false;
+        if (config.get<bool>(onDeathKey, false) || config.get<bool>(showDeathObjKey, false)) return false;
         return true;
     });
 }
