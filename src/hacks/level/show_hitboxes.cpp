@@ -314,7 +314,7 @@ class $modify(ShowHitboxesPlayLayer, PlayLayer) {
     };
 
     static void onModify(auto& self) {
-        (void) self.setHookPriority("PlayLayer::destroyPlayer", geode::Priority::Early); 
+        (void) self.setHookPriority("PlayLayer::destroyPlayer", -40); 
     }
 
     void destroyPlayer(PlayerObject* player, GameObject* object) override {
@@ -330,12 +330,7 @@ class $modify(ShowHitboxesPlayLayer, PlayLayer) {
         else if (currentCheckingObject != nullptr) {
             fields->m_deathObject = currentCheckingObject;
         }
-
-        bool noclip = Config::get().get<bool>("core.noclip", false);
-        if (noclip) {
-            return;
-        }
-
+        
         PlayLayer::destroyPlayer(player, object);
     }
 

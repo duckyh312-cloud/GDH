@@ -181,6 +181,7 @@ namespace TrajectoryManager {
     static void reset() {
         dummy_jump = nullptr;
         dummy_normal = nullptr;
+        draw_node = nullptr;
         is_simulating = false;
         simulation_dead = false;
     }
@@ -197,7 +198,7 @@ class $modify(ShowTrajectoryPlayLayer, PlayLayer) {
         auto& gui = GDH::Gui::get();
         auto& hack = gui.getWindow("Level").findHackByName("Show Trajectory");       
 
-        (void) self.setHookPriority("PlayLayer::destroyPlayer", geode::Priority::VeryEarly); 
+        (void) self.setHookPriority("PlayLayer::destroyPlayer", -50); 
         hack.addHookPtr(self.getHook("PlayLayer::destroyPlayer").unwrap());
         hack.addHookPtr(self.getHook("PlayLayer::playEndAnimationToPos").unwrap());
     }

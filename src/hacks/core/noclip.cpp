@@ -19,6 +19,7 @@ class $modify(NoclipPlayLayer, PlayLayer) {
         auto& gui = GDH::Gui::get();
         auto& hack = gui.getWindow("Core").findHackByName("Noclip");        
         
+        (void) self.setHookPriority("PlayLayer::destroyPlayer", -30); 
         hack.addHookPtr(self.getHook("PlayLayer::destroyPlayer").unwrap());
 
         hack.setCustomWindowImGui([

@@ -331,7 +331,7 @@ class $modify(LabelsPlayLayer, PlayLayer) {
     };
 
     static void onModify(auto& self) {
-        (void) self.setHookPriority("PlayLayer::destroyPlayer", -1500);
+        (void) self.setHookPriority("PlayLayer::destroyPlayer", -35);
     }
 
     bool init(GJGameLevel *level, bool useReplay, bool dontCreateObjects) {

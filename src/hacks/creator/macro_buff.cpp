@@ -1,5 +1,6 @@
 #include <Geode/Geode.hpp>
 #include <Geode/modify/GJBaseGameLayer.hpp>
+#include <Geode/modify/LevelEditorLayer.hpp>
 #include "../../core/gui.hpp"
 #include "../../core/ringBuffer.hpp"
 
@@ -119,6 +120,25 @@ class $modify(MacroBuffGJBaseGameLayer, GJBaseGameLayer) {
                     playerRect.origin.y - m_fields->spikeSize.height - 0.1f
                 );
             }
+        }
+    }
+};
+
+class $modify(MacroBuffEditorLayer, LevelEditorLayer) {
+    static void onModify(auto& self) {
+        auto& gui = GDH::Gui::get();
+        auto& hack = gui.getWindow("Creator").findHackByName("Macro Buff");        
+        
+        hack.addHookPtr(self.getHook("LevelEditorLayer::onPlaytest").unwrap());
+    }
+
+    void onPlaytest() {
+        LevelEditorLayer::onPlaytest();
+
+        if (auto gjbgl = static_cast<MacroBuffGJBaseGameLayer*>(GJBaseGameLayer::get())) {
+            gjbgl->m_fields->player_trail.clear();
+            gjbgl->m_fields->spikes.clear();
+            gjbgl->m_fields->frame = 0;
         }
     }
 };
