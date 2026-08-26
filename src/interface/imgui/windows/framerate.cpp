@@ -94,7 +94,7 @@ $execute {
 
         ImGuiH::SpaceSeparator();
         ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
-        if (ImGuiWidgetConfig::DragFloat("##LockDelta_Value", "invisible.lock_delta::value", 1, 1, FLT_MAX, 240.f, "LockDT: %.2f FPS")) {
+        if (ImGuiWidgetConfig::DragFloat("##LockDelta_Value", "invisible.lock_delta::value", 1, 1.f, FLT_MAX, 240.f, "LockDT: %.2f FPS")) {
             if (config.get<bool>("invisible.lock_delta::sync_tps", true)) {
                 auto value = config.get<float>("invisible.lock_delta::value", 240.f);
                 config.set<float>("invisible.tps::value", value);

@@ -15,13 +15,20 @@
 
 static float left_over = 0.f;
 
-#ifdef GEODE_IS_WINDOWS 
 static int expectedTicks = 5;
 uintptr_t offset = 0;
 
+#ifdef GEODE_IS_WINDOWS 
 $execute {
     offset = GDH::Utils::PatternScan(geode::base::get(), 0x250000, "F3 0F 10 86 ? ? ? ? F3 44 0F 10 1D");
 }
+#endif
+
+#ifdef GEODE_IS_ANDROID64
+$execute {
+    offset = GDH::Utils::PatternScan(geode::base::get(), 0x900000, "AB 19 60 1E 0A 10 62 1E 6A 09 6A 1E");
+}
+#endif
 
 class $modify(ReplayCCScheduler, cocos2d::CCScheduler) {
     static void onModify(auto& self) {
@@ -35,9 +42,17 @@ class $modify(ReplayCCScheduler, cocos2d::CCScheduler) {
         config.set<float>("invisible.tps::value", std::clamp(value, 10.f, 240.f));
 
         hack.setHandler([](bool enabled) {
+            #if defined(GEODE_IS_WINDOWS) || defined(GEODE_IS_ANDROID64)
+            if (offset == 0) {
+                geode::log::error("Couldn't find the offset for the TPS bypass");
+                return;
+            }
+            #endif
+
+            #ifdef GEODE_IS_WINDOWS 
             auto expectedTicksAddr = (uintptr_t)&expectedTicks;
             std::vector<uint8_t> patchBytes;
-
+            
             // mov rax, expectedTicks (48 B8 + 8 byte address)
             patchBytes.push_back(0x48);
             patchBytes.push_back(0xB8);
@@ -53,21 +68,48 @@ class $modify(ReplayCCScheduler, cocos2d::CCScheduler) {
             for (int i = 0; i < 54; i++) {
                 patchBytes.push_back(0x90); // NOP
             }
+            #endif
 
-            if (offset != 0) {
-                static auto result = geode::Mod::get()->patch((void*)(offset), patchBytes);
-                static auto patch = result.isErr() ? nullptr : result.unwrap();
-                if (patch) (void)patch->toggle(enabled);
-            }
-            else {
-                geode::log::error("Couldn't find the offset for the TPS bypass");
+            #ifdef GEODE_IS_ANDROID64
+            std::vector<uint8_t> patchBytes;
+
+            auto push_u32 = [&patchBytes](uint32_t insn) {
+                patchBytes.push_back(insn & 0xFF);
+                patchBytes.push_back((insn >> 8) & 0xFF);
+                patchBytes.push_back((insn >> 16) & 0xFF);
+                patchBytes.push_back((insn >> 24) & 0xFF);
+            };
+
+            uint64_t addr = reinterpret_cast<uint64_t>(&expectedTicks);
+            uint16_t u0 = (addr >> 0)  & 0xFFFF;
+            uint16_t u1 = (addr >> 16) & 0xFFFF;
+            uint16_t u2 = (addr >> 32) & 0xFFFF;
+            uint16_t u3 = (addr >> 48) & 0xFFFF;
+
+            // mov x9, &expectedTicks
+            push_u32(0xD2800009 | (u0 << 5));
+            push_u32(0xF2A00009 | (u1 << 5));
+            push_u32(0xF2C00009 | (u2 << 5));
+            push_u32(0xF2E00009 | (u3 << 5));
+
+            // ldr w0, [x9]
+            push_u32(0xB9400120);
+
+            // b +0x10 
+            push_u32(0x14000004);
+            #endif
+
+            static auto result = geode::Mod::get()->patch((void*)(offset), patchBytes);
+            static auto patch = result.isErr() ? nullptr : result.unwrap();
+            
+            if (patch) {
+                (void)patch->toggle(enabled);
             }
         });
     }
 };
-#endif
 
-#ifdef GEODE_IS_ANDROID
+#ifdef GEODE_IS_ANDROID32
 #include "../../core/recorder/recorder.hpp"
 
 class $modify(ReplayCCScheduler, cocos2d::CCScheduler) {
@@ -138,13 +180,14 @@ class $modify(ReplayGJBaseGameLayer, GJBaseGameLayer) {
         auto new_dt = steps * timestep;
         m_extraDelta = total_dt - new_dt;
 
-        #ifdef GEODE_IS_WINDOWS 
+        #if defined(GEODE_IS_WINDOWS) || defined(GEODE_IS_ANDROID64)
         if (new_dt > 0.0) {
             // float v6 = new_dt * 60.f;
             // expectedTicks = std::max(1.f, std::round(v6 / std::min(m_gameState.m_timeWarp, 1.f) * 4.f));
 
             float v6 = new_dt * tps;
             expectedTicks = std::max(1.f, std::round(v6 / std::min(m_gameState.m_timeWarp, 1.f)));
+            geode::log::debug("{}", expectedTicks);
         }
         #endif
 

@@ -21,6 +21,28 @@ $execute {
         tab->addSeparator();
         tab->prepareNewRow();
 
+        #if defined(GEODE_IS_WINDOWS) || defined(GEODE_IS_ANDROID64)
+        
+        tab->addConfigFloatInput("Lock Delta Value", "invisible.lock_delta::value", 240.f, 1.f, FLT_MAX, [&config](float value) {
+            if (config.get<bool>("invisible.lock_delta::sync_tps", true)) {
+                auto value = config.get<float>("invisible.lock_delta::value", 240.f);
+                config.set<float>("invisible.tps::value", value);
+            }
+        });
+        tab->addHackToggle("Lock Delta Enabled", "invisible.lock_delta");
+
+        tab->addConfigToggle("Real Time (Lock Delta)", "invisible.lock_delta::real_time", true);
+        tab->addConfigToggle("Sync TPS w/Lock DT ", "invisible.lock_delta::sync_tps", true, [&config](bool enabled) {
+            if (config.get<bool>("invisible.lock_delta::sync_tps", true)) {
+                auto value = config.get<float>("invisible.tps::value", 240.f);
+                config.set<float>("invisible.lock_delta::value", value);
+            }
+        });
+
+        tab->addSeparator();
+        tab->prepareNewRow();
+        #endif
+
         tab->addConfigFloatInput("Speedhack Value", "invisible.speedhack::value", 1.f, 0.01f, 50.f, [&gui](float) {
             gui.rescanActiveCheats();
         });
