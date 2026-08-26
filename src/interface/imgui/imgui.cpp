@@ -151,16 +151,11 @@ void PushAnimateFoundColor(const std::string& hackName) {
     float& t = anim[hackName];
 
     float speed = 16.0f;
-    float target = founded ? 1.0f : 0.0f;
+    float target = founded ? 1.0f : 0.20f;
 
     t = ImLerp(t, target, ImGui::GetIO().DeltaTime * speed);
 
-    ImVec4 normal = ImGui::GetStyle().Colors[ImGuiCol_Text];
-    ImVec4 faded = ImGui::GetStyle().Colors[ImGuiCol_TextDisabled];
-
-    ImVec4 col = ImLerp(faded, normal, t);
-
-    ImGui::PushStyleColor(ImGuiCol_Text, col);
+    ImGui::PushStyleVar(ImGuiStyleVar_Alpha, ImGui::GetStyle().Alpha * t);
 }
 
 void SettingsRender() {
@@ -490,7 +485,7 @@ void RenderMain() {
             bool state = config.get(id, false);
 
             PushAnimateFoundColor(hackName);
-            if (hack.isCheating() && g_search_text.empty()) ImGui::PushStyleColor(ImGuiCol_Text, ImColor(255, 128, 128).Value);
+            if (hack.isCheating()) ImGui::PushStyleColor(ImGuiCol_Text, ImColor(255, 128, 128).Value);
 
             ImGui::BeginDisabled(hack.getDisabled());
             if (ImGuiH::Checkbox(hackName.c_str(), &state)) {
@@ -498,8 +493,7 @@ void RenderMain() {
             }
             ImGui::EndDisabled();
 
-            if (hack.isCheating() && g_search_text.empty()) ImGui::PopStyleColor();
-            ImGui::PopStyleColor();
+            if (hack.isCheating()) ImGui::PopStyleColor();
 
             ImGuiH::Tooltip(hack.getDesc().c_str(), !hack.getDesc().empty() && ImGui::IsItemHovered());
 
@@ -514,6 +508,7 @@ void RenderMain() {
                     ImGui::EndPopup();
                 }
             }
+            ImGui::PopStyleVar();
         }
 
         if (layoutManager.isCollecting()) {

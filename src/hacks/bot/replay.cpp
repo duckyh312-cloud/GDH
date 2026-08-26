@@ -30,6 +30,7 @@ $execute {
 }
 #endif
 
+#if defined(GEODE_IS_WINDOWS) || defined(GEODE_IS_ANDROID64)
 class $modify(ReplayCCScheduler, cocos2d::CCScheduler) {
     static void onModify(auto& self) {
         auto& gui = GDH::Gui::get();
@@ -110,6 +111,7 @@ class $modify(ReplayCCScheduler, cocos2d::CCScheduler) {
         });
     }
 };
+#endif
 
 #ifdef GEODE_IS_ANDROID32
 #include "../../core/recorder/recorder.hpp"
