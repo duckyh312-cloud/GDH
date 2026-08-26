@@ -57,10 +57,13 @@ class $modify(AutoSafeModeEndLevelLayer, EndLevelLayer) {
             for (const auto& hackID : activeCheats)
                 text += hackID + "\n";
 
+            if (replay_engine)
+                text += "Replay Engine\n";
+
             text += "Safe Mode (GDH)";
             textColor = {255, 165, 0};
         }
-        else if (activeCheats.empty() && !cheatedInCurrentAttempt) {
+        else if (activeCheats.empty() && !cheatedInCurrentAttempt && !replay_engine) {
             text = "Legit (GDH)";
             textColor = {128, 255, 128};
         } 

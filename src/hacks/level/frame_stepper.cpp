@@ -19,6 +19,11 @@ static bool g_prevFrame = false;
 static bool g_pause = true;
 static int g_framesToAdvance = 0;
 
+// for android
+static bool g_isHolding = false;
+static float g_holdTimer = 0.0f;
+//
+
 bool FrameStepper::g_back = false;
 
 static const auto release_cp = [](CheckpointObject* cp) {
@@ -62,6 +67,8 @@ class $modify(FrameStepperCCScheduler, cocos2d::CCScheduler) {
         hack.setCustomWindowCocos([](cocos2d::CCNode* popupNode) {
             auto* popup = static_cast<HackSettingsPopup*>(popupNode);
             popup->addConfigIntInput("Multi-Step Frames Count", "frame_stepper::advance_frames_count", 1, 100, 5);
+            popup->addConfigFloatInput("Hold Timer (s)", "frame_stepper::hold_timer", 0.01f, 1.f, 0.15f);
+            popup->addSeparator();
             popup->addConfigToggle("Backward Stepping", "frame_stepper::backward", false);
             popup->addConfigIntInput("Back Frames Length", "frame_stepper::back_frames_length", 1, 1000, 240);
         });
@@ -96,6 +103,15 @@ class $modify(FrameStepperCCScheduler, cocos2d::CCScheduler) {
                 if (last) last->release();
 
                 g_nextFrame = true;
+            }
+        }
+
+        if (g_isHolding) {
+            g_holdTimer += dt;
+            if (g_holdTimer > config.get<float>("frame_stepper::hold_timer", 0.15f)) {
+                g_holdTimer = 0;
+                CCScheduler::update(dt);
+                return;
             }
         }
 
@@ -136,6 +152,33 @@ class $modify(FrameStepperGJBaseGameLayer, GJBaseGameLayer) {
         auto cp = pl->createCheckpoint();
         cp->retain(); 
         g_checkpoints.push(cp, release_cp);
+    }
+};
+
+class ArrowNext : public CCMenuItemSpriteExtra {
+public:
+    static ArrowNext* create(cocos2d::CCNode* sprite) {
+        auto ret = new ArrowNext();
+        if (ret && ret->init(sprite, nullptr, ret, nullptr)) {
+            ret->autorelease();
+            return ret;
+        }
+        CC_SAFE_DELETE(ret);
+        return nullptr;
+    }
+
+    virtual void selected() override {
+        CCMenuItemSpriteExtra::selected();
+        g_pause = true;
+        g_nextFrame = true;
+        g_isHolding = true;
+        g_holdTimer = 0.0f;
+    }
+    
+    virtual void unselected() override {
+        CCMenuItemSpriteExtra::unselected();
+        g_isHolding = false;
+        g_pause = true;
     }
 };
 
@@ -199,30 +242,43 @@ class $modify(FrameStepperPlayLayer, PlayLayer) {
         PlayLayer::createObjectsFromSetupFinished();
 
         auto director = cocos2d::CCDirector::sharedDirector();
-        auto next_arrow = cocos2d::CCSprite::create("GDH_arrow.png"_spr);  
-        next_arrow->setScale(1.f);
-        next_arrow->setFlipX(true);
 
-        auto next_step_click = geode::cocos::CCMenuItemExt::createSpriteExtra(next_arrow, [](CCMenuItemSpriteExtra* sender) {
-            g_pause = true;
-            g_nextFrame = true;
-        });        
-        
-        next_step_click->setPosition({50.f, director->getScreenTop() - next_step_click->getScaledContentHeight() - 5.f});
-        next_step_click->setOpacity(200);
-        next_step_click->setID("frame_stepper_next_btn"_spr);
-
+        // Back Frame
         auto back_arrow = cocos2d::CCSprite::create("GDH_arrow.png"_spr);  
-        back_arrow->setScale(1.f);
+        back_arrow->setScale(1.5f);
 
         auto back_arrow_click = geode::cocos::CCMenuItemExt::createSpriteExtra(back_arrow, [](CCMenuItemSpriteExtra* sender) {
             g_pause = true;
             g_prevFrame = true;
         });  
 
-        back_arrow_click->setPosition({50.f, director->getScreenTop() - back_arrow_click->getScaledContentHeight() * 2 - 10.f});
+        back_arrow_click->setPosition({50.f, 50.f});
         back_arrow_click->setOpacity(200);
         back_arrow_click->setID("frame_stepper_back_btn"_spr);
+
+        // Next Frame
+        auto next_arrow = cocos2d::CCSprite::create("GDH_arrow.png"_spr);  
+        next_arrow->setScale(1.5f);
+        next_arrow->setFlipX(true);
+
+        auto next_step_click = ArrowNext::create(next_arrow);
+        next_step_click->setPosition({125.f, 50.f});
+        next_step_click->setOpacity(255);
+        next_step_click->setID("frame_stepper_next_btn"_spr);
+
+        // Multi-Step Frame
+        auto next_multi_arrow = cocos2d::CCSprite::create("GDH_arrowMulti.png"_spr);  
+        next_multi_arrow->setScale(1.5f);
+        next_multi_arrow->setFlipX(true);
+
+        auto next_multi_arrow_click = geode::cocos::CCMenuItemExt::createSpriteExtra(next_multi_arrow, [](CCMenuItemSpriteExtra* sender) {
+            g_pause = true;
+            g_framesToAdvance = Config::get().get<int>("frame_stepper::advance_frames_count", 5);
+        });        
+        
+        next_multi_arrow_click->setPosition({200.f, 50.f});
+        next_multi_arrow_click->setOpacity(255);
+        next_multi_arrow_click->setID("frame_stepper_next_multi_btn"_spr);
 
         auto fields = m_fields.self();
         fields->m_stepperMenu = cocos2d::CCMenu::create();
@@ -230,8 +286,9 @@ class $modify(FrameStepperPlayLayer, PlayLayer) {
         fields->m_stepperMenu->setPosition(0, 0);
         fields->m_stepperMenu->setZOrder(999);
 
-        fields->m_stepperMenu->addChild(next_step_click);
         fields->m_stepperMenu->addChild(back_arrow_click);
+        fields->m_stepperMenu->addChild(next_step_click);
+        fields->m_stepperMenu->addChild(next_multi_arrow_click);
 
         auto& config = Config::get();
         bool enabled = config.get<bool>("level.frame_stepper", false);
@@ -257,6 +314,12 @@ class $modify(FrameStepperPlayLayer, PlayLayer) {
     
     void resume() {
         PlayLayer::resume();
+        toggleUI();
+    }
+
+    void resumeAndRestart(bool fromStart) {
+        PlayLayer::resumeAndRestart(fromStart);
+
         toggleUI();
     }
 

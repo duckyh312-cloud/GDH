@@ -99,12 +99,14 @@ class $modify(ReplayCCScheduler, cocos2d::CCScheduler) {
             push_u32(0x14000004);
             #endif
 
+            #if defined(GEODE_IS_WINDOWS) || defined(GEODE_IS_ANDROID64)
             static auto result = geode::Mod::get()->patch((void*)(offset), patchBytes);
             static auto patch = result.isErr() ? nullptr : result.unwrap();
             
             if (patch) {
                 (void)patch->toggle(enabled);
             }
+            #endif
         });
     }
 };
@@ -187,7 +189,6 @@ class $modify(ReplayGJBaseGameLayer, GJBaseGameLayer) {
 
             float v6 = new_dt * tps;
             expectedTicks = std::max(1.f, std::round(v6 / std::min(m_gameState.m_timeWarp, 1.f)));
-            geode::log::debug("{}", expectedTicks);
         }
         #endif
 

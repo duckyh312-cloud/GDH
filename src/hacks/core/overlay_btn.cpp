@@ -30,6 +30,18 @@ class $modify(OverlayButtonVisiblityPL, PlayLayer) {
         if (Config::get().get<bool>("ui_icon.hide_on_game", true))
             OverlayButton::get()->setVisible(false);
     }
+
+    void resumeAndRestart(bool fromStart) {
+        PlayLayer::resumeAndRestart(fromStart);
+
+        if (Config::get().get<bool>("ui_icon.hide_on_game", true))
+            OverlayButton::get()->setVisible(false);
+    }
+
+    void showEndLayer() {
+        PlayLayer::showEndLayer();
+        OverlayButton::get()->setVisible(true);
+    }
 };
 
 class $modify(OverlayButtonVisiblityLEL, LevelEditorLayer) {
