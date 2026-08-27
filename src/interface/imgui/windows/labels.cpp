@@ -209,7 +209,7 @@ $execute {
             if (!currentLabel.enabled) ImGui::BeginDisabled(true);
             
             const char* typeName = (currentLabel.type == GDH::Labels::LabelType::Text) ? "Text" :
-                                   (currentLabel.type == GDH::Labels::LabelType::CheatIndicator) ? "Cheat Indicator" : "Spacing";
+                                (currentLabel.type == GDH::Labels::LabelType::CheatIndicator) ? "Cheat Indicator" : "Spacing";
                 
             if (ImGui::BeginCombo("Label Type", typeName)) {
                 if (ImGui::Selectable("Text", currentLabel.type == GDH::Labels::LabelType::Text)) {
@@ -238,6 +238,7 @@ $execute {
                 ImGuiH::DragFloat("Size", &currentLabel.size, 0.1f, 0.1f, 4.0f);
             } else if (currentLabel.type == GDH::Labels::LabelType::CheatIndicator) {
                 ImGuiH::DragFloat("Size", &currentLabel.size, 0.1f, 0.1f, 4.0f);
+                ImGuiH::DragFloat("Opacity", &currentLabel.color[3], 0.01f, 0.f, 1.f);
             } else if (currentLabel.type == GDH::Labels::LabelType::Spacing) {
                 ImGuiH::DragFloat("##Spacing", &currentLabel.size, 1.0f, 1.0f, 256.0f, "Spacing: %.1fpx");
             }

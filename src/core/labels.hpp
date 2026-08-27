@@ -61,11 +61,11 @@ namespace GDH {
                 this->noclip = false;
             }
 
-            Label(float size, LabelType type) {
+            Label(float size, LabelType type, float opacity = 1.0f) {
                 this->enabled = true;
                 this->type = type;
                 this->text = ".";
-                this->color = {1.0f, 1.0f, 1.0f, 1.0f};
+                this->color = {1.0f, 1.0f, 1.0f, opacity};
                 this->size = size;
                 this->rainbow = false;
                 this->cps = false;

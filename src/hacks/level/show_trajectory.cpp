@@ -91,9 +91,6 @@ namespace TrajectoryManager {
         simPlayer->m_hasNoEffects = true;
         simPlayer->m_maybeReducedEffects = performanceMode;
 
-        simPlayer->setPosition(sourcePlayer->m_position);
-        simPlayer->setRotation(sourcePlayer->getRotation());
-
         simPlayer->m_gravityMod = sourcePlayer->m_gravityMod;
         simPlayer->m_isSideways = sourcePlayer->m_isSideways;
 
@@ -130,6 +127,10 @@ namespace TrajectoryManager {
         auto playerColor = GDH::Utils::hexToColor4F(config.get<std::string>("level.show_hitboxes::playerColor", "#FF0000FF"));
 
         cocos2d::ccColor4F lineColor = isJumpInput ? jumpColor : normalColor;
+
+        if (config.get<bool>("invisible.tps", false)) {
+            dt_step = 1.f / config.get<float>("invisible.tps::value", 240.f) * 60.f;
+        }
 
         float effectiveDt = dt_step * static_cast<float>(stepMultiplier);
 
@@ -326,6 +327,13 @@ class $modify(ShowTrajectoryBaseGameLayer, GJBaseGameLayer) {
     void playerTouchedRing(PlayerObject* player, RingObject* object) {
         if (TrajectoryManager::is_simulating) return;
         GJBaseGameLayer::playerTouchedRing(player, object);
+    }
+
+    void destroyObject(GameObject *object) {
+        if (TrajectoryManager::is_simulating) {
+            if (object->m_objectType == GameObjectType::Breakable) return;
+        }
+        GJBaseGameLayer::destroyObject(object);
     }
 };
 

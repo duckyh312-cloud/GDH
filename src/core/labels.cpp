@@ -254,6 +254,7 @@ void Manager::save() {
                 } break;
                 case LabelType::CheatIndicator: {
                     labelObj["size"] = label.size;
+                    labelObj["opacity"] = label.color[3];
                 } break;
                 case LabelType::Spacing: {
                     labelObj["spacing"] = label.size;
@@ -309,7 +310,8 @@ void Manager::load() {
                     labelsCorner.emplace_back(i["text"], color, i["size"], rainbow, cps, noclip);
                 } break;
                 case LabelType::CheatIndicator: {
-                    labelsCorner.emplace_back(i["size"].get<float>(), LabelType::CheatIndicator);
+                    float opacity = i.value("opacity", 1.0f);
+                    labelsCorner.emplace_back(i["size"].get<float>(), LabelType::CheatIndicator, opacity);
                 } break;
                 case LabelType::Spacing: {
                     labelsCorner.emplace_back(i["spacing"]);
@@ -545,7 +547,7 @@ class $modify(LabelsPlayLayer, PlayLayer) {
                         label->setColor({0, 255, 0});
                     }
 
-                    label->setOpacity(255);
+                    label->setOpacity(static_cast<GLubyte>(labelObj.color[3] * 255));
 
                     y += (label->getContentHeight()) * labelObj.size + manager.midPadding;
                 } 

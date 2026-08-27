@@ -185,6 +185,7 @@ protected:
             }
             input->setPosition({winSize.width / 2, y});
             input->setString(label.text);
+            input->setFilter("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~ ");
             input->setCallback([&label](const std::string& str) {
                 label.text = str;
             });
@@ -326,15 +327,15 @@ protected:
         } else if (label.type == GDH::Labels::LabelType::CheatIndicator) {
             auto sizeLabel = geode::Label::create("Size (px):", "GoogleSans.fnt"_spr);
             sizeLabel->setScale(0.4f);
-            sizeLabel->setPosition({60.f, y});
+            sizeLabel->setPosition({45.f, y});
             menu->addChild(sizeLabel);
 
-            auto sizeInput = TextInput::create(80.f, "Px", "chatFont.fnt");
+            auto sizeInput = TextInput::create(50.f, "Px", "chatFont.fnt");
             if (auto* bg = sizeInput->getChildByType<geode::NineSlice>(0)) { 
                 bg->setColor({71, 71, 131}); 
                 bg->setOpacity(255); 
             }
-            sizeInput->setPosition({150.f, y});
+            sizeInput->setPosition({95.f, y});
             sizeInput->setString(fmt::format("{:.1f}", label.size));
             sizeInput->setFilter("0123456789.");
             sizeInput->setCallback([&label](const std::string& str) {
@@ -343,6 +344,45 @@ protected:
                 }
             });
             m_mainLayer->addChild(sizeInput);
+
+            auto opacityLabel = geode::Label::create("Opacity:", "GoogleSans.fnt"_spr);
+            opacityLabel->setScale(0.4f);
+            opacityLabel->setPosition({160.f, y});
+            menu->addChild(opacityLabel);
+
+            GLubyte curAlpha = static_cast<GLubyte>(label.color[3] * 255.f);
+
+            auto colorSprite = ColorChannelSprite::create();
+            colorSprite->setScale(0.7f);
+            colorSprite->setColor({255, 255, 255});
+            colorSprite->setOpacity(curAlpha);
+
+            auto colorBtn = CCMenuItemExt::createSpriteExtra(colorSprite, [this, corner = m_corner, index = m_index, colorSprite](auto) {
+                auto& manager = GDH::Labels::Manager::get();
+                if (index >= manager.labels[corner].size()) return;
+                
+                auto& targetLabel = manager.labels[corner][index];
+                cocos2d::ccColor4B popupColor = {
+                    255, 255, 255,
+                    static_cast<GLubyte>(targetLabel.color[3] * 255.f)
+                };
+
+                auto popup = CompatibleColorPopup::create(popupColor, true);
+                popup->setCallback([weakSelf = geode::WeakRef(this), corner, index, colorSprite](cocos2d::ccColor4B const& formatColor) {
+                    if (!weakSelf.lock()) return;
+
+                    auto& mgr = GDH::Labels::Manager::get();
+                    if (index < mgr.labels[corner].size()) {
+                        auto& l = mgr.labels[corner][index];
+                        l.color[3] = formatColor.a / 255.f;
+                    }
+
+                    colorSprite->setOpacity(formatColor.a);
+                });
+                popup->show();
+            });
+            colorBtn->setPosition({210.f, y});
+            menu->addChild(colorBtn);
         }
 
         y = 30.f;
