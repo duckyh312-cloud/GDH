@@ -465,7 +465,7 @@ void RenderMain() {
 
     for (auto& window : windows) {
         std::string windowName = window.getName();
-        if (windowName == "Invisible") continue;
+        if (windowName == "Invisible" || windowName == "Settings" || windowName == "Search") continue;
         
         layoutManager.applyWindowTransform(windowName);
 

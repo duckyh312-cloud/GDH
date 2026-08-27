@@ -1,4 +1,3 @@
-#ifdef GEODE_IS_ANDROID
 #include <Geode/Geode.hpp>
 #include "../hacks_tab.hpp"
 #include "../../../core/gui.hpp"
@@ -84,4 +83,3 @@ $execute {
         });
     });
 }
-#endif
