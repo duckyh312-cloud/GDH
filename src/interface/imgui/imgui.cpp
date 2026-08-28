@@ -192,18 +192,6 @@ void SettingsRender() {
         config.set<bool>("ui.notify_updates", notify_updates);
     }
 
-    if (ImGuiH::Button("Refresh Layout", {ImGui::GetContentRegionAvail().x, 0})) {
-        g_resetLayoutCalled = true;
-    }
-
-    if (ImGuiH::Button(g_showThemeEditor ? "Disable Theme Editor" : "Theme Editor", {ImGui::GetContentRegionAvail().x, 0})) {
-        g_reopenAfterTheme = true;
-        if (g_showThemeEditor) g_reopenAfterRecalc = true;
-        ToggleUI();
-    }
-
-    ImGuiH::SpaceSeparator();
-
     if (ImGuiH::Button("Show Cheat Hack List", {ImGui::GetContentRegionAvail().x, 0})) {
         auto& activeCheats = GDH::Gui::get().getActiveCheats();
         bool replay_engine = (GDH::ReplayEngine::get().mode != state::disable);
@@ -243,6 +231,18 @@ void SettingsRender() {
         }
 
         ImGui::EndPopup();
+    }
+
+    ImGuiH::SpaceSeparator();
+
+    if (ImGuiH::Button("Refresh Layout", {ImGui::GetContentRegionAvail().x, 0})) {
+        g_resetLayoutCalled = true;
+    }
+
+    if (ImGuiH::Button(g_showThemeEditor ? "Disable Theme Editor" : "Theme Editor", {ImGui::GetContentRegionAvail().x, 0})) {
+        g_reopenAfterTheme = true;
+        if (g_showThemeEditor) g_reopenAfterRecalc = true;
+        ToggleUI();
     }
 
     if (layoutManager.isCollecting()) {

@@ -1,3 +1,22 @@
+# v5.1.0-beta.6
+- Fixed Noclip settings (tint on death not working)
+- Fixed Macro Buff (crash)
+- Fixed Editor Extension
+- TPS Optimization (Android ARM64)
+- Fixed icon visiblity (again)
+- Improved Cheat Indicator
+- Improved Frame Stepper UI (hold support)
+- Improved visibility of search results
+- Added Search (Mobile)
+- Ability to adjust opacity of cheat indicator (Labels)
+- Fixed size change of cheat indicator (Labels/Mobile)
+- Fixed Show Trajctory (breakable blocks and 1 frame delay)
+- Fixed inability to enter tags (Labels/Mobile)
+- Added Show Touches
+- Added Auto Disable Shake
+- Added Auto LDM
+- Improved theme editor (ability to change the glow color and shadow of the knobs)
+
 # v5.1.0-beta.5
 - Fixed Cheat Indicator (false red color)
 - Fixed "Solid Wave Trail"

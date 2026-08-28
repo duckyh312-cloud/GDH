@@ -23,6 +23,7 @@ GDH is a mod menu for Geometry Dash featuring gameplay enhancements and a beauti
 - Variables Editor
 - Hitboxes
 - Frame Stepper (w/Backward Support)
+- Show Trajctory
 - Something else coming soon...
 
 ## Install GDH directly through the mod catalogue in Geode itself (Recommended)
