@@ -169,7 +169,10 @@ $execute {
         }
         
         if (ImGui::BeginPopupModal("Crash the Game", 0, ImGuiWindowFlags_AlwaysAutoResize)) {
-            ImGuiH::GlowWindow(IM_COL32(255, 128, 128, 150), IM_COL32(255, 128, 128, 0), layout.multipleScale(500.f));
+            auto glow_in = ImGui::ColorConvertFloat4ToU32(ImGuiH::colorTable[ImGuiH::Glow_Popup_Critical_In]);
+            auto glow_out = ImGui::ColorConvertFloat4ToU32(ImGuiH::colorTable[ImGuiH::Glow_Popup_Critical_Out]);
+
+            ImGuiH::GlowWindow(glow_in, glow_out, layout.multipleScale(500.f));
             ImGui::Text("Are you sure you want to crash Geometry Dash?");
             ImGui::Text("Unsaved data will be lost");
 

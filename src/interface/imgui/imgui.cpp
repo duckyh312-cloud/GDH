@@ -227,7 +227,10 @@ void SettingsRender() {
 
     if (ImGui::BeginPopupModal("Disable cheating hacks##Confirm", 0, ImGuiWindowFlags_AlwaysAutoResize)) {
         auto& layout = GDH::Layout::Manager::get();
-        ImGuiH::GlowWindow(IM_COL32(71, 71, 131, 150), IM_COL32(255, 128, 128, 0), layout.multipleScale(500.f));
+        auto glow_in = ImGui::ColorConvertFloat4ToU32(ImGuiH::colorTable[ImGuiH::Glow_Popup_Warning_In]);
+        auto glow_out = ImGui::ColorConvertFloat4ToU32(ImGuiH::colorTable[ImGuiH::Glow_Popup_Warning_Out]);
+
+        ImGuiH::GlowWindow(glow_in, glow_out, layout.multipleScale(500.f));
         ImGui::Text("Are you sure you want to turn off cheating hacks?");
 
         if (ImGuiH::Button("Cancel", {ImGui::GetContentRegionAvail().x, 0})) {
@@ -403,7 +406,9 @@ void notifyUpdate() {
         auto& config = Config::get();
         bool dont_show_again = !config.get<bool>("ui.notify_updates", true);
         
-        ImGuiH::GlowWindow(IM_COL32(71, 71, 131, 150), IM_COL32(128, 255, 128, 0), layout.multipleScale(500.f));
+        auto glow_in = ImGui::ColorConvertFloat4ToU32(ImGuiH::colorTable[ImGuiH::Glow_Popup_Update_In]);
+        auto glow_out = ImGui::ColorConvertFloat4ToU32(ImGuiH::colorTable[ImGuiH::Glow_Popup_Update_Out]);
+        ImGuiH::GlowWindow(glow_in, glow_out, layout.multipleScale(500.f));
         
         float oldScale = ImGui::GetFont()->Scale;
         ImGui::GetFont()->Scale = layout.multipleScale(32.0f) / ImGui::GetFontSize();

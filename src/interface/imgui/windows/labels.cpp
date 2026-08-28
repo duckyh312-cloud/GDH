@@ -143,7 +143,10 @@ $execute {
         ImGui::PushStyleColor(ImGuiCol_WindowBg, bgColor);
         
         if (ImGui::BeginPopupModal("Add a label##Modal", 0, ImGuiWindowFlags_AlwaysAutoResize)) {
-            ImGuiH::GlowWindow(IM_COL32(120, 100, 240, 100), IM_COL32(120, 100, 240, 0), layout.multipleScale(250.f));
+            auto glow_in = ImGui::ColorConvertFloat4ToU32(ImGuiH::colorTable[ImGuiH::Glow_Popup_In]);
+            auto glow_out = ImGui::ColorConvertFloat4ToU32(ImGuiH::colorTable[ImGuiH::Glow_Popup_Out]);
+            ImGuiH::GlowWindow(glow_in, glow_out);
+            
             ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
             ImGui::ColorEdit4("##Color", g_newLabelColor.data());
             ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);

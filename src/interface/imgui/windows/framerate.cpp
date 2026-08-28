@@ -61,7 +61,9 @@ $execute {
         }
 
         if (ImGui::BeginPopupModal("TPS Warning##Modal", NULL, ImGuiWindowFlags_AlwaysAutoResize)) {
-            ImGuiH::GlowWindow(IM_COL32(255, 128, 128, 150), IM_COL32(255, 128, 128, 0), layout.multipleScale(500.f));
+            auto glow_in = ImGui::ColorConvertFloat4ToU32(ImGuiH::colorTable[ImGuiH::Glow_Popup_Critical_In]);
+            auto glow_out = ImGui::ColorConvertFloat4ToU32(ImGuiH::colorTable[ImGuiH::Glow_Popup_Critical_Out]);
+            ImGuiH::GlowWindow(glow_in, glow_out, layout.multipleScale(500.f));
 
             float oldScale = ImGui::GetFont()->Scale;
             ImGui::GetFont()->Scale = layout.multipleScale(32.0f) / ImGui::GetFontSize();

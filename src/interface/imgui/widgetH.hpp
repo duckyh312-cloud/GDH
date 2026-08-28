@@ -57,19 +57,16 @@ namespace ImGuiH {
         Glow_Popup_In,
         Glow_Popup_Out,
 
-        Glow_Popup_Crash_In,
-        Glow_Popup_Crash_Out,
+        Glow_Popup_Warning_In,
+        Glow_Popup_Warning_Out,
 
-        Glow_Popup_Disable_Cheats_In,
-        Glow_Popup_Disable_Cheats_Out,
+        Glow_Popup_Critical_In,
+        Glow_Popup_Critical_Out,
 
         Glow_Popup_Update_In,
         Glow_Popup_Update_Out,
 
-        Glow_Popup_TPS_Warning_In,
-        Glow_Popup_TPS_Warning_Out,
-
-        Color_Count,
+        Color_Count
     };
     
     struct PopupMessage {
@@ -80,7 +77,7 @@ namespace ImGuiH {
         bool dying;
     };
 
-    extern std::map<Color, ImVec4> colors;
+    extern std::map<Color, ImVec4> colorTable;
     
     bool Button(const char* label, const ImVec2& size_arg = ImVec2(0, 0));
     bool Checkbox(const char* label, bool* v);

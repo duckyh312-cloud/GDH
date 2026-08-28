@@ -714,7 +714,10 @@ $execute {
         }
 
         if (ImGui::BeginPopupModal("Record Overwrite Warning", 0, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoResize)) {
-            ImGuiH::GlowWindow(IM_COL32(71, 71, 131, 150), IM_COL32(255, 128, 128, 0), layout.multipleScale(500.f));
+            auto glow_in = ImGui::ColorConvertFloat4ToU32(ImGuiH::colorTable[ImGuiH::Glow_Popup_Warning_In]);
+            auto glow_out = ImGui::ColorConvertFloat4ToU32(ImGuiH::colorTable[ImGuiH::Glow_Popup_Warning_Out]);
+
+            ImGuiH::GlowWindow(glow_in, glow_out, layout.multipleScale(500.f));
             ImGui::Text("You currently have actions stored in the buffer.\nStarting a new recording will clear your current unsaved active macro.\n\nAre you sure you want to proceed?");
             ImGuiH::SpaceSeparator();
             if (ImGuiH::Button("Yes, Overwrite", {ImGui::GetContentRegionAvail().x / 2, 0})) {
@@ -736,7 +739,10 @@ $execute {
         }
 
         if (ImGui::BeginPopupModal("Save Overwrite Warning", 0, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoResize)) {
-            ImGuiH::GlowWindow(IM_COL32(71, 71, 131, 150), IM_COL32(255, 128, 128, 0), layout.multipleScale(500.f));
+            auto glow_in = ImGui::ColorConvertFloat4ToU32(ImGuiH::colorTable[ImGuiH::Glow_Popup_Warning_In]);
+            auto glow_out = ImGui::ColorConvertFloat4ToU32(ImGuiH::colorTable[ImGuiH::Glow_Popup_Warning_Out]);
+
+            ImGuiH::GlowWindow(glow_in, glow_out, layout.multipleScale(500.f));
             ImGui::Text("A macro named \"%s.re4\" already exists.\nAre you sure you want to overwrite it?", engine.replay_name.c_str());
             ImGuiH::SpaceSeparator();
             if (ImGuiH::Button("Yes, Overwrite", {ImGui::GetContentRegionAvail().x / 2, 0})) {
@@ -751,7 +757,10 @@ $execute {
         }
 
         if (ImGui::BeginPopupModal("Load Overwrite Warning", 0, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoResize)) {
-            ImGuiH::GlowWindow(IM_COL32(71, 71, 131, 150), IM_COL32(255, 128, 128, 0), layout.multipleScale(500.f));
+            auto glow_in = ImGui::ColorConvertFloat4ToU32(ImGuiH::colorTable[ImGuiH::Glow_Popup_Warning_In]);
+            auto glow_out = ImGui::ColorConvertFloat4ToU32(ImGuiH::colorTable[ImGuiH::Glow_Popup_Warning_Out]);
+
+            ImGuiH::GlowWindow(glow_in, glow_out, layout.multipleScale(500.f));
             ImGui::Text("You currently have recorded actions actively loaded.\nLoading this macro will clear your unsaved working progress.\n\nAre you sure you want to proceed?");
             ImGuiH::SpaceSeparator();
             if (ImGuiH::Button("Yes, Load", {ImGui::GetContentRegionAvail().x / 2, 0})) {
@@ -766,7 +775,10 @@ $execute {
         }
 
         if (ImGui::BeginPopupModal("Clear Warning", 0, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoResize)) {
-            ImGuiH::GlowWindow(IM_COL32(71, 71, 131, 150), IM_COL32(255, 128, 128, 0), layout.multipleScale(500.f));
+            auto glow_in = ImGui::ColorConvertFloat4ToU32(ImGuiH::colorTable[ImGuiH::Glow_Popup_Warning_In]);
+            auto glow_out = ImGui::ColorConvertFloat4ToU32(ImGuiH::colorTable[ImGuiH::Glow_Popup_Warning_Out]);
+
+            ImGuiH::GlowWindow(glow_in, glow_out, layout.multipleScale(500.f));
             ImGui::Text("Are you sure you want to completely clear the current macro?\nThis action cannot be undone.");
             ImGuiH::SpaceSeparator();
             if (ImGuiH::Button("Yes, Clear", {ImGui::GetContentRegionAvail().x / 2, 0})) {
@@ -782,7 +794,10 @@ $execute {
         }
 
         if (ImGui::BeginPopupModal("Select Replay", 0, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoResize)) {
-            ImGuiH::GlowWindow(IM_COL32(120, 100, 240, 100), IM_COL32(120, 100, 240, 0), layout.multipleScale(250.f));
+            auto glow_in = ImGui::ColorConvertFloat4ToU32(ImGuiH::colorTable[ImGuiH::Glow_Popup_In]);
+            auto glow_out = ImGui::ColorConvertFloat4ToU32(ImGuiH::colorTable[ImGuiH::Glow_Popup_Out]);
+
+            ImGuiH::GlowWindow(glow_in, glow_out, layout.multipleScale(250.f));
             ImGui::BeginChild("Replay List", {layout.multipleScale(400.f), layout.multipleScale(500.f)});
             for (const auto& replay : replay_list)
             {
@@ -813,7 +828,9 @@ $execute {
         }
         
         if (ImGui::BeginPopupModal("Pro Settings", &isProSettingsOpen)) {
-            ImGuiH::GlowWindow(IM_COL32(120, 100, 240, 100), IM_COL32(120, 100, 240, 0), layout.multipleScale(250.f));
+            auto glow_in = ImGui::ColorConvertFloat4ToU32(ImGuiH::colorTable[ImGuiH::Glow_Popup_In]);
+            auto glow_out = ImGui::ColorConvertFloat4ToU32(ImGuiH::colorTable[ImGuiH::Glow_Popup_Out]);
+            ImGuiH::GlowWindow(glow_in, glow_out);
 
             if (ImGui::BeginTabBar("ProSettingsTabBar")) {
                 if (ImGui::BeginTabItem("Settings")) {

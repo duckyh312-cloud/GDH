@@ -66,20 +66,17 @@ namespace ImGuiH {
         {Color::Drag_Foreground_Hover,          COLOR_F32(0xE0EBFFFF)},
         {Color::Drag_Foreground_Active,         COLOR_F32(0x1A1A49FF)},
 
-        {Color::Glow_Popup_In,                  COLOR_F32(0x47478396)},
-        {Color::Glow_Popup_Out,                 COLOR_F32(0x1A1A49FF)},
+        {Color::Glow_Popup_In,                  COLOR_F32(0x7864F064)},
+        {Color::Glow_Popup_Out,                 COLOR_F32(0x7864F000)},
         
-        {Color::Glow_Popup_Crash_In,            COLOR_F32(0x1A1A49FF)},
-        {Color::Glow_Popup_Crash_Out,           COLOR_F32(0x1A1A49FF)},
+        {Color::Glow_Popup_Warning_In,          COLOR_F32(0x47478396)},
+        {Color::Glow_Popup_Warning_Out,         COLOR_F32(0xFF808000)},
 
-        {Color::Glow_Popup_Disable_Cheats_In,   COLOR_F32(0x1A1A49FF)},
-        {Color::Glow_Popup_Disable_Cheats_Out,  COLOR_F32(0x1A1A49FF)},
+        {Color::Glow_Popup_Critical_In,         COLOR_F32(0xFF808096)},
+        {Color::Glow_Popup_Critical_Out,        COLOR_F32(0xFF808000)},
         
-        {Color::Glow_Popup_Update_In,           COLOR_F32(0x1A1A49FF)},
-        {Color::Glow_Popup_Update_Out,          COLOR_F32(0x1A1A49FF)},
-        
-        {Color::Glow_Popup_TPS_Warning_In,      COLOR_F32(0x1A1A49FF)},
-        {Color::Glow_Popup_TPS_Warning_Out,     COLOR_F32(0x1A1A49FF)},
+        {Color::Glow_Popup_Update_In,           COLOR_F32(0x47478396)},
+        {Color::Glow_Popup_Update_Out,          COLOR_F32(0x80FF8000)},
     };
 
     std::map<ImGuiCol_, ImVec4> nativeColorTable = {
@@ -196,6 +193,15 @@ namespace ImGuiH {
             case Color::Drag_Foreground:               return "Drag Foreground";
             case Color::Drag_Foreground_Hover:         return "Drag Foreground Hover";
             case Color::Drag_Foreground_Active:        return "Drag Foreground Active";
+            
+            case Color::Glow_Popup_In:                 return "Glow Popup In";
+            case Color::Glow_Popup_Out:                return "Glow Popup Out";
+            case Color::Glow_Popup_Warning_In:         return "Glow Popup Warning In";
+            case Color::Glow_Popup_Warning_Out:        return "Glow Popup Warning Out";
+            case Color::Glow_Popup_Critical_In:        return "Glow Popup Critical In";
+            case Color::Glow_Popup_Critical_Out:       return "Glow Popup Critical Out";
+            case Color::Glow_Popup_Update_In:          return "Glow Popup Update In";
+            case Color::Glow_Popup_Update_Out:         return "Glow Popup Update Out";
             default:                                   return "Unknown Custom Color";
         }
     }
@@ -374,6 +380,80 @@ namespace ImGuiH {
                     ImGui::EndTabItem();
                 }
                 ImGui::EndTabBar();
+            }
+
+            SpaceSeparator();
+
+            if (ImGuiH::Button("Show Popup for Glow Test")) {
+                ImGui::OpenPopup("Glow Test");
+            }
+
+            if (ImGui::BeginPopupModal("Glow Test", 0, ImGuiWindowFlags_AlwaysAutoResize)) {
+                static int color_type = 0;
+                auto& layout = GDH::Layout::Manager::get();
+
+                auto glow_in = ImGui::ColorConvertFloat4ToU32(ImGuiH::colorTable[ImGuiH::Glow_Popup_In]);
+                auto glow_out = ImGui::ColorConvertFloat4ToU32(ImGuiH::colorTable[ImGuiH::Glow_Popup_Out]);
+
+                if (color_type == 1) {
+                    glow_in = ImGui::ColorConvertFloat4ToU32(ImGuiH::colorTable[ImGuiH::Glow_Popup_Warning_In]);
+                    glow_out = ImGui::ColorConvertFloat4ToU32(ImGuiH::colorTable[ImGuiH::Glow_Popup_Warning_Out]);
+                }
+                else if (color_type == 2) {
+                    glow_in = ImGui::ColorConvertFloat4ToU32(ImGuiH::colorTable[ImGuiH::Glow_Popup_Critical_In]);
+                    glow_out = ImGui::ColorConvertFloat4ToU32(ImGuiH::colorTable[ImGuiH::Glow_Popup_Critical_Out]);
+                }
+                else if (color_type == 3) {
+                    glow_in = ImGui::ColorConvertFloat4ToU32(ImGuiH::colorTable[ImGuiH::Glow_Popup_Update_In]);
+                    glow_out = ImGui::ColorConvertFloat4ToU32(ImGuiH::colorTable[ImGuiH::Glow_Popup_Update_Out]);
+                }
+                ImGuiH::GlowWindow(glow_in, glow_out, layout.multipleScale(500.f));
+                
+                if (ImGuiH::RadioButton("Glow Default", color_type == 0)) {
+                    color_type = 0;
+                } ImGui::SameLine();
+
+                if (ImGuiH::RadioButton("Glow Warning", color_type == 1)) {
+                    color_type = 1;
+                } ImGui::SameLine();
+
+                if (ImGuiH::RadioButton("Glow Critical Warning", color_type == 2)) {
+                    color_type = 2;
+                } ImGui::SameLine();
+
+                if (ImGuiH::RadioButton("Glow Update", color_type == 3)) {
+                    color_type = 3;
+                }
+
+                ImGui::Spacing();
+                ImGui::Separator();
+                ImGui::Text("Glow Color Palette:");
+                ImGui::Spacing();
+
+                if (color_type == 0) {
+                    ImGui::ColorEdit4("Glow In", &ImGuiH::colorTable[ImGuiH::Glow_Popup_In].x, ImGuiColorEditFlags_NoInputs);
+                    ImGui::ColorEdit4("Glow Out", &ImGuiH::colorTable[ImGuiH::Glow_Popup_Out].x, ImGuiColorEditFlags_NoInputs);
+                }
+                else if (color_type == 1) {
+                    ImGui::ColorEdit4("Glow Warning In", &ImGuiH::colorTable[ImGuiH::Glow_Popup_Warning_In].x, ImGuiColorEditFlags_NoInputs);
+                    ImGui::ColorEdit4("Glow Warning Out", &ImGuiH::colorTable[ImGuiH::Glow_Popup_Warning_Out].x, ImGuiColorEditFlags_NoInputs);
+                }
+                else if (color_type == 2) {
+                    ImGui::ColorEdit4("Glow Critical In", &ImGuiH::colorTable[ImGuiH::Glow_Popup_Critical_In].x, ImGuiColorEditFlags_NoInputs);
+                    ImGui::ColorEdit4("Glow Critical Out", &ImGuiH::colorTable[ImGuiH::Glow_Popup_Critical_Out].x, ImGuiColorEditFlags_NoInputs);
+                }
+                else if (color_type == 3) {
+                    ImGui::ColorEdit4("Glow Update In", &ImGuiH::colorTable[ImGuiH::Glow_Popup_Update_In].x, ImGuiColorEditFlags_NoInputs);
+                    ImGui::ColorEdit4("Glow Update Out", &ImGuiH::colorTable[ImGuiH::Glow_Popup_Update_Out].x, ImGuiColorEditFlags_NoInputs);
+                }
+
+                ImGui::Spacing();
+
+                if (ImGuiH::Button("Close")) {
+                    ImGui::CloseCurrentPopup();
+                }
+
+                ImGui::EndPopup();
             }
         }
         ImGui::End();
