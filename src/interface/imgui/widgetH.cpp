@@ -35,6 +35,7 @@ namespace ImGuiH {
         {Color::Checkbox_Knob_On,               COLOR_F32(0x21214EFF)},
         {Color::Checkbox_Knob_On_Hover,         COLOR_F32(0x2E2E63FF)},
         {Color::Checkbox_Knob_On_Active,        COLOR_F32(0x16163AFF)},
+        {Color::Checkbox_Knob_Shadow,           COLOR_F32(0x0000002E)},
         {Color::Checkbox_Border,                COLOR_F32(0x00000000)},
 
         {Color::RadioButton_Ring_Off,          COLOR_F32(0x8585BFFF)},
@@ -64,6 +65,21 @@ namespace ImGuiH {
         {Color::Drag_Foreground,                COLOR_F32(0xC7D4FAFF)},
         {Color::Drag_Foreground_Hover,          COLOR_F32(0xE0EBFFFF)},
         {Color::Drag_Foreground_Active,         COLOR_F32(0x1A1A49FF)},
+
+        {Color::Glow_Popup_In,                  COLOR_F32(0x47478396)},
+        {Color::Glow_Popup_Out,                 COLOR_F32(0x1A1A49FF)},
+        
+        {Color::Glow_Popup_Crash_In,            COLOR_F32(0x1A1A49FF)},
+        {Color::Glow_Popup_Crash_Out,           COLOR_F32(0x1A1A49FF)},
+
+        {Color::Glow_Popup_Disable_Cheats_In,   COLOR_F32(0x1A1A49FF)},
+        {Color::Glow_Popup_Disable_Cheats_Out,  COLOR_F32(0x1A1A49FF)},
+        
+        {Color::Glow_Popup_Update_In,           COLOR_F32(0x1A1A49FF)},
+        {Color::Glow_Popup_Update_Out,          COLOR_F32(0x1A1A49FF)},
+        
+        {Color::Glow_Popup_TPS_Warning_In,      COLOR_F32(0x1A1A49FF)},
+        {Color::Glow_Popup_TPS_Warning_Out,     COLOR_F32(0x1A1A49FF)},
     };
 
     std::map<ImGuiCol_, ImVec4> nativeColorTable = {
@@ -152,6 +168,7 @@ namespace ImGuiH {
             case Color::Checkbox_Knob_On:              return "Checkbox Knob On";
             case Color::Checkbox_Knob_On_Hover:        return "Checkbox Knob On Hover";
             case Color::Checkbox_Knob_On_Active:       return "Checkbox Knob On Active";
+            case Color::Checkbox_Knob_Shadow:          return "Checkbox Knob Shadow";
             case Color::Checkbox_Border:               return "Checkbox Border";
             case Color::RadioButton_Ring_Off:          return "Radio Ring Off";
             case Color::RadioButton_Ring_Off_Hover:    return "Radio Ring Off Hover";
@@ -622,7 +639,7 @@ namespace ImGuiH {
 
         return pressed;
     }
-
+    
     bool Checkbox(const char* label, bool* v)
     {
         if (isLegacyRender()) {
@@ -696,6 +713,7 @@ namespace ImGuiH {
         const ImVec4 col_knob_on = colorTable[Color::Checkbox_Knob_On];
         const ImVec4 col_knob_on_hov = colorTable[Color::Checkbox_Knob_On_Hover];
         const ImVec4 col_knob_on_held = colorTable[Color::Checkbox_Knob_On_Active];
+        const ImVec4 col_knob_shadow = colorTable[Color::Checkbox_Knob_Shadow];
         const ImVec4 col_border = colorTable[Color::Checkbox_Border];
 
         const ImVec4 bg_base = LerpC(col_bg_off, col_bg_on, st.t);
@@ -721,11 +739,19 @@ namespace ImGuiH {
         const float kx = pos.x + KR + 2.5f + (W - H) * st.t;
         const float ky = pos.y + H * 0.5f;
 
-        dl->AddCircleFilled({ kx, ky + 0.8f }, kr_final + 1.f,
-                            ImGui::ColorConvertFloat4ToU32({ 0.f, 0.f, 0.f, 0.18f * alpha }), 32);
+        if (col_knob_shadow.w > 0.f)
+        {
+            ImVec4 drop_shadow = col_knob_shadow;
+            dl->AddCircleFilled({ kx, ky + 0.8f }, kr_final + 1.f, ToU32(drop_shadow, alpha), 32);
+        }
+
         dl->AddCircleFilled({ kx, ky }, kr_final, ToU32(kn_final, alpha), 32);
-        dl->AddCircle      ({ kx, ky }, kr_final,
-                            ImGui::ColorConvertFloat4ToU32({ 0.f, 0.f, 0.f, 0.08f * alpha }), 32, 1.f);
+
+        if (col_knob_shadow.w > 0.f)
+        {
+            ImVec4 outline_shadow = col_knob_shadow;
+            dl->AddCircle({ kx, ky }, kr_final, ToU32(outline_shadow, 0.45f * alpha), 32, 1.f);
+        }
 
         if (lend > label)
             dl->AddText({ pos.x + W + style.ItemInnerSpacing.x, pos.y + style.FramePadding.y },

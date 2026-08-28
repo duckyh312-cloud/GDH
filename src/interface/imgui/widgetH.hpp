@@ -23,6 +23,7 @@ namespace ImGuiH {
         Checkbox_Knob_On,
         Checkbox_Knob_On_Hover,
         Checkbox_Knob_On_Active,
+        Checkbox_Knob_Shadow,
         Checkbox_Border,
 
         RadioButton_Ring_Off,
@@ -52,6 +53,22 @@ namespace ImGuiH {
         Drag_Foreground,
         Drag_Foreground_Hover,
         Drag_Foreground_Active,
+
+        Glow_Popup_In,
+        Glow_Popup_Out,
+
+        Glow_Popup_Crash_In,
+        Glow_Popup_Crash_Out,
+
+        Glow_Popup_Disable_Cheats_In,
+        Glow_Popup_Disable_Cheats_Out,
+
+        Glow_Popup_Update_In,
+        Glow_Popup_Update_Out,
+
+        Glow_Popup_TPS_Warning_In,
+        Glow_Popup_TPS_Warning_Out,
+
         Color_Count,
     };
     
