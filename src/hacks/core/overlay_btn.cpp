@@ -5,6 +5,7 @@
 #include <Geode/modify/LevelEditorLayer.hpp>
 #include <Geode/modify/EditorUI.hpp>
 #include <Geode/modify/EditorPauseLayer.hpp>
+#include <Geode/modify/EndLevelLayer.hpp>
 #include "../../core/config.hpp"
 #include "../../interface/cocos/overlay_button.hpp"
 
@@ -68,6 +69,22 @@ class $modify(OverlayButtonVisiblityEPL, EditorPauseLayer) {
         EditorPauseLayer::onResume(sender);
 
         if (Config::get().get<bool>("ui_icon.hide_on_editor", false))
+            OverlayButton::get()->setVisible(false);
+    }
+};
+
+class $modify(OverlayButtonVisiblityELL, EndLevelLayer) {
+    void onRestartCheckpoint(cocos2d::CCObject *sender) {
+        EndLevelLayer::onRestartCheckpoint(sender);
+
+        if (Config::get().get<bool>("ui_icon.hide_on_game", true) && !this->m_exiting)
+            OverlayButton::get()->setVisible(false);
+    }
+
+    void onReplay(cocos2d::CCObject *sender) {
+        EndLevelLayer::onRestartCheckpoint(sender);
+
+        if (Config::get().get<bool>("ui_icon.hide_on_game", true) && !this->m_exiting)
             OverlayButton::get()->setVisible(false);
     }
 };

@@ -317,11 +317,11 @@ protected:
                 bg->setOpacity(255); 
             }
             spaceInput->setPosition({150.f, y});
-            spaceInput->setString(fmt::format("{:.1f}", label.size));
+            spaceInput->setString(fmt::format("{:.2f}", label.size));
             spaceInput->setFilter("0123456789.");
             spaceInput->setCallback([&label](const std::string& str) {
                 if (auto val = geode::utils::numFromString<float>(str)) {
-                    label.size = std::clamp(val.unwrap(), 1.0f, 256.0f);
+                    label.size = std::clamp(val.unwrap(), 0.01f, 256.0f);
                 }
             });
             m_mainLayer->addChild(spaceInput);
@@ -337,11 +337,11 @@ protected:
                 bg->setOpacity(255); 
             }
             sizeInput->setPosition({95.f, y});
-            sizeInput->setString(fmt::format("{:.1f}", label.size));
+            sizeInput->setString(fmt::format("{:.2f}", label.size));
             sizeInput->setFilter("0123456789.");
             sizeInput->setCallback([&label](const std::string& str) {
                 if (auto val = geode::utils::numFromString<float>(str)) {
-                    label.size = std::clamp(val.unwrap(), 1.0f, 256.0f);
+                    label.size = std::clamp(val.unwrap(), 0.01f, 256.0f);
                 }
             });
             m_mainLayer->addChild(sizeInput);
@@ -597,7 +597,7 @@ void refreshLabelsTab(HacksTab* tab) {
             itemRow->addChild(editBtn);
 
             std::string displayText = (label.type == GDH::Labels::LabelType::Text) ? (label.text.empty() ? "Empty Text" : label.text)
-                : fmt::format("{}: {:.1f}px", (label.type == GDH::Labels::LabelType::Spacing) ? "Spacing" : "Cheat Indicator", label.size);
+                : fmt::format("{}: {:.2f}px", (label.type == GDH::Labels::LabelType::Spacing) ? "Spacing" : "Cheat Indicator", label.size);
 
             auto textLabel = geode::Label::create(displayText, "GoogleSans.fnt"_spr);
             itemRow->addChild(textLabel);

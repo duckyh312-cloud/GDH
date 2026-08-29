@@ -3,12 +3,12 @@
 #include "../../core/gui.hpp"
 #include "Geode/modify/Modify.hpp"
 
-GUI_HACK_CREATE("Level", "Force Platofrmer", "Enables platformer mode on all levels", false);
+GUI_HACK_CREATE("Level", "Force Platformer", "Enables platformer mode on all levels", false);
 
 class $modify(ForcePlatformerPlayLayer, PlayLayer) {
     static void onModify(auto& self) {
         auto& gui = GDH::Gui::get();
-        auto& hack = gui.getWindow("Level").findHackByName("Force Platofrmer");        
+        auto& hack = gui.getWindow("Level").findHackByName("Force Platformer");        
         
         hack.addHookPtr(self.getHook("PlayLayer::init").unwrap());
     }
