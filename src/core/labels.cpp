@@ -84,10 +84,16 @@ bool renderVariable(geode::utils::StringBuffer<> &stream, std::string_view var_n
     } else if (var_name == "date") {
         stream.append(fmt::format("{:%F}", geode::localtime(std::time(nullptr))));
     } else if (var_name == "clicks") {
-        stream.append(CpsCounter::get().overall);
+        stream.append(CpsCounter::get().overall + CpsCounter::get().p2_overall);
     } else if (var_name == "cps") {
-        stream.append(CpsCounter::get().cps);
+        stream.append(CpsCounter::get().cps + CpsCounter::get().p2_cps);
     } else if (var_name == "cps_high") {
+        stream.append(CpsCounter::get().highscore + CpsCounter::get().p2_highscore);
+    } else if (var_name == "p1::clicks") {
+        stream.append(CpsCounter::get().overall);
+    } else if (var_name == "p1::cps") {
+        stream.append(CpsCounter::get().cps);
+    } else if (var_name == "p1::cps_high") {
         stream.append(CpsCounter::get().highscore);
     } else if (var_name == "p2::clicks") {
         if (!isDualAnd2P) return false;
@@ -485,8 +491,15 @@ class $modify(LabelsPlayLayer, PlayLayer) {
                         label->setColor({static_cast<GLubyte>(r * 255), static_cast<GLubyte>(g * 255), static_cast<GLubyte>(b * 255)});
                     } 
                     else if (labelObj.cps) {
-                        bool isP2Label = labelObj.text.find("p2::") != std::string::npos;
-                        bool isPressed = isP2Label ? CpsCounter::get().p2_push : CpsCounter::get().p1_push;
+                        bool isPressed = false;
+
+                        if (labelObj.text.find("p2::") != std::string::npos) {
+                            isPressed = CpsCounter::get().p2_push;
+                        } else if (labelObj.text.find("p1::") != std::string::npos) {
+                            isPressed = CpsCounter::get().p1_push;
+                        } else {
+                            isPressed = CpsCounter::get().p1_push || CpsCounter::get().p2_push;
+                        }
 
                         if (isPressed) {
                             label->setColor({0, 255, 0});
@@ -599,6 +612,8 @@ class $modify(LabelsGJBaseGameLayer, GJBaseGameLayer) {
 
             if (down) {
                 CpsCounter::get().click(isP1);
+                if (isP1) CpsCounter::get().p1_push = true;
+                else CpsCounter::get().p2_push = true;
             } else {
                 if (isP1) CpsCounter::get().p1_push = false;
                 else CpsCounter::get().p2_push = false;

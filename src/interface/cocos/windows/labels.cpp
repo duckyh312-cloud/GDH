@@ -37,6 +37,7 @@ protected:
             {"Best Run", "Best Run: {best_run}"},
             {"Best Time", "Best Time: {best_time}"},
             {"CPS Counter", "{cps}/{cps_high}/{clicks}"},
+            {"CPS Counter (P1)", "{p1::cps}/{p1::cps_high}/{p1::clicks}"},
             {"CPS Counter (P2)", "{p2::cps}/{p2::cps_high}/{p2::clicks}"},
             {"Cheat Indicator", ""},
             {"Custom text", "Edit me!"},
@@ -93,7 +94,7 @@ protected:
                     if (!hack.getEnabled()) hack.enable();
                 } else {
                     bool isRainbow = (name == "Rainbow Text");
-                    bool isCPS = (name == "CPS Counter");
+                    bool isCPS = name.contains("CPS Counter");
                     bool isNoclip = (name == "Death Counter" || name == "Noclip Accuracy (%)");
                     std::array<float, 4> color = {1.f, 1.f, 1.f, 0.3f};
                     if (isRainbow) color[3] = 0.85f;

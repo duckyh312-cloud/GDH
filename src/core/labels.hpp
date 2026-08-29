@@ -216,11 +216,9 @@ public:
 
     void click(bool isPlayer1) {
         if (isPlayer1) {
-            p1_push = true;
             overall++;
             clicks.push(current_time);
         } else {
-            p2_push = true;
             p2_overall++;
             p2_clicks.push(current_time);
         }

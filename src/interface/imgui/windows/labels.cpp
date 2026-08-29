@@ -25,6 +25,7 @@ const std::vector<std::pair<const char*, const char*>> g_labelTemplates = {
     {"Best Run", "Best Run: {best_run}"},
     {"Best Time", "Best Time: {best_time}"},
     {"CPS Counter", "{cps}/{cps_high}/{clicks}"},
+    {"CPS Counter (P1)", "{p1::cps}/{p1::cps_high}/{p1::clicks}"},
     {"CPS Counter (P2)", "{p2::cps}/{p2::cps_high}/{p2::clicks}"},
     {"Custom text", "Edit me!"},
     {"Date", "{date}"},
@@ -158,7 +159,7 @@ $execute {
                 if (ImGuiH::Button(name, {layout.multipleScale(290.f), 0})) {
                     std::string_view nameView(name);
                     bool isRainbowButton = (nameView == "Rainbow Text");
-                    bool isCPSButton = (nameView == "CPS Counter");
+                    bool isCPSButton = nameView.contains("CPS Counter");
                     bool isNoclip = (nameView == "Death Counter" || nameView == "Noclip Accuracy (%)");
 
                     if (isRainbowButton) g_newLabelColor[3] = 0.85f;
