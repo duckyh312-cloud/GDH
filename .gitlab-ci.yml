@@ -46,6 +46,7 @@ stages:
 .geode-apple-build:
   stage: build
   script:
+    - geode sdk update && geode sdk install-binaries -p "$GEODE_PLATFORM"
     - cmake -G Ninja -B build-apple -DCMAKE_BUILD_TYPE=Release
     - cmake --build build-apple --parallel
     - mkdir -p artifacts/$GEODE_PLATFORM
