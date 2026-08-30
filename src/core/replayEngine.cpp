@@ -130,7 +130,7 @@ void ReplayEngine::handle_commands(GJBaseGameLayer* self) {
 
             mode = state::record;
 
-            #ifdef GEODE_IS_WINDOWS
+            #ifdef GEODE_IS_DESKTOP
             ImGuiH::AddPopup("Switched to Record mode. Continue recording!");
             #endif
             return;

@@ -1469,7 +1469,7 @@ namespace ImGuiH {
 
     void AddPopup(const std::string& caption, float time)
     {
-        #ifdef GEODE_IS_WINDOWS
+        #ifdef GEODE_IS_DESKTOP
         s_popups.insert(s_popups.begin(), {
             caption,
             static_cast<float>(ImGui::GetTime()) + time,
@@ -1479,7 +1479,7 @@ namespace ImGuiH {
         });
         #endif
 
-        #ifdef GEODE_IS_ANDROID
+        #ifdef GEODE_IS_MOBILE
         GDH::MaterialLayer(FLAlertLayer::create("Info", caption.c_str(), "OK"))->show();
         #endif
     }

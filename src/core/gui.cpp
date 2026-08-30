@@ -204,7 +204,7 @@ class $modify(LateHacksInitMenuLayer, MenuLayer) {
 
             geode::log::debug("total loaded: {} hacks", totalHacks);
 
-            #ifdef GEODE_IS_WINDOWS
+            #ifdef GEODE_IS_DESKTOP
             auto& kb = GDH::Keybinds::get();
             kb.init();
             #endif

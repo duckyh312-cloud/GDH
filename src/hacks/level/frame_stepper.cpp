@@ -237,7 +237,7 @@ class $modify(FrameStepperPlayLayer, PlayLayer) {
         g_checkpoints.clear(release_cp);
     }
     
-    #ifdef GEODE_IS_ANDROID
+    #ifdef GEODE_IS_MOBILE
     void createObjectsFromSetupFinished() {
         PlayLayer::createObjectsFromSetupFinished();
 
@@ -326,7 +326,7 @@ class $modify(FrameStepperPlayLayer, PlayLayer) {
     #endif
 };
 
-#ifdef GEODE_IS_WINDOWS
+#ifdef GEODE_IS_DESKTOP
 $execute {
     auto& kb = GDH::Keybinds::get();
     kb.addCallback("frame_stepper::step_key", geode::Keybind(cocos2d::KEY_G, KeyboardModifier::None), [](bool repeat) {

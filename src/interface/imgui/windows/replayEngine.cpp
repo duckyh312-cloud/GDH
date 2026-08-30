@@ -1,4 +1,4 @@
-#ifdef GEODE_IS_WINDOWS
+#ifdef GEODE_IS_DESKTOP
 #include <Geode/Geode.hpp>
 #include "imgui.h"
 #include <imgui_stdlib.h>
@@ -8,12 +8,15 @@
 #include "../../../core/replayEngine.hpp"
 #include "../../../core/config.hpp"
 #include "../../../core/utils.hpp"
+#ifdef GEODE_IS_WINDOWS
 #include "../../../core/recorder/recorder.hpp"
 #include "../../../core/recorder/subprocess.hpp"
+#endif
 #include "../widgetH.hpp"
 #include "../widget_helper.hpp"
 #include "../layout.hpp"
 
+#ifdef GEODE_IS_WINDOWS
 std::string getFFmpegPath() {
     static std::string cachedPath = "";
     static bool checked = false;
@@ -338,6 +341,7 @@ void drawRecorderInterface() {
 
     ImGui::Text("Showcase Folder: %s", folder.string().c_str());
 }
+#endif
 
 void drawMacroEditor() {
     static int selected_frame_type = 1;
@@ -676,7 +680,7 @@ $execute {
             ImGui::OpenPopup("Select Replay");
         }
         
-        if (ImGuiH::Button("Save", {ImGui::GetContentRegionAvail().x / 3, NULL})) {
+        if (ImGuiH::Button("Save", {ImGui::GetContentRegionAvail().x / 3, 0.f})) {
             std::filesystem::path savePath = getFolderMacroPath() / (engine.replay_name + ".re4");
             if (std::filesystem::exists(savePath)) {
                 ImGui::OpenPopup("Save Overwrite Warning");
@@ -686,7 +690,7 @@ $execute {
         }
         ImGui::SameLine();
         
-        if (ImGuiH::Button("Load", {ImGui::GetContentRegionAvail().x / 2, NULL})) {
+        if (ImGuiH::Button("Load", {ImGui::GetContentRegionAvail().x / 2, 0.f})) {
             if (engine.get_actions_size() > 0) {
                 ImGui::OpenPopup("Load Overwrite Warning");
             } else {
@@ -695,7 +699,7 @@ $execute {
         }
         ImGui::SameLine();
         
-        if (ImGuiH::Button("Clear", {ImGui::GetContentRegionAvail().x, NULL})) {
+        if (ImGuiH::Button("Clear", {ImGui::GetContentRegionAvail().x, 0.f})) {
             if (engine.get_actions_size() > 0) {
                 ImGui::OpenPopup("Clear Warning");
             } else {
@@ -811,11 +815,11 @@ $execute {
             }
             ImGui::EndChild();
 
-            if (ImGuiH::Button("Open Folder", {ImGui::GetContentRegionAvail().x, NULL})) {
+            if (ImGuiH::Button("Open Folder", {ImGui::GetContentRegionAvail().x, 0.f})) {
                 geode::utils::file::openFolder(getFolderMacroPath());
             }
             
-            if (ImGuiH::Button("Close", {ImGui::GetContentRegionAvail().x, NULL})) {
+            if (ImGuiH::Button("Close", {ImGui::GetContentRegionAvail().x, 0.f})) {
                 ImGui::CloseCurrentPopup();
             }
             ImGui::EndPopup();
@@ -855,11 +859,13 @@ $execute {
                     ImGui::EndTabItem();
                 }
 
+                #ifdef GEODE_IS_WINDOWS
                 if (ImGui::BeginTabItem("Recorder")) {
                     ImGui::Spacing();
                     drawRecorderInterface();
                     ImGui::EndTabItem();
                 }
+                #endif
 
                 if (ImGui::BeginTabItem("Editor (Beta)")) {
                     ImGui::Spacing();

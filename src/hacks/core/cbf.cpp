@@ -1,4 +1,3 @@
-#ifdef GEODE_IS_WINDOWS
 #include <Geode/Geode.hpp>
 #include <Geode/binding/AppDelegate.hpp>
 #include "../../core/gui.hpp"
@@ -51,5 +50,3 @@ $on_game(ModsLoaded) {
 
     hack.setEnabled(!cbf->getSettingValue<bool>("soft-toggle"));
 }
-
-#endif

@@ -1,4 +1,4 @@
-#ifdef GEODE_IS_WINDOWS
+#ifdef GEODE_IS_DESKTOP
 #include "imgui.h"
 #include <Geode/Geode.hpp>
 #include "../../../core/gui.hpp"
