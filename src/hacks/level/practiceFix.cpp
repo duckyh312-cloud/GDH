@@ -36,16 +36,17 @@ class $modify(PracticeFixPlayLayer, PlayLayer) {
 
         auto fields = m_fields.self();
         auto& data = fields->m_checkpoints[checkpoint];
+        auto& engine = GDH::ReplayEngine::get();
 
         auto& releaseP1 = *reinterpret_cast<std::array<bool, 3>*>(&m_clickReleased[0]);
         auto& releaseP2 = *reinterpret_cast<std::array<bool, 3>*>(&m_clickReleased[3]);
 
         auto& checkpoint_p1 = data.first;   
-        checkpoint_p1 = GDH::PracticeFix::store(m_player1, releaseP1);
+        checkpoint_p1 = GDH::PracticeFix::store(m_player1, releaseP1, engine.get_frame());
         
         if (m_gameState.m_isDualMode) {
             auto& checkpoint_p2 = data.second;
-            checkpoint_p2 = GDH::PracticeFix::store(m_player2, releaseP2);
+            checkpoint_p2 = GDH::PracticeFix::store(m_player2, releaseP2, engine.get_frame());
         }
         
         return checkpoint;
@@ -80,15 +81,18 @@ class $modify(PracticeFixPlayLayer, PlayLayer) {
             
             auto& data = fields->m_checkpoints[checkpoint];
             auto& checkpoint_p1 = data.first;
+            auto& engine = GDH::ReplayEngine::get();
             
             auto& releaseP1 = *reinterpret_cast<std::array<bool, 3>*>(&m_clickReleased[0]);
             auto& releaseP2 = *reinterpret_cast<std::array<bool, 3>*>(&m_clickReleased[3]);
 
-            GDH::PracticeFix::apply(m_player1, checkpoint_p1, releaseP1);
+            int64_t frame = 0;
+            GDH::PracticeFix::apply(m_player1, checkpoint_p1, releaseP1, frame);
+            engine.set_frame(frame);
             
             if (m_gameState.m_isDualMode) {
                 auto& checkpoint_p2 = data.second;
-                GDH::PracticeFix::apply(m_player2, checkpoint_p2, releaseP2);
+                GDH::PracticeFix::apply(m_player2, checkpoint_p2, releaseP2, frame);
             }
             else {
                 releaseP2.fill(true);

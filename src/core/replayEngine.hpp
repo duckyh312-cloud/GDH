@@ -34,7 +34,11 @@ namespace GDH {
         state mode = state::disable;
         std::string replay_name;
 
-        uint64_t get_frame();
+        uint64_t get_frame() { return m_currentFrame; }
+        uint64_t get_frame_legacy();
+
+        void set_frame(uint64_t frame) { m_currentFrame = frame; }
+        void inc_frame() { m_currentFrame++; }
         void remove_actions(uint64_t currentFrame, bool pause = false);
 
         size_t get_actions_size();
@@ -66,5 +70,7 @@ namespace GDH {
         size_t m_inputIndex = 0;
 
         std::unordered_map<std::string, bool> m_savedHackStates;
+
+        uint64_t m_currentFrame = 0;
     };
 }

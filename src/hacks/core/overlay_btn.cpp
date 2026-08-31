@@ -1,3 +1,4 @@
+#ifdef GEODE_IS_MOBILE
 #include <Geode/Geode.hpp>
 #include <Geode/binding/EditorPauseLayer.hpp>
 #include <Geode/binding/EditorUI.hpp>
@@ -88,3 +89,4 @@ class $modify(OverlayButtonVisiblityELL, EndLevelLayer) {
             OverlayButton::get()->setVisible(false);
     }
 };
+#endif

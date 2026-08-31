@@ -6,7 +6,7 @@
 
 using namespace GDH;
 
-uint64_t ReplayEngine::get_frame() {
+uint64_t ReplayEngine::get_frame_legacy() {
     auto gjbgl = GJBaseGameLayer::get();
     if (gjbgl) {
         auto& config = Config::get();
@@ -18,12 +18,14 @@ uint64_t ReplayEngine::get_frame() {
 void ReplayEngine::remove_actions(uint64_t currentFrame, bool pause) {
     // clearing physic frames
     std::erase_if(m_physicFrames, [currentFrame](const physic_data &action) {
-        return action.frame >= currentFrame;
+        // return action.frame >= currentFrame;
+        return action.frame > currentFrame;
     });
 
     // clearing inputs and auto-releasing it
     std::erase_if(m_inputFrames, [currentFrame](const input_data &action) {
-        return action.frame >= currentFrame;
+        // return action.frame >= currentFrame;
+        return action.frame > currentFrame;
     });
 
     std::array<bool, 6> released = {true, true, true, true, true, true};

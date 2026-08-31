@@ -135,8 +135,8 @@ void OverlayButton::registerWithTouchDispatcher() {
     CCTouchDispatcher::get()->addTargetedDelegate(this, -1000, true);
 }
 
-#ifdef GEODE_IS_ANDROID
-#include "hacks_layer.hpp"
+#ifdef GEODE_IS_MOBILE
+#include "hacks_layer.hpp"      
 
 static bool inited = false;
 class $modify(CocosInitMenuLayer, MenuLayer) {

@@ -24,6 +24,8 @@ using namespace geode::prelude;
 #include "../../core/replayEngine.hpp"
 #include "../../core/recorder/recorder.hpp"
 
+#include "windows/replayEngine.hpp"
+
 static bool g_show = false;
 
 static bool g_showThemeEditor = false;
@@ -444,6 +446,27 @@ void RenderMain() {
     ImGuiIO &io = ImGui::GetIO();
     
     animateAlpha();
+
+    if (config.get<bool>("re::show_editor", false)) {
+        ImGui::PushStyleVar(ImGuiStyleVar_Alpha, 1.f);
+
+        ImVec2 window_size = ImVec2(layoutManager.multipleScale(700.0f), layoutManager.multipleScale(500.0f));
+        ImVec2 display_size = ImGui::GetIO().DisplaySize;
+
+        ImVec2 window_pos = ImVec2(
+            display_size.x - window_size.x,
+            display_size.y - window_size.y
+        );
+
+        ImGui::SetNextWindowPos(window_pos, ImGuiCond_Once);
+        ImGui::SetNextWindowSize(window_size, ImGuiCond_Once);
+
+        if (ImGui::Begin("Macro Editor##Window")) {
+            GDH::UI::drawMacroEditor();
+        }
+        ImGui::End();
+        ImGui::PopStyleVar();
+    }
 
     ImGuiH::RenderPopups();
     if (GDH::Recorder::get().isRecording()) RenderRecordingBadge();

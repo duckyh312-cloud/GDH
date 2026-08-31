@@ -2,6 +2,7 @@
 #include <Geode/Geode.hpp>
 
 struct checkpoint_data {
+    uint64_t currentFrame;
     // cocos2d::CCNode* m_mainLayer;
     bool m_wasTeleported;
     bool m_fixGravityBug;
@@ -308,9 +309,11 @@ struct checkpoint_data {
 };
 
 namespace GDH { namespace PracticeFix {
-    inline checkpoint_data store(PlayerObject* player, std::array<bool, 3>& releasedClicks) {
+    inline checkpoint_data store(PlayerObject* player, std::array<bool, 3>& releasedClicks, const int64_t& currentFrame) {
         checkpoint_data state;
         if (player == nullptr) return state;
+
+        state.currentFrame = currentFrame;
 
         // state.m_mainLayer = player->m_mainLayer;
         state.m_wasTeleported = player->m_wasTeleported;
@@ -637,8 +640,10 @@ namespace GDH { namespace PracticeFix {
         return state;
     }
     
-    inline void apply(PlayerObject* player, const checkpoint_data& state, std::array<bool, 3>& releasedClicks) {
+    inline void apply(PlayerObject* player, const checkpoint_data& state, std::array<bool, 3>& releasedClicks, int64_t& currentFrame) {
         if (player == nullptr) return;
+
+        currentFrame = state.currentFrame;
         
         // player->m_mainLayer = state.m_mainLayer;
         player->m_wasTeleported = state.m_wasTeleported;

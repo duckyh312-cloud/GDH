@@ -8,13 +8,17 @@
 #include "../../../core/replayEngine.hpp"
 #include "../../../core/config.hpp"
 #include "../../../core/utils.hpp"
+
 #ifdef GEODE_IS_WINDOWS
 #include "../../../core/recorder/recorder.hpp"
 #include "../../../core/recorder/subprocess.hpp"
 #endif
+
 #include "../widgetH.hpp"
 #include "../widget_helper.hpp"
 #include "../layout.hpp"
+
+#include "replayEngine.hpp"
 
 #ifdef GEODE_IS_WINDOWS
 std::string getFFmpegPath() {
@@ -343,19 +347,91 @@ void drawRecorderInterface() {
 }
 #endif
 
-void drawMacroEditor() {
+void GDH::UI::drawMacroEditor() {
     static int selected_frame_type = 1;
     static int selected_index = -1;
     static int prev_frame_type = selected_frame_type;
     static int target_frame_input = 0;
+    static int shift_offset_input = 0;
     static bool request_scroll = false;
     const char* frame_types[] = { "Physic Frames", "Input Frames" };
+
     if (prev_frame_type != selected_frame_type) {
         selected_index = -1;
         prev_frame_type = selected_frame_type;
         request_scroll = true;
     }
     auto& engine = GDH::ReplayEngine::get();
+    auto& layout = GDH::Layout::Manager::get();
+
+    // imgui table sucks so making custom table
+    auto drawFakeTable = [&](const char* child_id, const char* const* headers, const float* col_frac, int col_count, int row_count, geode::Function<void(int, int)> draw_cell) {
+        bool child_open = ImGui::BeginChild(child_id, ImVec2(ImGui::GetContentRegionAvail().x - layout.multipleScale(250.f), 0), true);
+        if (child_open) {
+            float table_width = ImGui::GetContentRegionAvail().x;
+            float table_left_x = ImGui::GetCursorPosX();
+            ImVec2 table_origin_screen = ImGui::GetCursorScreenPos();
+            float row_height = ImGui::GetTextLineHeightWithSpacing();
+            float col_x[16];
+            float acc = 0.0f;
+            for (int c = 0; c < col_count; c++) {
+                col_x[c] = acc * table_width;
+                acc += col_frac[c];
+            }
+
+            for (int c = 0; c < col_count; c++) {
+                if (c > 0) ImGui::SameLine();
+                ImGui::SetCursorPosX(table_left_x + col_x[c]);
+                ImGui::TextUnformatted(headers[c]);
+            }
+            ImGui::Separator();
+
+            ImGuiListClipper clipper;
+            clipper.Begin(row_count, row_height);
+            if (request_scroll && selected_index >= 0 && selected_index < row_count)
+                clipper.IncludeItemByIndex(selected_index);
+
+            while (clipper.Step()) {
+                for (int i = clipper.DisplayStart; i < clipper.DisplayEnd; i++) {
+                    bool is_selected = (selected_index == i);
+                    ImVec2 row_pos = ImGui::GetCursorPos();
+                    ImVec2 row_screen_pos = ImGui::GetCursorScreenPos();
+
+                    if (i % 2 == 1) {
+                        ImGui::GetWindowDrawList()->AddRectFilled(
+                            row_screen_pos,
+                            ImVec2(row_screen_pos.x + table_width, row_screen_pos.y + row_height),
+                            ImGui::GetColorU32(ImGuiCol_TableRowBgAlt));
+                    }
+
+                    std::string sel_id = std::string("##row") + child_id + std::to_string(i);
+                    if (ImGui::Selectable(sel_id.c_str(), is_selected, ImGuiSelectableFlags_AllowOverlap, ImVec2(table_width, row_height))) {
+                        selected_index = i;
+                    }
+                    if (is_selected && request_scroll) {
+                        ImGui::SetScrollHereY(0.5f);
+                        request_scroll = false;
+                    }
+
+                    ImGui::SetCursorPos(row_pos);
+                    for (int c = 0; c < col_count; c++) {
+                        if (c > 0) ImGui::SameLine();
+                        ImGui::SetCursorPosX(table_left_x + col_x[c]);
+                        draw_cell(i, c);
+                    }
+                }
+            }
+
+            float body_bottom_screen_y = ImGui::GetCursorScreenPos().y;
+            ImDrawList* draw_list = ImGui::GetWindowDrawList();
+            for (int c = 1; c < col_count; c++) {
+                float x = table_origin_screen.x + col_x[c] - ImGui::GetStyle().ItemSpacing.x * 0.5f;
+                draw_list->AddLine(ImVec2(x, table_origin_screen.y), ImVec2(x, body_bottom_screen_y), ImGui::GetColorU32(ImGuiCol_Border));
+            }
+        }
+        ImGui::EndChild();
+    };
+
     if (selected_frame_type == 0) {
         auto& frames = engine.get_physic_frames();
         if (frames.empty()) {
@@ -365,42 +441,20 @@ void drawMacroEditor() {
         } else if (selected_index >= (int)frames.size()) {
             selected_index = (int)frames.size() - 1;
         }
-        if (ImGui::BeginTable("PhysicTable", 5, ImGuiTableFlags_RowBg | ImGuiTableFlags_Borders | ImGuiTableFlags_ScrollY,
-            ImVec2(ImGui::GetContentRegionAvail().x - 200, 0))) {
-            ImGui::TableSetupColumn("Frame");
-            ImGui::TableSetupColumn("Player");
-            ImGui::TableSetupColumn("X");
-            ImGui::TableSetupColumn("Y");
-            ImGui::TableSetupColumn("Y Accel");
-            ImGui::TableHeadersRow();
 
-            ImGuiListClipper clipper;
-            clipper.Begin((int)frames.size());
-            if (request_scroll && selected_index >= 0 && selected_index < (int)frames.size())
-                clipper.IncludeItemByIndex(selected_index);
+        static const char* headers[] = { "Frame", "Player", "X", "Y", "Y Accel" };
+        static const float fracs[] = { 0.20f, 0.11f, 0.23f, 0.23f, 0.23f };
 
-            while (clipper.Step()) {
-                for (int i = clipper.DisplayStart; i < clipper.DisplayEnd; i++) {
-                    const auto& frame = frames[i];
-                    ImGui::TableNextRow();
-                    bool is_selected = (selected_index == i);
-                    ImGui::TableSetColumnIndex(0);
-                    std::string frame_str = std::to_string(frame.frame) + "##pf" + std::to_string(i);
-                    if (ImGui::Selectable(frame_str.c_str(), is_selected, ImGuiSelectableFlags_SpanAllColumns)) {
-                        selected_index = i;
-                    }
-                    if (is_selected && request_scroll) {
-                        ImGui::SetScrollHereY(0.5f);
-                        request_scroll = false;
-                    }
-                    ImGui::TableSetColumnIndex(1); ImGui::TextUnformatted(frame.isPlayer2 ? "P2" : "P1");
-                    ImGui::TableSetColumnIndex(2); ImGui::Text("%f", frame.x);
-                    ImGui::TableSetColumnIndex(3); ImGui::Text("%f", frame.y);
-                    ImGui::TableSetColumnIndex(4); ImGui::Text("%f", frame.y_accel);
-                }
+        drawFakeTable("PhysicFakeTable", headers, fracs, 5, (int)frames.size(), [&](int i, int c) {
+            const auto& frame = frames[i];
+            switch (c) {
+                case 0: ImGui::Text("%llu", (unsigned long long)frame.frame); break;
+                case 1: ImGui::TextUnformatted(frame.isPlayer2 ? "P2" : "P1"); break;
+                case 2: ImGui::Text("%f", frame.x); break;
+                case 3: ImGui::Text("%f", frame.y); break;
+                case 4: ImGui::Text("%f", frame.y_accel); break;
             }
-            ImGui::EndTable();
-        }
+        });
     } else {
         auto& frames = engine.get_input_frames();
         if (frames.empty()) {
@@ -410,52 +464,33 @@ void drawMacroEditor() {
         } else if (selected_index >= (int)frames.size()) {
             selected_index = (int)frames.size() - 1;
         }
-        if (ImGui::BeginTable("InputTable", 4, ImGuiTableFlags_RowBg | ImGuiTableFlags_Borders | ImGuiTableFlags_ScrollY,
-            ImVec2(ImGui::GetContentRegionAvail().x - 200, 0))) {
-            ImGui::TableSetupColumn("Frame");
-            ImGui::TableSetupColumn("Player");
-            ImGui::TableSetupColumn("Button");
-            ImGui::TableSetupColumn("Action");
-            ImGui::TableHeadersRow();
 
-            ImGuiListClipper clipper;
-            clipper.Begin((int)frames.size());
-            if (request_scroll && selected_index >= 0 && selected_index < (int)frames.size())
-                clipper.IncludeItemByIndex(selected_index);
+        static const char* headers[] = { "Frame", "Player", "Button", "Action" };
+        static const float fracs[] = { 0.20f, 0.15f, 0.30f, 0.40f };
 
-            while (clipper.Step()) {
-                for (int i = clipper.DisplayStart; i < clipper.DisplayEnd; i++) {
-                    const auto& frame = frames[i];
-                    ImGui::TableNextRow();
-                    bool is_selected = (selected_index == i);
-                    ImGui::TableSetColumnIndex(0);
-                    std::string frame_str = std::to_string(frame.frame) + "##if" + std::to_string(i);
-                    if (ImGui::Selectable(frame_str.c_str(), is_selected, ImGuiSelectableFlags_SpanAllColumns)) {
-                        selected_index = i;
-                    }
-                    if (is_selected && request_scroll) {
-                        ImGui::SetScrollHereY(0.5f);
-                        request_scroll = false;
-                    }
-                    ImGui::TableSetColumnIndex(1); ImGui::TextUnformatted(frame.isPlayer2 ? "P2" : "P1");
-                    ImGui::TableSetColumnIndex(2);
-                    ImGui::TextUnformatted(
-                        frame.button == 1 ? "Jump" :
-                        frame.button == 2 ? "Left" :
-                        frame.button == 3 ? "Right" : "Unknown");
-                    ImGui::TableSetColumnIndex(3);
-                    ImGui::TextUnformatted(frame.down ? "Push" : "Release");
-                }
+        drawFakeTable("InputFakeTable", headers, fracs, 4, (int)frames.size(), [&](int i, int c) {
+            const auto& frame = frames[i];
+            switch (c) {
+                case 0: ImGui::Text("%llu", (unsigned long long)frame.frame); break;
+                case 1: ImGui::TextUnformatted(frame.isPlayer2 ? "P2" : "P1"); break;
+                case 2: ImGui::TextUnformatted(
+                    frame.button == 1 ? "Jump" :
+                    frame.button == 2 ? "Left" :
+                    frame.button == 3 ? "Right" : "Unknown");
+                    break;
+                case 3: ImGui::TextUnformatted(frame.down ? "Push" : "Release"); break;
             }
-            ImGui::EndTable();
-        }
+        });
     }
+
     ImGui::SameLine();
-    if (ImGui::BeginChild("##EditorSettings", { 0, ImGui::GetContentRegionAvail().y })) {
+    bool settings_open = ImGui::BeginChild("##EditorSettings", { 0, ImGui::GetContentRegionAvail().y });
+    if (settings_open) {
         ImGui::Text("Frame Type:");
         ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
         ImGui::Combo("##FrameType", &selected_frame_type, frame_types, IM_ARRAYSIZE(frame_types));
         ImGui::Separator();
+
         ImGui::Text("Go to Frame:");
         ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x - 70.0f);
         ImGui::InputInt("##TargetFrame", &target_frame_input, 0, 0);
@@ -481,6 +516,82 @@ void drawMacroEditor() {
                 }
             }
         }
+        ImGui::Separator();
+        
+        if (ImGuiH::Button("Sort by Frame", ImVec2(ImGui::GetContentRegionAvail().x, 0))) {
+            if (selected_frame_type == 0) {
+                auto& frames = engine.get_physic_frames();
+                std::sort(frames.begin(), frames.end(), [](const physic_data& a, const physic_data& b) {
+                    return a.frame < b.frame;
+                });
+            } else {
+                auto& frames = engine.get_input_frames();
+                std::sort(frames.begin(), frames.end(), [](const input_data& a, const input_data& b) {
+                    return a.frame < b.frame;
+                });
+            }
+        }
+        ImGui::Separator();
+
+        ImGui::Text("Shift All Frames:");
+        ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x - 70.0f);
+        ImGui::InputInt("##ShiftOffset", &shift_offset_input, 0, 0);
+        ImGui::SameLine();
+        if (ImGuiH::Button("Shift##ApplyShift", ImVec2(62.0f, 0))) {
+            if (selected_frame_type == 0) {
+                auto& frames = engine.get_physic_frames();
+                for (auto& f : frames) {
+                    int64_t new_f = static_cast<int64_t>(f.frame) + shift_offset_input;
+                    f.frame = static_cast<uint64_t>(std::max<int64_t>(0, new_f));
+                }
+            } else {
+                auto& frames = engine.get_input_frames();
+                for (auto& f : frames) {
+                    int64_t new_f = static_cast<int64_t>(f.frame) + shift_offset_input;
+                    f.frame = static_cast<uint64_t>(std::max<int64_t>(0, new_f));
+                }
+            }
+        }
+
+        float half_w = (ImGui::GetContentRegionAvail().x / 2.0f) - 2.0f;
+
+        if (ImGuiH::Button("Delete ALL P1", ImVec2(half_w, 0))) {
+            if (selected_frame_type == 0) {
+                auto& frames = engine.get_physic_frames();
+                std::erase_if(frames, [](const physic_data& f) { return !f.isPlayer2; });
+            } else {
+                auto& frames = engine.get_input_frames();
+                std::erase_if(frames, [](const input_data& f) { return !f.isPlayer2; });
+            }
+            selected_index = -1;
+        }
+        ImGui::SameLine();
+        if (ImGuiH::Button("Delete ALL P2", ImVec2(ImGui::GetContentRegionAvail().x, 0))) {
+            if (selected_frame_type == 0) {
+                auto& frames = engine.get_physic_frames();
+                std::erase_if(frames, [](const physic_data& f) { return f.isPlayer2; });
+            } else {
+                auto& frames = engine.get_input_frames();
+                std::erase_if(frames, [](const input_data& f) { return f.isPlayer2; });
+            }
+            selected_index = -1;
+        }
+
+        if (ImGuiH::Button("Flip All P1/P2", ImVec2(selected_frame_type == 1 ? half_w : ImGui::GetContentRegionAvail().x, 0))) {
+            if (selected_frame_type == 0) {
+                for (auto& f : engine.get_physic_frames()) f.isPlayer2 = !f.isPlayer2;
+            } else {
+                for (auto& f : engine.get_input_frames()) f.isPlayer2 = !f.isPlayer2;
+            }
+        }
+
+        if (selected_frame_type == 1) {
+            ImGui::SameLine();
+            if (ImGuiH::Button("Flip All Push/Rel", ImVec2(ImGui::GetContentRegionAvail().x, 0))) {
+                for (auto& f : engine.get_input_frames()) f.down = !f.down;
+            }
+        }
+
         ImGui::Separator();
         ImGui::Text("Actions:");
         if (selected_frame_type == 0) {
@@ -512,7 +623,7 @@ void drawMacroEditor() {
                     request_scroll = true;
                 }
                 ImGui::BeginDisabled(selected_index <= 0);
-                if (ImGuiH::Button("Move Up", ImVec2((ImGui::GetContentRegionAvail().x / 2.0f) - 2.0f, 0))) {
+                if (ImGuiH::Button("Move Up", ImVec2(half_w, 0))) {
                     std::swap(frames[selected_index], frames[selected_index - 1]);
                     selected_index--;
                     request_scroll = true;
@@ -574,7 +685,7 @@ void drawMacroEditor() {
                     request_scroll = true;
                 }
                 ImGui::BeginDisabled(selected_index <= 0);
-                if (ImGuiH::Button("Move Up", ImVec2((ImGui::GetContentRegionAvail().x / 2.0f) - 2.0f, 0))) {
+                if (ImGuiH::Button("Move Up", ImVec2(half_w, 0))) {
                     std::swap(frames[selected_index], frames[selected_index - 1]);
                     selected_index--;
                     request_scroll = true;
@@ -604,9 +715,113 @@ void drawMacroEditor() {
             } else {
                 ImGui::TextColored(ImColor(255, 128, 128).Value, "No input frames");
             }
+
+            ImGuiH::SpaceSeparator();
+            if (ImGuiH::Button("Import Plain Text", ImVec2(ImGui::GetContentRegionAvail().x, 0))) {
+                geode::async::spawn(
+                    geode::utils::file::pick(
+                        geode::utils::file::PickMode::OpenFile,
+                        geode::utils::file::FilePickOptions{
+                            .filters = { { "Text File", { "*.txt" } } }
+                        }
+                    ),
+                    [](geode::utils::file::PickResult res) {
+                        if (!res) return;
+                        auto pathOpt = std::move(res).unwrapOr(std::nullopt);
+                        if (!pathOpt) return;
+
+                        auto selectedPath = *pathOpt;
+                        if (!GDH::Utils::isOnlyAsciiPath(selectedPath)) {
+                            ImGuiH::AddPopup("Invalid path. Please remove non-ASCII characters");
+                            return;
+                        }
+
+                        std::ifstream file(selectedPath);
+                        if (!file.is_open()) {
+                            ImGuiH::AddPopup("Failed to open file for reading");
+                            return;
+                        }
+
+                        auto& engine = GDH::ReplayEngine::get();
+
+                        engine.get_physic_frames().clear();
+                        auto& inputs = engine.get_input_frames();
+                        inputs.clear();
+
+                        std::string line;
+                        while (std::getline(file, line)) {
+                            if (line.empty()) continue;
+                            std::stringstream ss(line);
+                            
+                            int64_t frame = 0;
+                            int push = 0;
+                            int player = 0;
+
+                            if (ss >> frame >> push >> player) {
+                                input_data data{};
+                                data.frame = static_cast<uint64_t>(std::max<int64_t>(0, frame));
+                                data.down = (push != 0);
+                                data.isPlayer2 = (player != 0);
+                                data.button = 1;
+                                inputs.push_back(data);
+                            }
+                        }
+
+                        file.close();
+                        selected_index = inputs.empty() ? -1 : 0;
+                        request_scroll = true;
+                        ImGuiH::AddPopup("Macro imported successfully!");
+                    }
+                );
+            }
+
+            if (ImGuiH::Button("Export Plain Text", ImVec2(ImGui::GetContentRegionAvail().x, 0))) {
+                geode::async::spawn(
+                    geode::utils::file::pick(
+                        geode::utils::file::PickMode::SaveFile,
+                        geode::utils::file::FilePickOptions{
+                            .defaultPath = "macro.txt",
+                            .filters = { { "Text File", { "*.txt" } } }
+                        }
+                    ),
+                    [](geode::utils::file::PickResult res) {
+                        if (!res) return;
+                        auto pathOpt = std::move(res).unwrapOr(std::nullopt);
+                        if (!pathOpt) return;
+
+                        auto selectedPath = *pathOpt;
+                        if (!GDH::Utils::isOnlyAsciiPath(selectedPath)) {
+                            ImGuiH::AddPopup("Invalid path. Please remove non-ASCII characters");
+                            return;
+                        }
+
+                        std::ofstream file(selectedPath);
+                        if (!file.is_open()) {
+                            ImGuiH::AddPopup("Failed to open file for writing");
+                            return;
+                        }
+
+                        auto& engine = GDH::ReplayEngine::get();
+                        const auto& inputs = engine.get_input_frames();
+
+                        for (const auto& f : inputs) {
+                            file << static_cast<int64_t>(f.frame) << " " 
+                                << (f.down ? 1 : 0) << " " 
+                                << (f.isPlayer2 ? 1 : 0) << "\n";
+                        }
+
+                        file.close();
+                        ImGuiH::AddPopup("Macro exported successfully!");
+                    }
+                );
+            }
+
+            ImGuiH::SpaceSeparator();
+
+            ImGuiWidgetConfig::Checkbox("Show Outside", "re::show_editor", false);
         }
-        ImGui::EndChild();
     }
+    ImGui::EndChild();
 }
 
 $execute {
@@ -802,18 +1017,19 @@ $execute {
             auto glow_out = ImGui::ColorConvertFloat4ToU32(ImGuiH::colorTable[ImGuiH::Glow_Popup_Out]);
 
             ImGuiH::GlowWindow(glow_in, glow_out, layout.multipleScale(250.f));
-            ImGui::BeginChild("Replay List", {layout.multipleScale(400.f), layout.multipleScale(500.f)});
-            for (const auto& replay : replay_list)
-            {
-                std::string filename_str = replay.filename().string();
-                
-                if (ImGuiH::Button(filename_str.c_str(), {ImGui::GetContentRegionAvail().x, 0.0f}))
+            if (ImGui::BeginChild("Replay List", {layout.multipleScale(400.f), layout.multipleScale(500.f)})) {
+                for (const auto& replay : replay_list)
                 {
-                    engine.replay_name = replay.stem().string();
-                    ImGui::CloseCurrentPopup();
+                    std::string filename_str = replay.filename().string();
+                    
+                    if (ImGuiH::Button(filename_str.c_str(), {ImGui::GetContentRegionAvail().x, 0.0f}))
+                    {
+                        engine.replay_name = replay.stem().string();
+                        ImGui::CloseCurrentPopup();
+                    }
                 }
+                ImGui::EndChild();
             }
-            ImGui::EndChild();
 
             if (ImGuiH::Button("Open Folder", {ImGui::GetContentRegionAvail().x, 0.f})) {
                 geode::utils::file::openFolder(getFolderMacroPath());
@@ -867,10 +1083,12 @@ $execute {
                 }
                 #endif
 
-                if (ImGui::BeginTabItem("Editor (Beta)")) {
-                    ImGui::Spacing();
-                    drawMacroEditor();
-                    ImGui::EndTabItem();
+                if (!config.get<bool>("re::show_editor", false)) {
+                    if (ImGui::BeginTabItem("Editor (Beta)")) {
+                        ImGui::Spacing();
+                        GDH::UI::drawMacroEditor();
+                        ImGui::EndTabItem();
+                    }
                 }
                 ImGui::EndTabBar();
             }

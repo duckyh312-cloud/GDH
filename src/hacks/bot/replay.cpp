@@ -289,10 +289,12 @@ class $modify(ReplayGJBaseGameLayer, GJBaseGameLayer) {
     // }
         
     void processQueuedButtons(float dt, bool clearInputQueue) {
+        auto &engine = GDH::ReplayEngine::get();
+        engine.inc_frame();
+        
         GJBaseGameLayer::processQueuedButtons(dt, clearInputQueue);
-
+        
         if (!m_levelEndAnimationStarted) {
-            auto &engine = GDH::ReplayEngine::get();
             engine.handle_commands(this);
             engine.handle_update(this);
         }
@@ -370,6 +372,8 @@ class $modify(ReplayPlayLayer, PlayLayer) {
         auto &engine = GDH::ReplayEngine::get();
 
         left_over = 0;
+        engine.set_frame(0);
+
         PlayLayer::resetLevel();
         
         engine.handle_reset();  
