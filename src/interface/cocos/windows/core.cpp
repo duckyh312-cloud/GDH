@@ -15,7 +15,13 @@ $execute {
         tab->addSeparator();
         tab->prepareNewRow();
 
-        tab->addConfigFloatInput("TPS Value", "invisible.tps::value", 240.f, 1.f, FLT_MAX);
+        tab->addConfigFloatInput("TPS Value", "invisible.tps::value", 240.f, 1.f, FLT_MAX, [&gui](float value) {
+            auto& hack = gui.getWindow("Invisible").findHackByName("TPS");  
+            if (hack.getEnabled()) {
+                hack.disable();
+                hack.enable();
+            }
+        });
         tab->addHackToggle("TPS Enabled", "invisible.tps");
         
         tab->addSeparator();

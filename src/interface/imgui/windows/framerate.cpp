@@ -51,6 +51,12 @@ $execute {
             if (config.get<bool>("invisible.lock_delta::sync_tps", true)) {
                 config.set<float>("invisible.lock_delta::value", tpsValue);
             }
+
+            auto& hack = gui.getWindow("Invisible").findHackByName("TPS");  
+            if (hack.getEnabled()) {
+                hack.disable();
+                hack.enable();
+            }
         }
         ImGui::SameLine();
         ImGuiWidgetConfig::HackCheckbox("##TPS_Enabled", "invisible.tps", false);

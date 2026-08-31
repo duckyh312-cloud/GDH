@@ -15,8 +15,16 @@
 
 static float left_over = 0.f;
 
-static int expectedTicks = 5;
-uintptr_t offset = 0;
+#if defined(GEODE_IS_WINDOWS) || defined (GEODE_IS_ANDROID64)
+static int expectedTicks = 0;
+#endif
+
+#if defined (GEODE_IS_MACOS)
+static float expectedTicks = 0;
+#endif
+
+static uintptr_t offset = 0;
+static uintptr_t deltaOffset = 0;
 
 #ifdef GEODE_IS_WINDOWS 
 $execute {
@@ -30,7 +38,14 @@ $execute {
 }
 #endif
 
-#if defined(GEODE_IS_WINDOWS) || defined(GEODE_IS_ANDROID64)
+#ifdef GEODE_IS_INTEL_MAC
+$execute {
+    offset = GDH::Utils::PatternScan(geode::base::get(), 0x1600000, "0F 28 ? F3 0F 5D 83 ? ? ? ? F3 0F ? ? F2 0F 10");
+    deltaOffset = GDH::Utils::PatternScan(geode::base::get(), 0x1600000, "11 11 11 11 11 11 71 3F");
+}
+#endif
+
+#if defined(GEODE_IS_WINDOWS) || defined(GEODE_IS_ANDROID64) || defined(GEODE_IS_INTEL_MAC)
 class $modify(ReplayCCScheduler, cocos2d::CCScheduler) {
     static void onModify(auto& self) {
         auto& gui = GDH::Gui::get();
@@ -43,7 +58,7 @@ class $modify(ReplayCCScheduler, cocos2d::CCScheduler) {
         config.set<float>("invisible.tps::value", std::clamp(value, 10.f, 240.f));
 
         hack.setHandler([](bool enabled) {
-            #if defined(GEODE_IS_WINDOWS) || defined(GEODE_IS_ANDROID64)
+            #if defined(GEODE_IS_WINDOWS) || defined(GEODE_IS_ANDROID64) || defined(GEODE_IS_INTEL_MAC)
             if (offset == 0) {
                 geode::log::error("Couldn't find the offset for the TPS bypass");
                 return;
@@ -61,7 +76,7 @@ class $modify(ReplayCCScheduler, cocos2d::CCScheduler) {
                 patchBytes.push_back((expectedTicksAddr >> (i * 8)) & 0xFF);
             }
 
-            //mov r11d, [rax] (44 8B 18)
+            // mov r11d, [rax] (44 8B 18)
             patchBytes.push_back(0x44);
             patchBytes.push_back(0x8B);
             patchBytes.push_back(0x18);
@@ -100,7 +115,38 @@ class $modify(ReplayCCScheduler, cocos2d::CCScheduler) {
             push_u32(0x14000004);
             #endif
 
-            #if defined(GEODE_IS_WINDOWS) || defined(GEODE_IS_ANDROID64)
+            #ifdef GEODE_IS_INTEL_MAC
+            auto expectedTicksAddr = reinterpret_cast<uintptr_t>(&expectedTicks);
+            std::vector<uint8_t> patchBytes;
+
+            // movabs rax, expectedTicksAddr
+            patchBytes.push_back(0x48);
+            patchBytes.push_back(0xB8);
+            for (int i = 0; i < 8; i++) {
+                patchBytes.push_back((expectedTicksAddr >> (i * 8)) & 0xFF);
+            }
+
+            // movss xmm0, dword ptr [rax]
+            patchBytes.push_back(0xF3);
+            patchBytes.push_back(0x0F);
+            patchBytes.push_back(0x10);
+            patchBytes.push_back(0x00);
+
+            // jmp rel32 (0x36)
+            patchBytes.push_back(0xE9);
+            int32_t rel = 0x36;
+            patchBytes.push_back(rel & 0xFF);
+            patchBytes.push_back((rel >> 8) & 0xFF);
+            patchBytes.push_back((rel >> 16) & 0xFF);
+            patchBytes.push_back((rel >> 24) & 0xFF);
+
+            // nop padding
+            for (int i = 0; i < 54; i++) {
+                patchBytes.push_back(0x90);
+            }
+            #endif
+
+            #if defined(GEODE_IS_WINDOWS) || defined(GEODE_IS_ANDROID64) || defined(GEODE_IS_INTEL_MAC)
             static auto result = geode::Mod::get()->patch((void*)(offset), patchBytes);
             static auto patch = result.isErr() ? nullptr : result.unwrap();
             
@@ -108,54 +154,41 @@ class $modify(ReplayCCScheduler, cocos2d::CCScheduler) {
                 (void)patch->toggle(enabled);
             }
             #endif
+
+            #ifdef GEODE_IS_INTEL_MAC
+            if (deltaOffset != 0) {
+                static geode::Patch* deltaPatch = nullptr;
+
+                if (enabled) {
+                    auto& config = Config::get();
+                    float tps = config.get<float>("invisible.tps::value", 240.f);
+                    double value = 1.0 / static_cast<double>(tps);
+
+                    std::vector<uint8_t> deltaBytes(sizeof(double));
+                    std::memcpy(deltaBytes.data(), &value, sizeof(double));
+
+                    if (!deltaPatch) {
+                        auto dRes = geode::Mod::get()->patch(reinterpret_cast<void*>(deltaOffset), deltaBytes);
+                        if (dRes.isOk()) {
+                            deltaPatch = dRes.unwrap();
+                            (void)deltaPatch->enable();
+                        } else {
+                            geode::log::error("failed to patch delta for intel mac: {}", dRes.unwrapErr());
+                        }
+                    } else {
+                        (void)deltaPatch->updateBytes(deltaBytes);
+                        (void)deltaPatch->enable();
+                    }
+                } else if (deltaPatch) {
+                    (void)deltaPatch->disable();
+                }
+            } else {
+                geode::log::error("couldn't find the deltaOffset for intel mac");
+            }
+            #endif
         });
     }
 };
-#endif
-
-#ifdef GEODE_IS_ANDROID32
-#include "../../core/recorder/recorder.hpp"
-
-class $modify(ReplayCCScheduler, cocos2d::CCScheduler) {
-    static void onModify(auto& self) {
-        auto& gui = GDH::Gui::get();
-        auto& hack = gui.getWindow("Invisible").findHackByName("TPS");   
-        hack.setCheating(true);
-        hack.addHookPtr(self.getHook("cocos2d::CCScheduler::update").unwrap());
-    }
-
-    void update(float dt) {
-        auto &engine = GDH::ReplayEngine::get();
-        auto &config = Config::get();
-        auto& recorder = GDH::Recorder::get();
-
-        if (recorder.isRecording()) {
-            return CCScheduler::update(dt);
-        }
-
-        float tps_value = config.get<float>("invisible.tps::value", 240.f);
-        float new_dt = 1.f / tps_value;
-
-        unsigned times = static_cast<int>((dt + left_over) / new_dt);  
-        if (dt <= 0.f)
-            return CCScheduler::update(dt);
-
-        auto start = std::chrono::high_resolution_clock::now();
-        using namespace std::literals;
-
-        for (unsigned i = 0; i < times; ++i) {
-            CCScheduler::update(new_dt);
-
-            if (std::chrono::high_resolution_clock::now() - start > 33.333ms) {         
-                times = i + 1;
-                break;
-            }
-        }
-
-        left_over = std::max(0.f, left_over + dt - new_dt * times);
-    }
-};
-
 #endif
 
 class $modify(ReplayGJBaseGameLayer, GJBaseGameLayer) {
@@ -165,7 +198,40 @@ class $modify(ReplayGJBaseGameLayer, GJBaseGameLayer) {
         auto& tps = gui.getWindow("Invisible").findHackByName("TPS");       
         tps.setCheating(true); 
         tps.addHookPtr(self.getHook("GJBaseGameLayer::getModifiedDelta").unwrap());
+        #if defined(GEODE_IS_INTEL_MAC)
+        tps.addHookPtr(self.getHook("GJBaseGameLayer::update").unwrap());
+        #endif
     }
+
+    #if defined(GEODE_IS_INTEL_MAC)
+    double calculateModifiedDelta(float dt) {
+        if (m_resumeTimer > 0) {
+            --m_resumeTimer;
+            dt = 0.0f;
+        }
+        
+        auto& config = Config::get();
+        auto tps = config.get<float>("invisible.tps::value", 240.f);
+        auto fixed_dt = 1.0 / static_cast<double>(tps);
+
+        auto timestep = std::min(static_cast<double>(m_gameState.m_timeWarp), 1.0) * fixed_dt;
+        auto total_dt = dt + m_extraDelta;
+        auto steps = std::round(total_dt / timestep);
+        auto new_dt = steps * timestep;
+
+        if (new_dt > 0.0) {
+            float v6 = static_cast<float>(new_dt) * tps;
+            expectedTicks = std::max(1.f, std::round(v6 / std::min(m_gameState.m_timeWarp, 1.f)));
+        }
+
+        return new_dt;
+    }
+
+    void update(float dt) {
+        calculateModifiedDelta(dt);
+        GJBaseGameLayer::update(dt);
+    }
+    #endif
 
     double getModifiedDelta(float dt) {
         if (m_resumeTimer > 0)
