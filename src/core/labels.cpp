@@ -184,13 +184,30 @@ bool renderVariable(geode::utils::StringBuffer<> &stream, std::string_view var_n
     } else if (var_name == "p2::is_upside_down") {
         if (!isDualAnd2P || !pl->m_player2) return false;
         stream.append(fmt::format("{}", pl->m_player2->m_isUpsideDown));
-    } else if (var_name == "best_run") {
+    } else if (var_name == "best_run" || var_name.starts_with("best_run:")) {
         if (pl && pl->m_level && pl->m_level->isPlatformer()) {
             return false;
         }
 
+        int decimal_points = 0;
+        if (var_name.starts_with("best_run:")) {
+            var_name.remove_prefix(9);
+            auto parsed = geode::utils::numFromString<int>(var_name, 10);
+            if (parsed.ok()) decimal_points = *parsed;
+        }
+
         auto& mgr = GDH::Labels::Manager::get();
-        stream.append(fmt::format("{:.0f}% - {:.0f}%", mgr.m_bestRunStart, mgr.m_bestRunEnd));
+        if (mgr.m_bestRuns.empty()) {
+            stream.append("N/A");
+        } else {
+            for (size_t i = 0; i < mgr.m_bestRuns.size(); ++i) {
+                const auto& run = mgr.m_bestRuns[i];
+                stream.append(fmt::format("{:.{}f}%-{:.{}f}%", run.start, decimal_points, run.end, decimal_points));
+                if (i + 1 < mgr.m_bestRuns.size()) {
+                    stream.append(", ");
+                }
+            }
+        }
     } else if (var_name == "best_time") {
         if (pl && pl->m_level && !pl->m_level->isPlatformer()) {
             return false;
@@ -396,15 +413,7 @@ class $modify(LabelsPlayLayer, PlayLayer) {
         auto& mgr = GDH::Labels::Manager::get();
 
         if (!m_level || !m_level->isPlatformer()) {
-            float currentStart = GDH::Utils::getRealProgress(this);
-            if (std::abs(fields->startPercent - currentStart) > 0.01f) {
-                mgr.resetBestRun();
-                fields->startPercent = currentStart;
-            }
-            if (mgr.m_bestRunStart == 0.0f && mgr.m_bestRunEnd == 0.0f) {
-                mgr.m_bestRunStart = currentStart;
-                mgr.m_bestRunEnd = currentStart;
-            }
+            fields->startPercent = GDH::Utils::getRealProgress(this);
         }
     }
 
@@ -486,6 +495,15 @@ class $modify(LabelsPlayLayer, PlayLayer) {
                     i++;
                 
                     label->setScale(labelObj.size);
+                    label->setText(renderedText);
+
+                    float labelWidth = label->getContentWidth() * labelObj.size;
+                    float maxWidth = windowSize.width - (manager.cornerPadding * 2.0f);
+                    if (labelWidth > maxWidth && labelWidth > 0.0f) {
+                        float autoScale = (maxWidth / labelWidth) * labelObj.size;
+                        label->setScale(autoScale);
+                    }
+
                     if (labelObj.rainbow) {
                         float r, g, b; GDH::Utils::hsvToRgb(g_rainbowHue, 1.0f, 1.0f, r, g, b);
                         label->setColor({static_cast<GLubyte>(r * 255), static_cast<GLubyte>(g * 255), static_cast<GLubyte>(b * 255)});
@@ -521,9 +539,8 @@ class $modify(LabelsPlayLayer, PlayLayer) {
                             static_cast<GLubyte>(labelObj.color[1] * 255),static_cast<GLubyte>(labelObj.color[2] * 255)});
                     }
                     label->setOpacity(static_cast<GLubyte>(labelObj.color[3] * 255));
-                    label->setText(renderedText);
 
-                    y += label->getContentHeight() * labelObj.size + manager.midPadding;
+                    y += label->getContentHeight() * label->getScaleY() + manager.midPadding;
                 } 
                 else if (labelObj.type == LabelType::CheatIndicator) {
                     if (!cheat_indicator_enabled) continue;
@@ -585,7 +602,7 @@ class $modify(LabelsPlayLayer, PlayLayer) {
                     if (labelObj.render().empty()) continue; 
                     geode::Label *label = labelVec[i++];
                     label->setPosition(getCornerPos(corner, manager.cornerPadding, windowSize, y, labelsHeight));
-                    y += label->getContentHeight() * labelObj.size + manager.midPadding;
+                    y += label->getContentHeight() * label->getScaleY() + manager.midPadding;
                 } 
                 else if (labelObj.type == LabelType::CheatIndicator) {
                     if (!cheat_indicator_enabled) continue;

@@ -129,6 +129,7 @@ $execute {
         ImGuiWidgetConfig::HackCheckbox("##Pitch_Shifter_Enabled", "invisible.pitch_shifter", false);
         
         ImGuiWidgetConfig::HackCheckbox("Speedhack Audio", "invisible.speedhack_audio", false);
+        ImGuiWidgetConfig::Checkbox("Sync With Speedhack", "invisible.speedhack_audio::sync", true);
 
         ImGuiH::SpaceSeparator();
 

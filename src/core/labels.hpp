@@ -6,25 +6,25 @@
 #include <unordered_map>
 #include <string>
 #include <queue>
+#include <algorithm>
 
 namespace GDH {
     namespace Labels {
         enum Corner {
-            Top_Left,
-            Top_Center,
-            Top_Right,
-            Center_Left,
-            Center_Center,
-            Center_Right,
-            Bottom_Left,
-            Bottom_Center,
-            Bottom_Right,
+            Top_Left, Top_Center, Top_Right,
+            Center_Left, Center_Center, Center_Right,
+            Bottom_Left, Bottom_Center, Bottom_Right
         };
 
         enum LabelType {
             Text,
             Spacing,
             CheatIndicator
+        };
+
+        struct Run {
+            float start = 0.0f;
+            float end = 0.0f;
         };
 
         class Label {
@@ -94,24 +94,32 @@ namespace GDH {
             
             bool m_cheatedInCurrentAttempt = false;
 
-            float m_bestRunStart = 0.0f;
-            float m_bestRunEnd = 0.0f;
-
+            std::vector<Run> m_bestRuns;
             double m_bestTime = 0.0;
 
             void resetBestRun() {
-                m_bestRunStart = 0.0f;
-                m_bestRunEnd = 0.0f;
+                m_bestRuns.clear();
                 m_bestTime = 0.0;
             }
 
             void updateBestRun(float start, float end) {
                 if (end < start) return;
 
-                if (end > m_bestRunEnd) {
-                    m_bestRunStart = start;
-                    m_bestRunEnd = end;
+                auto it = std::find_if(m_bestRuns.begin(), m_bestRuns.end(), [start](const Run& run) {
+                    return std::abs(run.start - start) < 0.5f;
+                });
+
+                if (it != m_bestRuns.end()) {
+                    if (end > it->end) {
+                        it->end = end;
+                    }
+                } else {
+                    m_bestRuns.push_back({start, end});
                 }
+
+                std::sort(m_bestRuns.begin(), m_bestRuns.end(), [](const Run& a, const Run& b) {
+                    return a.start < b.start;
+                });
             }
 
             void updateBestTime(double time) {

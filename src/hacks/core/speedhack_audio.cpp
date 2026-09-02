@@ -30,9 +30,15 @@ class $modify(SpeedhackAudioFMODAudioEngine, FMODAudioEngine) {
         FMOD::ChannelGroup* group;
 
         if (m_system->getMasterChannelGroup(&group) == FMOD_OK) {
-            bool enabled = config.get<bool>("invisible.speedhack", false);
-            const float value = enabled ? config.get<float>("invisible.speedhack::value", 1.f) : 1.f;
-            group->setPitch(value);
+            bool speedhackEnabled = config.get<bool>("invisible.speedhack", false);
+            bool syncWithSpeedhack = config.get<bool>("invisible.speedhack_audio::sync", true);
+            const float value = config.get<float>("invisible.speedhack::value", 1.f);
+
+            if (syncWithSpeedhack) {
+                group->setPitch(speedhackEnabled ? value : 1.f);
+            } else {
+                group->setPitch(value);
+            }
         }
     }
 };
