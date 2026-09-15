@@ -20,8 +20,8 @@ class $modify(StartposSwitcherPlayLayer, PlayLayer) {
 
         ~Fields() {
             auto& kb = GDH::Keybinds::get();
-            kb.removeCallback("startpos_switcher::left");
-            kb.removeCallback("startpos_switcher::right");
+            kb.clearCallback("startpos_switcher::left");
+            kb.clearCallback("startpos_switcher::right");
         }
     };
 

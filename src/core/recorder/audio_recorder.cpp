@@ -10,7 +10,7 @@ void AudioRecorder::init() {
     system->getSoftwareFormat((int*)&m_sampleRate, nullptr, nullptr);
 
     FMOD_DSP_DESCRIPTION desc = {};
-    strcpy(desc.name, "DSP Recorder");
+    std::snprintf(desc.name, sizeof(desc.name), "GDH DSP Recorder");
     desc.numinputbuffers = 1;
     desc.numoutputbuffers = 1;
     

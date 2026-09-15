@@ -203,6 +203,12 @@ void Keybinds::addCallback(const std::string& id, geode::Keybind defaultBind, ge
     }
 }
 
+void Keybinds::clearCallback(const std::string& id) {
+    if (m_customBinds.contains(id)) {
+        m_customBinds[id].second = nullptr;
+    }
+}
+
 void Keybinds::changeBind(const std::string& id, geode::Keybind newBind) {
     m_customBinds[id].first = newBind;
 }
