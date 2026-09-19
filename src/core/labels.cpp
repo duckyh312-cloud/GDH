@@ -323,6 +323,8 @@ void Manager::load() {
         if (!obj.contains(cornerIndice)) continue;
 
         for (const auto &i : obj[cornerIndice]) {
+            bool enabled = i.value("enabled", true);
+
             switch (i["type"].get<LabelType>()) {
                 case LabelType::Text: {
                     std::array<float, 4> color = { i["color"][0], i["color"][1], i["color"][2], i["color"][3] };
@@ -330,14 +332,17 @@ void Manager::load() {
                     bool cps = i.value("cps", false);
                     bool noclip = i.value("noclip", false);
                     
-                    labelsCorner.emplace_back(i["text"], color, i["size"], rainbow, cps, noclip);
+                    auto& lbl = labelsCorner.emplace_back(i["text"], color, i["size"], rainbow, cps, noclip);
+                    lbl.enabled = enabled;
                 } break;
                 case LabelType::CheatIndicator: {
                     float opacity = i.value("opacity", 1.0f);
-                    labelsCorner.emplace_back(i["size"].get<float>(), LabelType::CheatIndicator, opacity);
+                    auto& lbl = labelsCorner.emplace_back(i["size"].get<float>(), LabelType::CheatIndicator, opacity);
+                    lbl.enabled = enabled;
                 } break;
                 case LabelType::Spacing: {
-                    labelsCorner.emplace_back(i["spacing"]);
+                    auto& lbl = labelsCorner.emplace_back(i["spacing"].get<float>());
+                    lbl.enabled = enabled;
                 } break;
             }
         }
@@ -392,7 +397,7 @@ class $modify(LabelsPlayLayer, PlayLayer) {
             return PlayLayer::destroyPlayer(player, obj);
 
         auto fields = m_fields.self();
-        if (!m_level || !m_level->isPlatformer()) {
+        if (!m_isPracticeMode && (!m_level || !m_level->isPlatformer())) {
             float currentEnd = GDH::Utils::getRealProgress(this);
             GDH::Labels::Manager::get().updateBestRun(fields->startPercent, currentEnd);
         }
@@ -419,10 +424,13 @@ class $modify(LabelsPlayLayer, PlayLayer) {
 
     void levelComplete() {
         auto fields = m_fields.self();
-        if (m_level && m_level->isPlatformer()) {
-            GDH::Labels::Manager::get().updateBestTime(m_timePlayed);
-        } else {
-            GDH::Labels::Manager::get().updateBestRun(fields->startPercent, 100.0f);
+
+        if (!m_isPracticeMode) {
+            if (m_level && m_level->isPlatformer()) {
+                GDH::Labels::Manager::get().updateBestTime(m_timePlayed);
+            } else {
+                GDH::Labels::Manager::get().updateBestRun(fields->startPercent, 100.0f);
+            }
         }
         PlayLayer::levelComplete();
     }

@@ -409,10 +409,13 @@ class $modify(ReplayPlayLayer, PlayLayer) {
     }
 
     void pauseGame(bool unfocused) {
-        if (!this->canPauseGame() || AppDelegate::get()->m_gamePaused) return;
+        if (!this->canPauseGame() || AppDelegate::get()->m_gamePaused) {
+            return PlayLayer::pauseGame(unfocused);
+        }
 
         auto& engine = GDH::ReplayEngine::get();
         if (engine.mode == state::record) engine.handle_reset(true);
+
         PlayLayer::pauseGame(unfocused);
     }
 
