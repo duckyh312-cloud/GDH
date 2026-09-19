@@ -5,7 +5,6 @@
 #include <vector>
 #include <unordered_map>
 #include <string>
-#include <queue>
 #include <algorithm>
 
 namespace GDH {
@@ -201,11 +200,6 @@ public:
     CpsCounter(const CpsCounter&) = delete;
     CpsCounter& operator=(const CpsCounter&) = delete;
 
-    std::queue<float> clicks;
-    std::queue<float> p2_clicks;
-
-    float current_time = 0.f;
-
     int cps = 0, highscore = 0, overall = 0;
     int p2_cps = 0, p2_highscore = 0, p2_overall = 0;
 
@@ -216,30 +210,46 @@ public:
         cps = highscore = overall = 0;
         p2_cps = p2_highscore = p2_overall = 0;
         p1_push = p2_push = false;
-        current_time = 0.f;
+        timer = 0.0f;
+        current_bucket = 0;
 
-        std::queue<float>().swap(clicks);
-        std::queue<float>().swap(p2_clicks);
+        for (int i = 0; i < 10; ++i) {
+            buckets[i] = 0;
+            p2_buckets[i] = 0;
+        }
     }
 
-    void click(bool isPlayer1) {
+    void click(bool down, bool isPlayer1) {
         if (isPlayer1) {
-            overall++;
-            clicks.push(current_time);
+            p1_push = down;
+            if (down) {
+                overall++;
+                cps++;
+                buckets[current_bucket]++;
+            }
         } else {
-            p2_overall++;
-            p2_clicks.push(current_time);
+            p2_push = down;
+            if (down) {
+                p2_overall++;
+                p2_cps++;
+                p2_buckets[current_bucket]++;
+            }
         }
     }
 
     void update(float dt) {
-        current_time += dt;
+        timer += dt;
 
-        while (!clicks.empty() && (current_time - clicks.front() > 1.0f)) clicks.pop();
-        while (!p2_clicks.empty() && (current_time - p2_clicks.front() > 1.0f)) p2_clicks.pop();
+        if (timer >= 0.1f) {
+            timer -= 0.1f;
+            current_bucket = (current_bucket + 1) % 10;
 
-        cps = static_cast<int>(clicks.size());
-        p2_cps = static_cast<int>(p2_clicks.size());
+            cps -= buckets[current_bucket];
+            buckets[current_bucket] = 0;
+
+            p2_cps -= p2_buckets[current_bucket];
+            p2_buckets[current_bucket] = 0;
+        }
 
         highscore = std::max(highscore, cps);
         p2_highscore = std::max(p2_highscore, p2_cps);
@@ -247,4 +257,9 @@ public:
 
 private:
     CpsCounter() = default;
+
+    int buckets[10] = {0};
+    int p2_buckets[10] = {0};
+    int current_bucket = 0;
+    float timer = 0.f;
 };

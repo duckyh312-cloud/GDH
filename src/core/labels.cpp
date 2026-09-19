@@ -627,14 +627,7 @@ class $modify(LabelsGJBaseGameLayer, GJBaseGameLayer) {
             bool isDualAnd2P = m_gameState.m_isDualMode && m_level && m_level->m_twoPlayerMode;
             bool isP1 = isDualAnd2P ? (swapControls ? !isPlayer1 : isPlayer1) : true;
 
-            if (down) {
-                CpsCounter::get().click(isP1);
-                if (isP1) CpsCounter::get().p1_push = true;
-                else CpsCounter::get().p2_push = true;
-            } else {
-                if (isP1) CpsCounter::get().p1_push = false;
-                else CpsCounter::get().p2_push = false;
-            }
+            CpsCounter::get().click(down, isP1);
         }
     }
 

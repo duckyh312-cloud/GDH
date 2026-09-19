@@ -121,6 +121,7 @@ void ReplayEngine::handle_update(GJBaseGameLayer* self) {
 
 void ReplayEngine::handle_commands(GJBaseGameLayer* self) {
     auto frame = get_frame();
+    auto& cps = CpsCounter::get();
 
     if (mode == state::continue_mode) {
         bool reachedEnd = (m_inputIndex >= m_inputFrames.size());
@@ -156,8 +157,7 @@ void ReplayEngine::handle_commands(GJBaseGameLayer* self) {
         self->m_allowedButtons.clear();
         #endif
 
-        if (m_inputFrames[m_inputIndex].down)
-            CpsCounter::get().click(!m_inputFrames[m_inputIndex].isPlayer2);
+        cps.click(m_inputFrames[m_inputIndex].down, !m_inputFrames[m_inputIndex].isPlayer2);
         
         customHandleButton(self, m_inputFrames[m_inputIndex].down, static_cast<PlayerButton>(m_inputFrames[m_inputIndex].button), isPlayer1);
         m_inputIndex++;

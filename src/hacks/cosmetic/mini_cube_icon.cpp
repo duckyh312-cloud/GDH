@@ -11,6 +11,7 @@ class $modify(MiniCubeIconPlayerObject, PlayerObject) {
         auto& gui = GDH::Gui::get();
         auto& hack = gui.getWindow("Cosmetic").findHackByName("Mini Cube Icon");        
         
+        hack.setGameVariableID(GameVar::DefaultMiniIcon);
         hack.addHookPtr(self.getHook("PlayerObject::updatePlayerFrame").unwrap());
         hack.addHookPtr(self.getHook("PlayerObject::updatePlayerRollFrame").unwrap());
     }
