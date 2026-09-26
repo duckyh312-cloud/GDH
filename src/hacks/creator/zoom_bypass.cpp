@@ -9,7 +9,7 @@ class $modify(ZoomBypassEditorUI, EditorUI) {
         auto& gui = GDH::Gui::get();
         auto& hack = gui.getWindow("Creator").findHackByName("Zoom Bypass");   
         
-        #if defined(GEODE_IS_WINDOWS)
+        #if defined(GEODE_IS_WINDOWS) || defined(GEODE_IS_MACOS) 
         (void) self.setHookPriority("EditorUI::zoomIn", geode::Priority::Early); 
         (void) self.setHookPriority("EditorUI::zoomOut", geode::Priority::Early); 
         (void) self.setHookPriority("EditorUI::scrollWheel", geode::Priority::Early); 
@@ -17,7 +17,7 @@ class $modify(ZoomBypassEditorUI, EditorUI) {
         hack.addHookPtr(self.getHook("EditorUI::zoomIn").unwrap());
         hack.addHookPtr(self.getHook("EditorUI::zoomOut").unwrap());
         hack.addHookPtr(self.getHook("EditorUI::scrollWheel").unwrap());
-        #elif defined(GEODE_IS_ANDROID) || defined(GEODE_IS_MACOS) 
+        #elif defined(GEODE_IS_ANDROID)
         (void) self.setHookPriority("EditorUI::zoomGameLayer", geode::Priority::Early); 
         hack.addHookPtr(self.getHook("EditorUI::zoomGameLayer").unwrap());
         #endif
@@ -31,7 +31,7 @@ class $modify(ZoomBypassEditorUI, EditorUI) {
         this->updateZoom(std::max(scale, 0.01f));
     }
 
-    #if defined(GEODE_IS_WINDOWS)
+    #if defined(GEODE_IS_WINDOWS) || defined(GEODE_IS_MACOS) 
 
     void zoomIn(cocos2d::CCObject* sender) {
         zoomBypass(true);
@@ -56,7 +56,7 @@ class $modify(ZoomBypassEditorUI, EditorUI) {
         }
     }
 
-    #elif defined(GEODE_IS_ANDROID) || defined(GEODE_IS_MACOS)
+    #elif defined(GEODE_IS_ANDROID)
 
     void zoomGameLayer(bool zoomingIn) {
         zoomBypass(zoomingIn);

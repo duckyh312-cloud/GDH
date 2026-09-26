@@ -31,15 +31,16 @@ class $modify(LockDeltaCCScheduler, cocos2d::CCScheduler) {
 
         auto pl = PlayLayer::get();
         if (recorder.isRecording() && pl && !pl->m_isPaused) {
-            #if defined(GEODE_IS_WINDOWS) || defined(GEODE_IS_ANDROID64)
+            #if defined(GEODE_IS_WINDOWS) || defined(GEODE_IS_ANDROID64) || defined(GEODE_IS_INTEL_MAC)
+
             auto record_dt = 1.f / static_cast<float>(recorder.fps);
 
             if (recorder.record_audio) GDH::AudioRecorder::get().wait_for_audio(record_dt);
             
             recorder.resize_resolution([this, record_dt] { CCScheduler::update(record_dt); });
-            #endif
-            
-            #ifdef GEODE_IS_ANDROID32
+
+            #else
+
             auto record_dt = 1.f / config.get<float>("invisible.tps::value", 240.f);
             auto start = std::chrono::high_resolution_clock::now();
             using namespace std::literals;
@@ -47,6 +48,7 @@ class $modify(LockDeltaCCScheduler, cocos2d::CCScheduler) {
                 recorder.resize_resolution([this, record_dt] { CCScheduler::update(record_dt); });
                 if (recorder.record_audio) GDH::AudioRecorder::get().wait_for_audio(record_dt);
             } while (recorder.isRecording() && std::chrono::high_resolution_clock::now() - start < 50ms);
+            
             #endif
 
 
@@ -61,7 +63,7 @@ class $modify(LockDeltaCCScheduler, cocos2d::CCScheduler) {
         float new_dt = 1.f / tps_value;
 
         if (dt <= 0.f) {
-            CCScheduler::update(new_dt);
+            CCScheduler::update(dt);
             return;
         }
 

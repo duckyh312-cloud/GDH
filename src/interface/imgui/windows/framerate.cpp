@@ -100,6 +100,8 @@ $execute {
             ImGui::EndPopup();
         }
 
+        #if defined(GEODE_IS_WINDOWS) || defined(GEODE_IS_ANDROID64) || defined(GEODE_IS_INTEL_MAC)
+
         ImGuiH::SpaceSeparator();
         ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
         if (ImGuiWidgetConfig::DragFloat("##LockDelta_Value", "invisible.lock_delta::value", 1, 1.f, FLT_MAX, 240.f, "LockDT: %.2f FPS")) {
@@ -110,6 +112,8 @@ $execute {
         }
         ImGuiWidgetConfig::HackCheckbox("Lock Delta Enabled", "invisible.lock_delta", false);
         ImGuiH::SpaceSeparator();
+
+        #endif
         
         ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x - layout.multipleScale(52.f));
         if (ImGuiWidgetConfig::DragFloat("##Speedhack_Value", "invisible.speedhack::value", 0.01f, 0, 500.f, 1.f, "Speed: %.2fx"))
@@ -136,12 +140,15 @@ $execute {
         ImGuiWidgetConfig::HackCheckbox("Vertical Sync", "invisible.vertical_sync", false);
 
         ImGuiWidgetConfig::Checkbox("Real Time (Lock Delta)", "invisible.lock_delta::real_time", true);
+
+        #if defined(GEODE_IS_WINDOWS) || defined(GEODE_IS_ANDROID64) || defined(GEODE_IS_INTEL_MAC)
         if (ImGuiWidgetConfig::Checkbox("Sync TPS with Lock DT", "invisible.lock_delta::sync_tps", true)) {
             if (config.get<bool>("invisible.lock_delta::sync_tps", true)) {
                 auto value = config.get<float>("invisible.tps::value", 240.f);
                 config.set<float>("invisible.lock_delta::value", value);
             }
         }
+        #endif
     });
 }
 #endif

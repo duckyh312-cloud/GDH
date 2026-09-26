@@ -9,8 +9,9 @@
 #include "../../../core/config.hpp"
 #include "../../../core/utils.hpp"
 
-#ifdef GEODE_IS_WINDOWS
 #include "../../../core/recorder/recorder.hpp"
+
+#ifdef GEODE_IS_WINDOWS
 #include "../../../core/recorder/subprocess.hpp"
 #endif
 
@@ -47,6 +48,7 @@ std::string getFFmpegPath() {
     cachedPath = "";
     return cachedPath;
 }
+#endif
 
 void savePreset(const std::filesystem::path& path, const GDH::Recorder& recorder) {
     std::ofstream file(path);
@@ -88,8 +90,10 @@ void loadPreset(const std::filesystem::path& path, GDH::Recorder& recorder) {
 }
 
 void drawRecorderInterface() {
-    std::string ffmpegPath = getFFmpegPath();
     std::filesystem::path folder = Config::get().get<std::string>("recorder::path", (getFolderPath() / "Showcases").string());
+
+    #ifdef GEODE_IS_WINDOWS
+    std::string ffmpegPath = getFFmpegPath();
 
     if (ffmpegPath.empty()) {
         ImGui::TextColored(ImColor(255, 128, 128).Value, "FFmpeg not found!");
@@ -104,6 +108,7 @@ void drawRecorderInterface() {
         }
         return;
     }
+    #endif
 
     auto& layout = GDH::Layout::Manager::get();
     auto& recorder = GDH::Recorder::get();
@@ -128,6 +133,8 @@ void drawRecorderInterface() {
     ImGui::InputText("##videoname", &recorder.videoName);
     
     ImGuiH::Checkbox("Include Audio", &recorder.record_audio);
+    
+    #ifdef GEODE_IS_WINDOWS
     ImGui::SameLine();
 
     static geode::Mod* loader = geode::Loader::get()->getLoadedMod("geode.loader");
@@ -135,6 +142,8 @@ void drawRecorderInterface() {
     if (ImGuiH::Checkbox("Show Console (Requires Restart)", &consoleEnabled)) {
         loader->setSettingValue("show-platform-console", consoleEnabled);
     }
+
+    #endif
     
     ImGui::Text("Resolution:");
     ImGui::Separator();
@@ -172,6 +181,8 @@ void drawRecorderInterface() {
     ImGui::PushItemWidth(layout.multipleScale(50.f));
     ImGui::InputText("Bitrate", &recorder.bitrate); 
 
+    #ifdef GEODE_IS_WINDOWS
+
     ImGui::SameLine();
     ImGui::PushItemWidth(layout.multipleScale(120.f));
     ImGui::InputText("Codec", &recorder.codec);
@@ -185,6 +196,8 @@ void drawRecorderInterface() {
     ImGui::PushItemWidth(layout.multipleScale(450.f));
     ImGui::InputText("Audio Merge Args", &recorder.audio_args);
 
+    #endif
+
     ImGui::Spacing();
     ImGui::Text("Built-in Presets");
     ImGui::Separator();
@@ -196,6 +209,8 @@ void drawRecorderInterface() {
     if (ImGuiH::Button("2K")) { recorder.width = 2560; recorder.height = 1440; recorder.fps = 60; recorder.bitrate = "70M"; }   
     ImGui::SameLine();  
     if (ImGuiH::Button("4K")) { recorder.width = 3840; recorder.height = 2160; recorder.fps = 60; recorder.bitrate = "80M"; }   
+
+    #ifdef GEODE_IS_WINDOWS
     ImGui::SameLine();  
     if (ImGuiH::Button("8K")) { recorder.width = 7680; recorder.height = 4320; recorder.fps = 60; recorder.bitrate = "250M"; }
 
@@ -243,6 +258,7 @@ void drawRecorderInterface() {
         recorder.codec = "av1_amf";
         recorder.extra_args = "-pix_fmt yuv420p -quality quality";
     }
+    #endif
 
     ImGui::Spacing();
     ImGui::Text("Custom Presets");
@@ -345,7 +361,6 @@ void drawRecorderInterface() {
 
     ImGui::Text("Showcase Folder: %s", folder.string().c_str());
 }
-#endif
 
 void GDH::UI::drawMacroEditor() {
     static int selected_frame_type = 1;
@@ -1075,13 +1090,11 @@ $execute {
                     ImGui::EndTabItem();
                 }
 
-                #ifdef GEODE_IS_WINDOWS
                 if (ImGui::BeginTabItem("Recorder")) {
                     ImGui::Spacing();
                     drawRecorderInterface();
                     ImGui::EndTabItem();
                 }
-                #endif
 
                 if (!config.get<bool>("re::show_editor", false)) {
                     if (ImGui::BeginTabItem("Editor (Beta)")) {

@@ -105,7 +105,7 @@ void animateAlpha()
         return;
 
     ImGuiStyle& style = ImGui::GetStyle();
-    float deltaTime = ImGui::GetIO().DeltaTime;
+    float deltaTime = std::min(ImGui::GetIO().DeltaTime, 0.033f);
 
     float duration = Config::get().get<int>("gui::anim_durr", 100) / 1000.0f;
     g_animTime += deltaTime;
@@ -152,11 +152,13 @@ void PushAnimateFoundColor(const std::string& hackName) {
     bool founded = search_item.empty() ? true : (search_name.find(search_item) != std::string::npos);
 
     float& t = anim[hackName];
-
+    
+    float dt = std::min(ImGui::GetIO().DeltaTime, 0.033f);
     float speed = 16.0f;
     float target = founded ? 1.0f : 0.20f;
 
-    t = ImLerp(t, target, ImGui::GetIO().DeltaTime * speed);
+    float factor = std::clamp(dt * speed, 0.f, 1.f);
+    t = ImLerp(t, target, factor);
 
     ImGui::PushStyleVar(ImGuiStyleVar_Alpha, ImGui::GetStyle().Alpha * t);
 }
@@ -404,7 +406,7 @@ void notifyUpdate() {
         g_showUpdatePopup = false;
     }
 
-    if (ImGui::BeginPopupModal("Update Available##Popup", NULL, ImGuiWindowFlags_AlwaysAutoResize)) {
+    if (ImGui::BeginPopupModal("Update Available##Popup", 0, ImGuiWindowFlags_AlwaysAutoResize)) {
         auto& layout = GDH::Layout::Manager::get();
         auto& config = Config::get();
         bool dont_show_again = !config.get<bool>("ui.notify_updates", true);
@@ -532,7 +534,7 @@ void RenderMain() {
                     ImGui::OpenPopup(fmt::format("{} Settings##Popup", hackName).c_str());
                 }
 
-                if (ImGui::BeginPopup(fmt::format("{} Settings##Popup", hackName).c_str(), NULL)) {
+                if (ImGui::BeginPopup(fmt::format("{} Settings##Popup", hackName).c_str(), 0)) {
                     hack.callCustomWindowImGui();
                     ImGui::EndPopup();
                 }
@@ -592,12 +594,17 @@ class $modify(ImGuiInitMenuLayer, MenuLayer) {
             );
 
             auto mod = geode::Mod::get();
+            
+            #ifndef GEODE_IS_MACOS
             ImGuiCocos::get().setForceLegacy(mod->getSettingValue<bool>("legacy-render"));
+            #else
+            ImGuiCocos::get().setForceLegacy(true);
+            #endif
 
             ImGuiCocos::get().setup([] {
                 auto& config = Config::get();
                 ImGuiIO &io = ImGui::GetIO();
-                io.IniFilename = NULL;
+                io.IniFilename = 0;
 
                 // backuping and applying original theme
                 ImGuiH::ProccessOriginalTheme(true);

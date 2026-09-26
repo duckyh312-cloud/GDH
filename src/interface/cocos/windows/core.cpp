@@ -27,7 +27,7 @@ $execute {
         tab->addSeparator();
         tab->prepareNewRow();
 
-        #if defined(GEODE_IS_WINDOWS) || defined(GEODE_IS_ANDROID64)
+        #if defined(GEODE_IS_WINDOWS) || defined(GEODE_IS_ANDROID64) || defined(GEODE_IS_INTEL_MAC)
         
         tab->addConfigFloatInput("Lock Delta Value", "invisible.lock_delta::value", 240.f, 1.f, FLT_MAX, [&config](float value) {
             if (config.get<bool>("invisible.lock_delta::sync_tps", true)) {
@@ -47,6 +47,13 @@ $execute {
 
         tab->addSeparator();
         tab->prepareNewRow();
+        #else
+
+        tab->addConfigToggle("Real Time (Lock Delta)", "invisible.lock_delta::real_time", true);
+
+        tab->addSeparator();
+        tab->prepareNewRow();
+
         #endif
 
         tab->addConfigFloatInput("Speedhack Value", "invisible.speedhack::value", 1.f, 0.01f, 50.f, [&gui](float) {

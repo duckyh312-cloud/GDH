@@ -4,8 +4,8 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 if ("${CMAKE_SYSTEM_NAME}" STREQUAL "iOS" OR IOS)
     set(CMAKE_OSX_ARCHITECTURES "arm64")
 else()
-    # set(CMAKE_OSX_ARCHITECTURES "arm64;x86_64")
-    set(CMAKE_OSX_ARCHITECTURES "x86_64")
+    set(CMAKE_OSX_ARCHITECTURES "arm64;x86_64")
+    # set(CMAKE_OSX_ARCHITECTURES "x86_64")
 endif()
 set(CMAKE_CXX_VISIBILITY_PRESET hidden)
 
@@ -62,6 +62,24 @@ if (ANDROID AND ANDROID_ABI STREQUAL "armeabi-v7a")
     target_link_libraries(${PROJECT_NAME} ${CMAKE_SOURCE_DIR}/libs/ffmpeg/armeabi-v7a/libswresample/libswresample.a)
     target_link_libraries(${PROJECT_NAME} ${CMAKE_SOURCE_DIR}/libs/ffmpeg/armeabi-v7a/libswscale/libswscale.a)
     target_link_libraries(${PROJECT_NAME} ${CMAKE_SOURCE_DIR}/libs/ffmpeg/armeabi-v7a/x264/libx264.a)
+endif()
+
+if (APPLE)
+    target_include_directories(${PROJECT_NAME} PRIVATE libs/ffmpeg/mac/include)
+
+    target_link_libraries(${PROJECT_NAME} ${CMAKE_SOURCE_DIR}/libs/ffmpeg/mac/libffmpeg_all.a)
+
+    target_link_libraries(${PROJECT_NAME}
+        "-framework CoreVideo"
+        "-framework CoreMedia"
+        "-framework CoreFoundation"
+        "-framework AVFoundation"
+        "-framework AudioToolbox"
+        "-framework Security"
+        z
+        iconv
+        bz2
+    )
 endif()
 
 setup_geode_mod(${PROJECT_NAME})

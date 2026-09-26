@@ -83,7 +83,7 @@ class $modify(WatchReplayGJBaseGameLayer, GJBaseGameLayer) {
         while (g_indexAction < g_actions.size() && m_gameState.m_currentProgress >= g_actions[g_indexAction].frame)
         {
             #ifdef GEODE_IS_ANDROID
-            self->m_allowedButtons.clear();
+            this->m_allowedButtons.clear();
             #endif
 
             this->handleButton(g_actions[g_indexAction].down, g_actions[g_indexAction].button, g_actions[g_indexAction].isPlayer2);

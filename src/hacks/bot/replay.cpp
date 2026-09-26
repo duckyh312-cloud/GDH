@@ -58,12 +58,10 @@ class $modify(ReplayCCScheduler, cocos2d::CCScheduler) {
         config.set<float>("invisible.tps::value", std::clamp(value, 10.f, 240.f));
 
         hack.setHandler([](bool enabled) {
-            #if defined(GEODE_IS_WINDOWS) || defined(GEODE_IS_ANDROID64) || defined(GEODE_IS_INTEL_MAC)
             if (offset == 0) {
                 geode::log::error("Couldn't find the offset for the TPS bypass");
                 return;
             }
-            #endif
 
             #ifdef GEODE_IS_WINDOWS 
             auto expectedTicksAddr = (uintptr_t)&expectedTicks;
@@ -146,14 +144,12 @@ class $modify(ReplayCCScheduler, cocos2d::CCScheduler) {
             }
             #endif
 
-            #if defined(GEODE_IS_WINDOWS) || defined(GEODE_IS_ANDROID64) || defined(GEODE_IS_INTEL_MAC)
             static auto result = geode::Mod::get()->patch((void*)(offset), patchBytes);
             static auto patch = result.isErr() ? nullptr : result.unwrap();
             
             if (patch) {
                 (void)patch->toggle(enabled);
             }
-            #endif
 
             #ifdef GEODE_IS_INTEL_MAC
             if (deltaOffset != 0) {
@@ -189,6 +185,54 @@ class $modify(ReplayCCScheduler, cocos2d::CCScheduler) {
         });
     }
 };
+#endif
+
+#if defined(GEODE_IS_ANDROID32) || defined(GEODE_IS_ARM_MAC)
+#include "../../core/recorder/recorder.hpp"
+
+class $modify(ReplayCCScheduler, cocos2d::CCScheduler) {
+    static void onModify(auto& self) {
+        auto& gui = GDH::Gui::get();
+        auto& hack = gui.getWindow("Invisible").findHackByName("TPS");   
+        hack.setCheating(true);
+        hack.addHookPtr(self.getHook("cocos2d::CCScheduler::update").unwrap());
+    }
+
+    void update(float dt) {
+        auto &engine = GDH::ReplayEngine::get();
+        auto &config = Config::get();
+        auto& recorder = GDH::Recorder::get();
+
+        if (recorder.isRecording()) {
+            return CCScheduler::update(dt);
+        }
+
+        float tps_value = config.get<float>("invisible.tps::value", 240.f);
+        float new_dt = 1.f / tps_value;
+
+        unsigned times = static_cast<int>((dt + left_over) / new_dt);  
+        if (dt <= 0.f)
+            return CCScheduler::update(dt);
+
+        if (!config.get<bool>("invisible.lock_delta::real_time", true))
+            return CCScheduler::update(new_dt);
+
+        auto start = std::chrono::high_resolution_clock::now();
+        using namespace std::literals;
+
+        for (unsigned i = 0; i < times; ++i) {
+            CCScheduler::update(new_dt);
+
+            if (std::chrono::high_resolution_clock::now() - start > 33.333ms) {         
+                times = i + 1;
+                break;
+            }
+        }
+
+        left_over = std::max(0.f, left_over + dt - new_dt * times);
+    }
+};
+
 #endif
 
 class $modify(ReplayGJBaseGameLayer, GJBaseGameLayer) {
@@ -380,7 +424,7 @@ class $modify(ReplayPlayLayer, PlayLayer) {
 
         if (engine.mode == state::continue_mode && !m_isPracticeMode) {
             togglePracticeMode(true);
-            #ifdef GEODE_IS_WINDOWS
+            #ifdef GEODE_IS_DESKTOP
             ImGuiH::AddPopup("Continue Feature: Switching to practice mode. Don't forget to set checkpoints!");
             #endif
         }

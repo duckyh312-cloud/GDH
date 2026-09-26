@@ -7,7 +7,7 @@
 #include "subprocess.hpp"
 #endif
 
-#ifdef GEODE_IS_ANDROID
+#if defined(GEODE_IS_ANDROID) || defined(GEODE_IS_MACOS)
 #include "h264_encoder.hpp"
 #include "log_overlay.hpp"
 #endif
@@ -44,7 +44,7 @@ void Recorder::start() {
 
     #ifdef GEODE_IS_WINDOWS
     startWindowsEncoder();
-    #elif defined(GEODE_IS_ANDROID)
+    #elif defined(GEODE_IS_ANDROID) || defined(GEODE_IS_MACOS)
     LogOverlay::get().create();
     startAndroidEncoder();
     #endif
@@ -139,7 +139,7 @@ void Recorder::startWindowsEncoder() {
 }
 #endif
 
-#ifdef GEODE_IS_ANDROID
+#if defined(GEODE_IS_ANDROID) || defined(GEODE_IS_MACOS)
 void Recorder::startAndroidEncoder() {
     std::thread([this]() {
         std::filesystem::path folder = Config::get().get<std::string>("recorder::path", (getFolderPath() / "Showcases").string());

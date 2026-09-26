@@ -77,7 +77,7 @@ namespace GDH {
         void startWindowsEncoder();
         #endif
 
-        #ifdef GEODE_IS_ANDROID
+        #if defined(GEODE_IS_ANDROID) || defined(GEODE_IS_MACOS)
         void startAndroidEncoder();
         #endif
     };
