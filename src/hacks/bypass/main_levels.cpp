@@ -10,7 +10,7 @@ class $modify(MainLevelsGameLevelManager, GameLevelManager) {
         auto& gui = GDH::Gui::get();
         auto& hack = gui.getWindow("Bypass").findHackByName("Main Levels");        
         
-        hack.addHookPtr(self.getHook("GameLevelManager::getMainLevel").unwrap());
+        hack.addHookPtr(self.getHook("GameLevelManager::getMainLevel"));
     }
 
     GJGameLevel* getMainLevel(int levelID, bool dontGetLevelString) {
@@ -27,7 +27,7 @@ class $modify(MainLevelsAreaInnerLayer, LevelAreaInnerLayer) {
         auto& gui = GDH::Gui::get();
         auto& hack = gui.getWindow("Bypass").findHackByName("Main Levels");        
         
-        hack.addHookPtr(self.getHook("LevelAreaInnerLayer::init").unwrap());
+        hack.addHookPtr(self.getHook("LevelAreaInnerLayer::init"));
     }
 
     bool init(bool returning) {

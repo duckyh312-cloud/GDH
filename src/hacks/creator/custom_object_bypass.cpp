@@ -9,7 +9,7 @@ class $modify(CustomObjectBypassEditorUI, EditorUI) {
         auto& gui = GDH::Gui::get();
         auto& hack = gui.getWindow("Creator").findHackByName("Custom Object Bypass");        
         
-        hack.addHookPtr(self.getHook("EditorUI::onNewCustomItem").unwrap());
+        hack.addHookPtr(self.getHook("EditorUI::onNewCustomItem"));
     }
 
     void onNewCustomItem(CCObject* sender) {        

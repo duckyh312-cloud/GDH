@@ -12,7 +12,7 @@ class $modify(NoParticlesClassicCCParticleSystemQuad, CCParticleSystemQuad) {
         auto& gui = GDH::Gui::get();
         auto& hack = gui.getWindow("Cosmetic").findHackByName("No Particles Classic");
 
-        hack.addHookPtr(self.getHook("cocos2d::CCParticleSystemQuad::draw").unwrap());
+        hack.addHookPtr(self.getHook("cocos2d::CCParticleSystemQuad::draw"));
     }
 
     void draw() {}

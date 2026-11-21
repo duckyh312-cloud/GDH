@@ -9,7 +9,7 @@ class $modify(NoPortalCirclePlayerObject, PlayerObject) {
         auto& gui = GDH::Gui::get();
         auto& hack = gui.getWindow("Cosmetic").findHackByName("No Portal Circle");        
         
-        hack.addHookPtr(self.getHook("PlayerObject::spawnPortalCircle").unwrap());
+        hack.addHookPtr(self.getHook("PlayerObject::spawnPortalCircle"));
     }
 
     void spawnPortalCircle(cocos2d::ccColor3B color, float startRadius) {}

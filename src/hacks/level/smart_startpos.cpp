@@ -19,8 +19,8 @@ class $modify(SmartStartposPlayLayer, PlayLayer) {
         auto& gui = GDH::Gui::get();
         auto& hack = gui.getWindow("Level").findHackByName("Smart Startpos");        
         
-        hack.addHookPtr(self.getHook("PlayLayer::resetLevel").unwrap());
-        hack.addHookPtr(self.getHook("PlayLayer::addObject").unwrap());
+        hack.addHookPtr(self.getHook("PlayLayer::resetLevel"));
+        hack.addHookPtr(self.getHook("PlayLayer::addObject"));
 
         hack.setCustomWindowImGui([
             gravityPortals = hack.formatAdditionalSetting("gravityPortals"),

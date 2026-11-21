@@ -9,7 +9,7 @@ class $modify(CheckpointLimitPlayLayer, PlayLayer) {
         auto& gui = GDH::Gui::get();
         auto& hack = gui.getWindow("Bypass").findHackByName("Checkpoint Limit");        
         
-        hack.addHookPtr(self.getHook("PlayLayer::storeCheckpoint").unwrap());
+        hack.addHookPtr(self.getHook("PlayLayer::storeCheckpoint"));
     }
 
     void storeCheckpoint(CheckpointObject* obj) {        

@@ -9,7 +9,7 @@ class $modify(NoRobotFirePlayerObject, PlayerObject) {
         auto& gui = GDH::Gui::get();
         auto& hack = gui.getWindow("Cosmetic").findHackByName("No Robot Fire");        
         
-        hack.addHookPtr(self.getHook("PlayerObject::toggleRobotMode").unwrap());
+        hack.addHookPtr(self.getHook("PlayerObject::toggleRobotMode"));
     }
 
     void toggleRobotMode(bool enable, bool noEffects) {

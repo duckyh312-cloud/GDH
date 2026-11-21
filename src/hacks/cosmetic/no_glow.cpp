@@ -10,7 +10,7 @@ class $modify(NoGlowPlayLayer, PlayLayer) {
         auto& gui = GDH::Gui::get();
         auto& hack = gui.getWindow("Cosmetic").findHackByName("No Glow");
 
-        hack.addHookPtr(self.getHook("PlayLayer::addObject").unwrap());
+        hack.addHookPtr(self.getHook("PlayLayer::addObject"));
     }
 
     void addObject(GameObject* obj) {

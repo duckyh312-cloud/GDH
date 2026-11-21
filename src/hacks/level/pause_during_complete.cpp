@@ -9,10 +9,10 @@ class $modify(PauseDuringCompletePlayLayer, PlayLayer) {
         auto& gui = GDH::Gui::get();
         auto& hack = gui.getWindow("Level").findHackByName("Pause During Complete");
 
-        hack.addHookPtr(self.getHook("PlayLayer::pauseGame").unwrap());
-        hack.addHookPtr(self.getHook("PlayLayer::resetLevel").unwrap());
-        hack.addHookPtr(self.getHook("PlayLayer::playEndAnimationToPos").unwrap());
-        hack.addHookPtr(self.getHook("PlayLayer::playPlatformerEndAnimationToPos").unwrap());
+        hack.addHookPtr(self.getHook("PlayLayer::pauseGame"));
+        hack.addHookPtr(self.getHook("PlayLayer::resetLevel"));
+        hack.addHookPtr(self.getHook("PlayLayer::playEndAnimationToPos"));
+        hack.addHookPtr(self.getHook("PlayLayer::playPlatformerEndAnimationToPos"));
     }
 
     void pauseGame(bool unfocused) {

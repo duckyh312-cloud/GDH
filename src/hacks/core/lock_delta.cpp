@@ -94,7 +94,7 @@ class $modify(LockDeltaPlayLayer, PlayLayer) {
         auto& gui = GDH::Gui::get();
         auto& hack = gui.getWindow("Invisible").findHackByName("Lock Delta");
 
-        hack.addHookPtr(self.getHook("PlayLayer::resetLevel").unwrap());
+        hack.addHookPtr(self.getHook("PlayLayer::resetLevel"));
     }
 
     void resetLevel() {

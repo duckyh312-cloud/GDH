@@ -14,7 +14,7 @@ class $modify(RainbowIconGJBaseGameLayer, GJBaseGameLayer) {
         auto& gui = GDH::Gui::get();
         auto& hack = gui.getWindow("Cosmetic").findHackByName("Rainbow Icon");
 
-        hack.addHookPtr(self.getHook("GJBaseGameLayer::update").unwrap());
+        hack.addHookPtr(self.getHook("GJBaseGameLayer::update"));
 
         hack.setCustomWindowImGui([
             hue_speed  = hack.formatAdditionalSetting("hue_speed"),

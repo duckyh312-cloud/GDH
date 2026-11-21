@@ -122,8 +122,8 @@ class $modify(AutoSafeModePlayLayer, PlayLayer) {
         }
     }
 
-    bool init(GJGameLevel* level, bool useReplay, bool dontRun) {
-        if (!PlayLayer::init(level, useReplay, dontRun)) return false;
+    bool init(GJGameLevel* level, bool dontCreateObjects) {
+        if (!PlayLayer::init(level, dontCreateObjects)) return false;
         m_fields.self();
         checkCheats();
         return true;

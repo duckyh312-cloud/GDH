@@ -23,8 +23,8 @@ class $modify(StraightFlyGJBaseGameLayer, GJBaseGameLayer) {
         auto& gui = GDH::Gui::get();
         auto& hack = gui.getWindow("Level").findHackByName("Straight Fly Bot");        
         
-        hack.addHookPtr(self.getHook("GJBaseGameLayer::processQueuedButtons").unwrap());
-        hack.addHookPtr(self.getHook("GJBaseGameLayer::teleportPlayer").unwrap());
+        hack.addHookPtr(self.getHook("GJBaseGameLayer::processQueuedButtons"));
+        hack.addHookPtr(self.getHook("GJBaseGameLayer::teleportPlayer"));
 
         hack.setCustomWindowImGui([] {
             ImGuiWidgetConfig::DragFloat("##straightfly_bot::accuracy", "level.straightfly_bot::accuracy", 1.f, 0.f, 100.f, 40.f, "Y Accuracy: %.1f");

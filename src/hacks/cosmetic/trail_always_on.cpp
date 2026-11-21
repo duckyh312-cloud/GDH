@@ -9,7 +9,7 @@ class $modify(TrailAlwaysOnCCMotionStreak, cocos2d::CCMotionStreak) {
         auto& gui = GDH::Gui::get();
         auto& hack = gui.getWindow("Cosmetic").findHackByName("Trail Always On");        
         
-        hack.addHookPtr(self.getHook("cocos2d::CCMotionStreak::update").unwrap());
+        hack.addHookPtr(self.getHook("cocos2d::CCMotionStreak::update"));
     }
 
     void update(float delta) {

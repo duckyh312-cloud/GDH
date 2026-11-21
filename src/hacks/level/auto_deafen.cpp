@@ -29,8 +29,8 @@ class $modify(AutoDeafenPlayLayer, PlayLayer) {
         auto& gui = GDH::Gui::get();
         auto& hack = gui.getWindow("Level").findHackByName("Auto Deafen");    
         
-        hack.addHookPtr(self.getHook("PlayLayer::updateProgressbar").unwrap());
-        hack.addHookPtr(self.getHook("PlayLayer::pauseGame").unwrap());
+        hack.addHookPtr(self.getHook("PlayLayer::updateProgressbar"));
+        hack.addHookPtr(self.getHook("PlayLayer::pauseGame"));
 
         auto& kb = GDH::Keybinds::get();
         auto& config = Config::get();

@@ -12,7 +12,7 @@ class $modify(AccidentTowerClickFixLevelPage, LevelPage) {
     static void onModify(auto& self) {
         auto& gui = GDH::Gui::get();
         auto& hack = gui.getWindow("Cosmetic").findHackByName("Accident \"The Tower\" Click");        
-        hack.addHookPtr(self.getHook("LevelPage::onTheTower").unwrap());
+        hack.addHookPtr(self.getHook("LevelPage::onTheTower"));
     }
 
     void onTheTower(cocos2d::CCObject* sender) {
@@ -29,8 +29,8 @@ class $modify(AccidentTowerClickFixLevelSelectLayer, LevelSelectLayer) {
     static void onModify(auto& self) {
         auto& gui = GDH::Gui::get();
         auto& hack = gui.getWindow("Cosmetic").findHackByName("Accident \"The Tower\" Click");        
-        hack.addHookPtr(self.getHook("LevelSelectLayer::onNext").unwrap());
-        hack.addHookPtr(self.getHook("LevelSelectLayer::onPrev").unwrap());
+        hack.addHookPtr(self.getHook("LevelSelectLayer::onNext"));
+        hack.addHookPtr(self.getHook("LevelSelectLayer::onPrev"));
     }
 
     void onNext(cocos2d::CCObject* sender) {

@@ -10,7 +10,7 @@ class $modify(NoRespawnBlinkPlayerObject, PlayerObject) {
         auto& gui = GDH::Gui::get();
         auto& hack = gui.getWindow("Core").findHackByName("No Respawn Blink");        
         
-        // hack.addHookPtr(self.getHook("PlayerObject::playSpawnEffect").unwrap());
+        // hack.addHookPtr(self.getHook("PlayerObject::playSpawnEffect"));
     }
 
     void playSpawnEffect() {

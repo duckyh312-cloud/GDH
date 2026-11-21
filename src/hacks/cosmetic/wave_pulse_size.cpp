@@ -13,7 +13,7 @@ class $modify(WavePulseSizeHardStreak, HardStreak) {
         auto& gui = GDH::Gui::get();
         auto& hack = gui.getWindow("Cosmetic").findHackByName("Wave Pulse Size"); 
 
-        hack.addHookPtr(self.getHook("HardStreak::updateStroke").unwrap());
+        hack.addHookPtr(self.getHook("HardStreak::updateStroke"));
 
         hack.setCustomWindowImGui([
             multiplyKey = hack.formatAdditionalSetting("multiply"),

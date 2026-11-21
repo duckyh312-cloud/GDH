@@ -10,16 +10,16 @@
 #include <type_traits>
 #include <asp/fs.hpp>
 
-inline std::filesystem::path getFolderPath() {
+inline asp::fs::Path getFolderPath() {
     return geode::Mod::get()->getSaveDir();
 }
-inline std::filesystem::path getFolderMacroPath() { return getFolderPath() / "Macros"; }
-inline std::filesystem::path getFolderPresetsPath() { return getFolderPath() / "Presets"; }
-inline std::filesystem::path getFolderShowcasesPath() { return getFolderPath() / "Showcases"; }
-inline std::filesystem::path getFileDataPath() { return getFolderPath() / "config3.json"; }
-inline std::filesystem::path getLabelsDataPath() { return getFolderPath() / "labels.json"; }
-inline std::filesystem::path getColorsDataPath() { return getFolderPath() / "colors.txt"; }
-inline std::filesystem::path getKeybindsDataPath() { return getFolderPath() / "keybinds.json"; }
+inline asp::fs::Path getFolderMacroPath() { return getFolderPath() / "Macros"; }
+inline asp::fs::Path getFolderPresetsPath() { return getFolderPath() / "Presets"; }
+inline asp::fs::Path getFolderShowcasesPath() { return getFolderPath() / "Showcases"; }
+inline asp::fs::Path getFileDataPath() { return getFolderPath() / "config3.json"; }
+inline asp::fs::Path getLabelsDataPath() { return getFolderPath() / "labels.json"; }
+inline asp::fs::Path getColorsDataPath() { return getFolderPath() / "colors.txt"; }
+inline asp::fs::Path getKeybindsDataPath() { return getFolderPath() / "keybinds.json"; }
 
 template <typename T>
 struct requires_ref {
@@ -114,19 +114,18 @@ public:
     template <typename T, typename R = optional_ref<T>> requires is_valid_type<T>
     R get(std::string_view key, const T& defaultValue) {
         if (!inited) {
-            auto CheckDir = [](const std::filesystem::path& path)
+            auto CheckDir = [](asp::fs::PathView path)
             {
-                std::error_code ec;
-                if (!std::filesystem::is_directory(path, ec) || !asp::fs::exists(path))
+                if (path.empty() || !asp::fs::exists(path))
                 {
-                    std::filesystem::create_directory(path, ec);
+                    (void)asp::fs::createDir(path);
                 }
             };
             CheckDir(getFolderMacroPath());
             CheckDir(getFolderShowcasesPath());
             CheckDir(getFolderPresetsPath());
 
-            this->load(getFileDataPath());
+            this->load(getFileDataPath().string());
             inited = true;
         }
 

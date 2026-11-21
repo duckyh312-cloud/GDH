@@ -9,7 +9,7 @@ class $modify(AutoSongDownloadLevelInfoLayer, LevelInfoLayer) {
         auto& gui = GDH::Gui::get();
         auto& hack = gui.getWindow("Level").findHackByName("Auto Song Download");        
         
-        hack.addHookPtr(self.getHook("LevelInfoLayer::init").unwrap());
+        hack.addHookPtr(self.getHook("LevelInfoLayer::init"));
     }
 
     bool init(GJGameLevel* p0, bool p1) {

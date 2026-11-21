@@ -9,7 +9,7 @@ class $modify(NoExitDualEffectGJBaseGameLayer, GJBaseGameLayer) {
         auto& gui = GDH::Gui::get();
         auto& hack = gui.getWindow("Cosmetic").findHackByName("No Exit Dual Effect");        
         
-        hack.addHookPtr(self.getHook("GJBaseGameLayer::playExitDualEffect").unwrap());
+        hack.addHookPtr(self.getHook("GJBaseGameLayer::playExitDualEffect"));
     }
 
     void playExitDualEffect(PlayerObject *player) {}

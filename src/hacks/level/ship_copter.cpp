@@ -12,8 +12,8 @@ class $modify(ShipcopterPlayerObject, PlayerObject) {
         auto& gui = GDH::Gui::get();
         auto& hack = gui.getWindow("Level").findHackByName("Shipcopter");
 
-        hack.addHookPtr(self.getHook("PlayerObject::pushButton").unwrap());
-        hack.addHookPtr(self.getHook("PlayerObject::releaseButton").unwrap());
+        hack.addHookPtr(self.getHook("PlayerObject::pushButton"));
+        hack.addHookPtr(self.getHook("PlayerObject::releaseButton"));
         hack.setCheating(true);
     }
 
@@ -57,7 +57,7 @@ class $modify(ShipcopterPlayLayer, PlayLayer) {
         auto& gui = GDH::Gui::get();
         auto& hack = gui.getWindow("Level").findHackByName("Shipcopter");
 
-        hack.addHookPtr(self.getHook("PlayLayer::resetLevel").unwrap());
+        hack.addHookPtr(self.getHook("PlayLayer::resetLevel"));
     }
 
     void resetLevel() {

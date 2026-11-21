@@ -9,7 +9,7 @@ class $modify(VerifyHackEditLevelLayer, EditLevelLayer) {
         auto& gui = GDH::Gui::get();
         auto& hack = gui.getWindow("Creator").findHackByName("Verify Hack");        
         
-        hack.addHookPtr(self.getHook("EditLevelLayer::init").unwrap());
+        hack.addHookPtr(self.getHook("EditLevelLayer::init"));
     }
 
     bool init(GJGameLevel *gjgl) {

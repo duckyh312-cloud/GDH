@@ -16,7 +16,7 @@ class $modify(UnlockVaultsGameManager, GameManager) {
         auto& gui = GDH::Gui::get();
         auto& hack = gui.getWindow("Bypass").findHackByName("Unlock Vaults");        
         
-        hack.addHookPtr(self.getHook("GameManager::getUGV").unwrap());
+        hack.addHookPtr(self.getHook("GameManager::getUGV"));
     }
 
     bool getUGV(char const* p0) {
@@ -35,8 +35,8 @@ class $modify(UnlockVaultsGameStatsManager, GameStatsManager) {
         auto& gui = GDH::Gui::get();
         auto& hack = gui.getWindow("Bypass").findHackByName("Unlock Vaults");        
         
-        hack.addHookPtr(self.getHook("GameStatsManager::isItemUnlocked").unwrap());
-        hack.addHookPtr(self.getHook("GameStatsManager::getStat").unwrap());
+        hack.addHookPtr(self.getHook("GameStatsManager::isItemUnlocked"));
+        hack.addHookPtr(self.getHook("GameStatsManager::getStat"));
     }
 
     bool isItemUnlocked(UnlockType p0, int p1) {
@@ -65,8 +65,8 @@ class $modify(UnlockVaultsOptionsLayer, OptionsLayer) {
         auto& gui = GDH::Gui::get();
         auto& hack = gui.getWindow("Bypass").findHackByName("Unlock Vaults");        
         
-        hack.addHookPtr(self.getHook("OptionsLayer::customSetup").unwrap());
-        hack.addHookPtr(self.getHook("OptionsLayer::onSecretVault").unwrap());
+        hack.addHookPtr(self.getHook("OptionsLayer::customSetup"));
+        hack.addHookPtr(self.getHook("OptionsLayer::onSecretVault"));
     }
 
     void customSetup() {
@@ -89,8 +89,8 @@ class $modify(UnlockVaultsSecretLayer2, SecretLayer2) {
         auto& gui = GDH::Gui::get();
         auto& hack = gui.getWindow("Bypass").findHackByName("Unlock Vaults");        
         
-        hack.addHookPtr(self.getHook("SecretLayer2::init").unwrap());
-        hack.addHookPtr(self.getHook("SecretLayer2::onSecretLevel").unwrap());
+        hack.addHookPtr(self.getHook("SecretLayer2::init"));
+        hack.addHookPtr(self.getHook("SecretLayer2::onSecretLevel"));
     }
 
     bool init() {
@@ -113,8 +113,8 @@ class $modify(UnlockVaultsCreatorLayer, CreatorLayer) {
         auto& gui = GDH::Gui::get();
         auto& hack = gui.getWindow("Bypass").findHackByName("Unlock Vaults");        
         
-        hack.addHookPtr(self.getHook("CreatorLayer::init").unwrap());
-        hack.addHookPtr(self.getHook("CreatorLayer::onSecretVault").unwrap());
+        hack.addHookPtr(self.getHook("CreatorLayer::init"));
+        hack.addHookPtr(self.getHook("CreatorLayer::onSecretVault"));
     }
 
     bool init() {

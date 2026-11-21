@@ -9,7 +9,7 @@ class $modify(AutoLDMLevelInfoLayer, LevelInfoLayer) {
         auto& gui = GDH::Gui::get();
         auto& hack = gui.getWindow("Level").findHackByName("Auto LDM");        
         
-        hack.addHookPtr(self.getHook("LevelInfoLayer::init").unwrap());
+        hack.addHookPtr(self.getHook("LevelInfoLayer::init"));
     }
 
     bool init(GJGameLevel* level, bool challenge) {

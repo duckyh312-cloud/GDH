@@ -18,7 +18,7 @@ class $modify(AutoclickerGJBaseGameLayer, GJBaseGameLayer) {
         auto& gui = GDH::Gui::get();
         auto& hack = gui.getWindow("Level").findHackByName("Autoclicker");        
         
-        hack.addHookPtr(self.getHook("GJBaseGameLayer::processQueuedButtons").unwrap());
+        hack.addHookPtr(self.getHook("GJBaseGameLayer::processQueuedButtons"));
         hack.setCustomWindowImGui([] {
             ImGuiWidgetConfig::DragInt("##autoclicker::push_length", "level.autoclicker::push_length", 1.f, 1, INT_MAX, 4, "Push Length: %d");
             ImGuiWidgetConfig::DragInt("##autoclicker::release_length", "level.autoclicker::release_length", 1.f, 1, INT_MAX, 4, "Release Length: %d");

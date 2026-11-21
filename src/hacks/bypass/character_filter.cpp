@@ -9,10 +9,10 @@ class $modify(CharacterFilterCCTextInputNode, CCTextInputNode) {
         auto& gui = GDH::Gui::get();
         auto& hack = gui.getWindow("Bypass").findHackByName("Character Filter");        
         
-        hack.addHookPtr(self.getHook("CCTextInputNode::updateLabel").unwrap());
+        hack.addHookPtr(self.getHook("CCTextInputNode::updateLabel"));
     }
 
-    void updateLabel(gd::string str) {
+    void updateLabel(std::string str) {
         this->setAllowedChars("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~ ");
         CCTextInputNode::updateLabel(std::move(str));
     }

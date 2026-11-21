@@ -109,7 +109,7 @@ class $modify(CustomPulsePlayLayer, PlayLayer) {
         auto& gui = GDH::Gui::get();
         auto& hack = gui.getWindow("Cosmetic").findHackByName("Custom DSP Pulse");
 
-        hack.addHookPtr(self.getHook("PlayLayer::updateVisibility").unwrap());
+        hack.addHookPtr(self.getHook("PlayLayer::updateVisibility"));
 
         hack.setHandler([](bool enabled) {
             if (enabled) {

@@ -9,7 +9,7 @@ class $modify(NoSpiderDashPlayerObject, PlayerObject) {
         auto& gui = GDH::Gui::get();
         auto& hack = gui.getWindow("Cosmetic").findHackByName("No Spider Dash");        
         
-        hack.addHookPtr(self.getHook("PlayerObject::playSpiderDashEffect").unwrap());
+        hack.addHookPtr(self.getHook("PlayerObject::playSpiderDashEffect"));
     }
 
     void playSpiderDashEffect(cocos2d::CCPoint from, cocos2d::CCPoint to) { }

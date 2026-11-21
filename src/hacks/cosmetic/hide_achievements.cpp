@@ -10,7 +10,7 @@ class $modify(HideAchievementsAchievementNotifier, AchievementNotifier) {
         auto& gui = GDH::Gui::get();
         auto& hack = gui.getWindow("Cosmetic").findHackByName("Hide Achievements");        
         
-        hack.addHookPtr(self.getHook("AchievementNotifier::notifyAchievement").unwrap());
+        hack.addHookPtr(self.getHook("AchievementNotifier::notifyAchievement"));
     }
 
     void notifyAchievement(char const* title, char const* desc, char const* icon, bool quest) {}

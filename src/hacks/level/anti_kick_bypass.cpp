@@ -9,7 +9,7 @@ class $modify(AntiKickGJBaseGameLayer, GJBaseGameLayer) {
         auto& gui = GDH::Gui::get();
         auto& hack = gui.getWindow("Level").findHackByName("Anti Kick Bypass");        
         
-        hack.addHookPtr(self.getHook("GJBaseGameLayer::shouldExitHackedLevel").unwrap());
+        hack.addHookPtr(self.getHook("GJBaseGameLayer::shouldExitHackedLevel"));
     }
 
     bool shouldExitHackedLevel() { return false; }

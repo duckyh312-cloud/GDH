@@ -61,7 +61,7 @@ protected:
 
         auto closeBtn = CCSprite::create("GDH_closeBtn.png"_spr);
         closeBtn->setScale(0.75f);
-        m_closeBtn->setSprite(closeBtn);
+        this->setCloseButtonSpr(closeBtn);
 
         auto createLabel = [&menu](const std::string& text, const cocos2d::CCPoint& position, float scale = 0.6f) {
             auto label = geode::Label::create(text, "GoogleSans.fnt"_spr);
@@ -112,11 +112,11 @@ protected:
                                 if (!res) return;
                                 auto pathOpt = std::move(res).unwrapOr(std::nullopt);
                                 if (!pathOpt) return;
-                                tryStartRecorder(std::move(*pathOpt));
+                                tryStartRecorder(pathOpt->string());
                             }
                         );
                     } else {
-                        tryStartRecorder(getFolderShowcasesPath());
+                        tryStartRecorder(getFolderShowcasesPath().string());
                     }
                 }
             );
@@ -265,7 +265,7 @@ protected:
 
         auto closeBtn = CCSprite::create("GDH_closeBtn.png"_spr);
         closeBtn->setScale(0.75f);
-        m_closeBtn->setSprite(closeBtn);
+        this->setCloseButtonSpr(closeBtn);
 
         auto scroll = ScrollLayer::create({600.f, 180.f});
         scroll->setPosition({winSize.width / 2 - 300.f, 10.f});
@@ -280,7 +280,7 @@ protected:
 
         scroll->m_contentLayer->addChild(CCNode::create());
 
-        for (const auto& entry : std::filesystem::directory_iterator(getFolderMacroPath())) {
+        for (const auto& entry : std::filesystem::directory_iterator(getFolderMacroPath().string())) {
             if (entry.is_regular_file() && entry.path().extension() == ".re4") {
                 if (GDH::Utils::isOnlyAsciiPath(entry)) {
                     std::string macroName = entry.path().stem().string();
@@ -337,7 +337,7 @@ protected:
 
         auto closeBtn = CCSprite::create("GDH_closeBtn.png"_spr);
         closeBtn->setScale(0.75f);
-        m_closeBtn->setSprite(closeBtn);
+        this->setCloseButtonSpr(closeBtn);
 
         m_contentLayer = cocos2d::CCNode::create();
         m_contentLayer->setContentSize(m_mainLayer->getContentSize());
@@ -887,7 +887,7 @@ $execute {
                     if (!pathOpt) return;
                     
                     auto selectedPath = *pathOpt;
-                    if (!GDH::Utils::isOnlyAsciiPath(selectedPath)) {
+                    if (!GDH::Utils::isOnlyAsciiPath(selectedPath.string())) {
                         GDH::MaterialLayer(FLAlertLayer::create("Import", "Invalid path. Please remove any Cyrillic characters", "OK"))->show();
                         return;
                     }
@@ -897,19 +897,17 @@ $execute {
                         return;
                     }
 
-                    auto destFolder = getFolderMacroPath();
-                    std::error_code ec;
-                    std::filesystem::create_directories(destFolder, ec);
-                    auto destPath = destFolder / selectedPath.filename();
+                    asp::fs::PathView destFolder = getFolderMacroPath();
 
-                    std::filesystem::copy_file(selectedPath, destPath, std::filesystem::copy_options::overwrite_existing, ec);
-                    if (ec) {
+                    (void)asp::fs::createDir(destFolder);
+                    auto destPath = destFolder / selectedPath.filename().value();
+
+                    if (asp::fs::copy(selectedPath, destPath).isErr()) {
                         GDH::MaterialLayer(FLAlertLayer::create("Import", "Failed to copy file", "OK"))->show();
                         return;
                     }
 
-                    std::string macroName = destPath.stem().string();
-                    GDH::MaterialLayer(FLAlertLayer::create("Import", fmt::format("Imported successfully! {}", macroName).c_str(), "OK"))->show();
+                    GDH::MaterialLayer(FLAlertLayer::create("Import", fmt::format("Imported successfully! {}", destPath.string()).c_str(), "OK"))->show();
                 }
             );
         });
@@ -932,8 +930,7 @@ $execute {
                 [&engine](auto, bool btn2) {
                     if (btn2) {
                         auto fileToDelete = getFolderMacroPath() / (engine.replay_name + ".re4");
-                        std::error_code ec;
-                        if (std::filesystem::exists(fileToDelete) && std::filesystem::remove(fileToDelete, ec)) {
+                        if (asp::fs::exists(fileToDelete) && asp::fs::removeFile(fileToDelete)) {
                             GDH::MaterialLayer(FLAlertLayer::create("Delete Macro", "Macro successfully deleted", "OK"))->show();
                         } else {
                             GDH::MaterialLayer(FLAlertLayer::create("Delete Macro", "Failed to delete macro file", "OK"))->show();

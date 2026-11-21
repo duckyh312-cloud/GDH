@@ -23,7 +23,10 @@ namespace GDH {
         void setDisabled(bool value);
         void setHandler(geode::Function<void(bool)> func);
         void setEarlyInit(bool value);
-        void addHookPtr(geode::Hook* ptr);     
+
+        void addHookPtr(geode::Hook* ptr);   
+        void addHookPtr(geode::Result<geode::Hook*> const& hookRes);
+        
         void setGameVariableID(const std::string& key);
 
         void setCustomWindowImGui(geode::Function<void()> func) { m_handlerImGui = std::move(func); };

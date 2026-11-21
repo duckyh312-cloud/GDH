@@ -11,10 +11,10 @@ class $modify(AllModesPlatformerGJBaseGameLayer, GJBaseGameLayer) {
         auto& gui = GDH::Gui::get();
         auto& hack = gui.getWindow("Level").findHackByName("All Modes Platformer");
 
-        hack.addHookPtr(self.getHook("GJBaseGameLayer::collisionCheckObjects").unwrap());
+        hack.addHookPtr(self.getHook("GJBaseGameLayer::collisionCheckObjects"));
     }
 
-    void collisionCheckObjects(PlayerObject* object, gd::vector<GameObject*>* objects, int objectCount, float dt) {
+    void collisionCheckObjects(PlayerObject* object, std::vector<GameObject*>* objects, int objectCount, float dt) {
     GJBaseGameLayer::collisionCheckObjects(object, objects, objectCount, dt);
 
     if (!m_isPlatformer || !object || !objects) return;

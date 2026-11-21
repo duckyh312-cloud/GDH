@@ -12,8 +12,8 @@ class $modify(LevelEditPauseLayer, PauseLayer) {
         auto& gui = GDH::Gui::get();
         auto& hack = gui.getWindow("Creator").findHackByName("Level Edit");        
         
-        hack.addHookPtr(self.getHook("PauseLayer::customSetup").unwrap());
-        hack.addHookPtr(self.getHook("PauseLayer::onTryEdit").unwrap());
+        hack.addHookPtr(self.getHook("PauseLayer::customSetup"));
+        hack.addHookPtr(self.getHook("PauseLayer::onTryEdit"));
     }
 
     void customSetup() {
@@ -40,7 +40,7 @@ class $modify(LevelEditEditorUI, EditorUI) {
         auto& gui = GDH::Gui::get();
         auto& hack = gui.getWindow("Creator").findHackByName("Level Edit");        
         
-        hack.addHookPtr(self.getHook("EditorUI::onSettings").unwrap());
+        hack.addHookPtr(self.getHook("EditorUI::onSettings"));
     }
 
     void onSettings(cocos2d::CCObject* sender) {
@@ -58,7 +58,7 @@ class $modify(LevelEditEditorPauseLayer, EditorPauseLayer) {
         auto& gui = GDH::Gui::get();
         auto& hack = gui.getWindow("Creator").findHackByName("Level Edit");        
         
-        hack.addHookPtr(self.getHook("EditorPauseLayer::init").unwrap());
+        hack.addHookPtr(self.getHook("EditorPauseLayer::init"));
     }
 
     bool init(LevelEditorLayer* p0) {
@@ -78,10 +78,10 @@ class $modify(LevelEditLevelTools, LevelTools) {
         auto& gui = GDH::Gui::get();
         auto& hack = gui.getWindow("Creator").findHackByName("Level Edit");        
         
-        hack.addHookPtr(self.getHook("LevelTools::verifyLevelIntegrity").unwrap());
+        hack.addHookPtr(self.getHook("LevelTools::verifyLevelIntegrity"));
     }
 
-    static bool verifyLevelIntegrity(gd::string p0, int p1) {
+    static bool verifyLevelIntegrity(std::string p0, int p1) {
         if (LevelTools::verifyLevelIntegrity(p0, p1))
             return true;
             

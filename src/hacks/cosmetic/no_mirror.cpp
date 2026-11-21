@@ -10,7 +10,7 @@ class $modify(NoMirrorGJBaseGameLayer, GJBaseGameLayer) {
         auto& gui = GDH::Gui::get();
         auto& hack = gui.getWindow("Cosmetic").findHackByName("No Mirror");
 
-        hack.addHookPtr(self.getHook("GJBaseGameLayer::canBeActivatedByPlayer").unwrap());
+        hack.addHookPtr(self.getHook("GJBaseGameLayer::canBeActivatedByPlayer"));
     }
 
     bool canBeActivatedByPlayer(PlayerObject *p0, EffectGameObject *p1) {

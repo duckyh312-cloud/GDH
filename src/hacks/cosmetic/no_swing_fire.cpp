@@ -9,7 +9,7 @@ class $modify(NoSwingFirePlayerObject, PlayerObject) {
         auto& gui = GDH::Gui::get();
         auto& hack = gui.getWindow("Cosmetic").findHackByName("No Swing Fire");        
         
-        hack.addHookPtr(self.getHook("PlayerObject::toggleSwingMode").unwrap());
+        hack.addHookPtr(self.getHook("PlayerObject::toggleSwingMode"));
     }
 
     void toggleSwingMode(bool enable, bool noEffects) {

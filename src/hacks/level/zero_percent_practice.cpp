@@ -14,7 +14,7 @@ class $modify(ZeroPracticeCompletePlayLayer, PlayLayer) {
         auto& gui = GDH::Gui::get();
         auto& hack = gui.getWindow("Level").findHackByName("Zero Practice Complete");        
         
-        hack.addHookPtr(self.getHook("PlayLayer::levelComplete").unwrap());
+        hack.addHookPtr(self.getHook("PlayLayer::levelComplete"));
     }
 
     void resetLevel() {

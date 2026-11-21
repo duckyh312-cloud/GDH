@@ -13,7 +13,7 @@ class $modify(PulseSizePlayLayer, PlayLayer) {
         auto& gui = GDH::Gui::get();
         auto& hack = gui.getWindow("Cosmetic").findHackByName("Pulse Size");        
 
-        hack.addHookPtr(self.getHook("PlayLayer::updateVisibility").unwrap());
+        hack.addHookPtr(self.getHook("PlayLayer::updateVisibility"));
 
         hack.setCustomWindowImGui([
             multiplyKey = hack.formatAdditionalSetting("multiply"),

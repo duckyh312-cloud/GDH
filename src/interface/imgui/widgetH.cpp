@@ -232,7 +232,7 @@ namespace ImGuiH {
             json["native"][name] = { color.x, color.y, color.z, color.w };
         }
 
-        std::ofstream outFile(themeFilePath);
+        std::ofstream outFile(themeFilePath.string());
         if (outFile.is_open()) {
             outFile << json.dump(4);
             outFile.close();
@@ -240,7 +240,7 @@ namespace ImGuiH {
     }
 
     void LoadTheme() {
-        std::ifstream inFile(themeFilePath);
+        std::ifstream inFile(themeFilePath.string());
         if (!inFile.is_open()) return;
         
         std::string file_contents((std::istreambuf_iterator<char>(inFile)), std::istreambuf_iterator<char>());
@@ -476,7 +476,7 @@ namespace ImGuiH {
                         if (!pathOpt) return;
 
                         auto selectedPath = *pathOpt;
-                        if (!GDH::Utils::isOnlyAsciiPath(selectedPath)) {
+                        if (!GDH::Utils::isOnlyAsciiPath(selectedPath.string())) {
                             AddPopup("Invalid path. Please remove any Cyrillic characters");
                             return;
                         }
@@ -487,7 +487,7 @@ namespace ImGuiH {
                         }
 
                         std::error_code ec;
-                        std::filesystem::copy_file(selectedPath, themeFilePath, std::filesystem::copy_options::overwrite_existing, ec);
+                        std::filesystem::copy_file(selectedPath.string(), themeFilePath.string(), std::filesystem::copy_options::overwrite_existing, ec);
                         if (ec) {
                             AddPopup("Failed to copy theme file");
                             return;
@@ -516,13 +516,13 @@ namespace ImGuiH {
                         if (!pathOpt) return;
 
                         auto selectedPath = *pathOpt;
-                        if (!GDH::Utils::isOnlyAsciiPath(selectedPath)) {
+                        if (!GDH::Utils::isOnlyAsciiPath(selectedPath.string())) {
                             AddPopup("Invalid path. Please remove any Cyrillic characters");
                             return;
                         }
 
                         std::error_code ec;
-                        std::filesystem::copy_file(themeFilePath, selectedPath, std::filesystem::copy_options::overwrite_existing, ec);
+                        std::filesystem::copy_file(themeFilePath.string(), selectedPath.string(), std::filesystem::copy_options::overwrite_existing, ec);
                         if (ec) {
                             AddPopup("Failed to export theme file");
                             return;
@@ -1487,11 +1487,17 @@ namespace ImGuiH {
     void RenderPopups()
     {
         ImDrawList* dl = ImGui::GetForegroundDrawList();
-        const ImVec2 dis = ImGui::GetIO().DisplaySize;
-        const float dt = ImGui::GetIO().DeltaTime;
+        ImGuiIO& io = ImGui::GetIO();
+        ImGuiStyle& style = ImGui::GetStyle();
+
+        const ImVec2 dis = io.DisplaySize;
+        const float dt = io.DeltaTime;
         const float now = static_cast<float>(ImGui::GetTime());
-        
+
         auto& layout = GDH::Layout::Manager::get();
+
+        const float scale = std::max(1.0f, layout.multipleScale(1.0f));
+        auto scaleVal = [scale](float val) { return val * scale; };
 
         for (auto& m : s_popups) 
         {
@@ -1511,28 +1517,38 @@ namespace ImGuiH {
             s_popups.end()
         );
 
-        float curY = dis.y - layout.multipleScale(18.0f);
+        const float oldFontScale = io.FontGlobalScale;
+        io.FontGlobalScale = scale;
+
+        const bool legacy = isLegacyRender();
+        const float popupRounding = legacy ? 0.0f : scaleVal(12.0f);
+        const ImVec2 popupPadding = { scaleVal(10.0f), scaleVal(10.0f) };
+
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, popupRounding);
+        ImGui::PushStyleVar(ImGuiStyleVar_PopupRounding, popupRounding);
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, popupPadding);
+
+        ImFont* font = ImGui::GetFont();
+        const float baseFontSize = 18.0f;
+
+        float curY = dis.y - scaleVal(18.0f);
 
         const ImVec4 col_bg = colorTable[Color::Tooltip_Background];
         const ImVec4 col_border = colorTable[Color::Tooltip_Border];
         const ImVec4 col_text = colorTable[Color::Tooltip_Foreground];
-        
-        const float rnd = layout.multipleScale(GImGui->Style.WindowRounding);
-        const ImVec2 pad = { layout.multipleScale(GImGui->Style.WindowPadding.x), layout.multipleScale(GImGui->Style.WindowPadding.y) };
 
         for (const auto& m : s_popups) 
         {
-            float sCardW = layout.multipleScale(272.0f);
+            float sCardW = scaleVal(272.0f);
+            float textMaxW = sCardW - popupPadding.x * 2.0f;
+
+            ImVec2 textSz = font->CalcTextSizeA(baseFontSize * scale, FLT_MAX, textMaxW, m.caption.c_str());
             
-            float textMaxW = sCardW - pad.x * 2.0f;
-            ImVec2 textSz = ImGui::CalcTextSize(m.caption.c_str(), nullptr, false, textMaxW);
-            
-            float totalCardH = pad.y * 2.0f + textSz.y;
+            float totalCardH = popupPadding.y * 2.0f + textSz.y;
             float slotH = totalCardH * m.height_t;
 
-            float xOff = (sCardW + layout.multipleScale(18.0f)) * (1.0f - m.slide_t);
-            float x = dis.x - sCardW - layout.multipleScale(18.0f) + xOff;
-            
+            float xOff = (sCardW + scaleVal(18.0f)) * (1.0f - m.slide_t);
+            float x = dis.x - sCardW - scaleVal(18.0f) + xOff;
             float y = curY - slotH;
 
             ImVec2 pMin = { x, y };
@@ -1543,15 +1559,18 @@ namespace ImGuiH {
             ImU32 u_text = ImGui::ColorConvertFloat4ToU32({ col_text.x, col_text.y, col_text.z, col_text.w });
             ImU32 u_shadow = ImGui::ColorConvertFloat4ToU32({ 0.0f, 0.0f, 0.0f, 0.18f });
 
-            dl->AddRectFilled({ pMin.x + 2.0f, pMin.y + 3.0f }, { pMax.x + 2.0f, pMax.y + 3.0f }, u_shadow, rnd + 1.0f);
-            dl->AddRectFilled(pMin, pMax, u_bg, rnd);
-            dl->AddRect(pMin, pMax, u_border, rnd, 0, 1.0f);
+            dl->AddRectFilled({ pMin.x + 2.0f, pMin.y + 3.0f }, { pMax.x + 2.0f, pMax.y + 3.0f }, u_shadow, popupRounding + 1.0f);
+            dl->AddRectFilled(pMin, pMax, u_bg, popupRounding);
+            dl->AddRect(pMin, pMax, u_border, popupRounding, 0, 1.0f);
             
             dl->PushClipRect(pMin, pMax, true);
-            dl->AddText(ImGui::GetFont(), layout.multipleScale(ImGui::GetFontSize()), { pMin.x + pad.x, pMin.y + pad.y }, u_text, m.caption.c_str(), nullptr, textMaxW);
+            dl->AddText(font, baseFontSize * scale, { pMin.x + popupPadding.x, pMin.y + popupPadding.y }, u_text, m.caption.c_str(), nullptr, textMaxW);
             dl->PopClipRect();
 
-            curY -= slotH + layout.multipleScale(8.0f);
+            curY -= slotH + scaleVal(8.0f);
         }
+
+        ImGui::PopStyleVar(3);
+        io.FontGlobalScale = oldFontScale;
     }
 } // namespace ImGuiH

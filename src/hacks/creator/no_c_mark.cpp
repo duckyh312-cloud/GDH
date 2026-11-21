@@ -9,7 +9,7 @@ class $modify(NoCMarkEditLevelLayer, EditLevelLayer) {
         auto& gui = GDH::Gui::get();
         auto& hack = gui.getWindow("Creator").findHackByName("No (C) Mark");        
         
-        hack.addHookPtr(self.getHook("EditLevelLayer::onShare").unwrap());
+        hack.addHookPtr(self.getHook("EditLevelLayer::onShare"));
     }
 
     void onShare(CCObject* sender) {

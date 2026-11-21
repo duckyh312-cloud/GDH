@@ -11,8 +11,8 @@ class $modify(NoNewBestPopupPlayLayer, PlayLayer) {
     static void onModify(auto& self) {
         auto& gui = GDH::Gui::get();
         auto& hack = gui.getWindow("Cosmetic").findHackByName("No New Best Popup");
-        hack.addHookPtr(self.getHook("PlayLayer::showNewBest").unwrap());
-        hack.addHookPtr(self.getHook("PlayLayer::destroyPlayer").unwrap());
+        hack.addHookPtr(self.getHook("PlayLayer::showNewBest"));
+        hack.addHookPtr(self.getHook("PlayLayer::destroyPlayer"));
     }
 
     void showNewBest(bool p0, int p1, int p2, bool p3, bool p4, bool p5) {

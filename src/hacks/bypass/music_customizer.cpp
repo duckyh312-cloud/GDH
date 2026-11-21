@@ -12,7 +12,7 @@ class $modify(MusicUnlockerGameStatsManager, GameStatsManager) {
         auto& gui = GDH::Gui::get();
         auto& hack = gui.getWindow("Bypass").findHackByName("Music Customizer");        
         
-        hack.addHookPtr(self.getHook("GameStatsManager::isItemUnlocked").unwrap());
+        hack.addHookPtr(self.getHook("GameStatsManager::isItemUnlocked"));
     }
 
     bool isItemUnlocked(UnlockType type, int key) {

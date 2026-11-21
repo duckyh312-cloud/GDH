@@ -10,7 +10,7 @@ class $modify(NoEffectCirclesCCCircleWave, CCCircleWave) {
         auto& gui = GDH::Gui::get();
         auto& hack = gui.getWindow("Cosmetic").findHackByName("No Effect Circles");
 
-        hack.addHookPtr(self.getHook("CCCircleWave::draw").unwrap());
+        hack.addHookPtr(self.getHook("CCCircleWave::draw"));
     }
 
     void draw() {}

@@ -10,7 +10,7 @@ class $modify(NoOrbRingRingObject, RingObject) {
         auto& gui = GDH::Gui::get();
         auto& hack = gui.getWindow("Cosmetic").findHackByName("No Orb Ring");
 
-        hack.addHookPtr(self.getHook("RingObject::spawnCircle").unwrap());
+        hack.addHookPtr(self.getHook("RingObject::spawnCircle"));
     }
 
     void spawnCircle() {}

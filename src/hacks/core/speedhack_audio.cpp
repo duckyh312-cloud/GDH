@@ -20,7 +20,7 @@ class $modify(SpeedhackAudioFMODAudioEngine, FMODAudioEngine) {
             }
         });
 
-        hack.addHookPtr(self.getHook("FMODAudioEngine::update").unwrap());
+        hack.addHookPtr(self.getHook("FMODAudioEngine::update"));
     }
 
     void update(float dt) {

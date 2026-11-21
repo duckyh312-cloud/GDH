@@ -21,7 +21,7 @@ class $modify(PracticeMusicGameStatsManager, GameStatsManager) {
             if (gjbgl) gjbgl->toggleMusicInPractice();
         });
 
-        hack.addHookPtr(self.getHook("GameStatsManager::isItemUnlocked").unwrap());
+        hack.addHookPtr(self.getHook("GameStatsManager::isItemUnlocked"));
     }
 
     bool isItemUnlocked(UnlockType type, int key) {

@@ -9,7 +9,7 @@ class $modify(UnlockShopsGameManager, GameManager) {
         auto& gui = GDH::Gui::get();
         auto& hack = gui.getWindow("Bypass").findHackByName("Unlock Shops");        
         
-        hack.addHookPtr(self.getHook("GameManager::getUGV").unwrap());
+        hack.addHookPtr(self.getHook("GameManager::getUGV"));
     }
 
     bool getUGV(char const* p0) {

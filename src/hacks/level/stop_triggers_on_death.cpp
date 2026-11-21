@@ -11,7 +11,7 @@ class $modify(StopTriggersOnDeathGJBaseGameLayer, GJBaseGameLayer) {
         auto& gui = GDH::Gui::get();
         auto& hack = gui.getWindow("Level").findHackByName("Stop Triggers On Death");
 
-        hack.addHookPtr(self.getHook("GJBaseGameLayer::update").unwrap());
+        hack.addHookPtr(self.getHook("GJBaseGameLayer::update"));
     }
 
     void update(float dt) {

@@ -13,10 +13,10 @@ class $modify(MenuGameplayMenuGameLayer, MenuGameLayer) {
         auto& gui = GDH::Gui::get();
         auto& hack = gui.getWindow("Level").findHackByName("Menu Gameplay");        
         
-        hack.addHookPtr(self.getHook("MenuGameLayer::tryJump").unwrap());
-        hack.addHookPtr(self.getHook("MenuGameLayer::update").unwrap());
-        hack.addHookPtr(self.getHook("MenuGameLayer::ccTouchBegan").unwrap());
-        hack.addHookPtr(self.getHook("MenuGameLayer::resetPlayer").unwrap());
+        hack.addHookPtr(self.getHook("MenuGameLayer::tryJump"));
+        hack.addHookPtr(self.getHook("MenuGameLayer::update"));
+        hack.addHookPtr(self.getHook("MenuGameLayer::ccTouchBegan"));
+        hack.addHookPtr(self.getHook("MenuGameLayer::resetPlayer"));
     }
 
     void tryJump(float dt) {}
@@ -59,7 +59,7 @@ class $modify(MenuGameplayCCTouchDispatcher, CCTouchDispatcher) {
         auto& gui = GDH::Gui::get();
         auto& hack = gui.getWindow("Level").findHackByName("Menu Gameplay");        
         
-        hack.addHookPtr(self.getHook("cocos2d::CCTouchDispatcher::touches").unwrap());
+        hack.addHookPtr(self.getHook("cocos2d::CCTouchDispatcher::touches"));
     }
 
     void touches(CCSet* touches, CCEvent* event, unsigned int type) {

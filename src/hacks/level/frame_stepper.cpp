@@ -38,7 +38,7 @@ class $modify(FrameStepperCCScheduler, cocos2d::CCScheduler) {
 
         auto& gui = GDH::Gui::get();
         auto& hack = gui.getWindow("Level").findHackByName("Frame Stepper");
-        hack.addHookPtr(self.getHook("cocos2d::CCScheduler::update").unwrap());
+        hack.addHookPtr(self.getHook("cocos2d::CCScheduler::update"));
 
         hack.setHandler([](bool enabled) {
             if (enabled) {
@@ -196,12 +196,12 @@ class $modify(FrameStepperPlayLayer, PlayLayer) {
         auto& gui = GDH::Gui::get();
         auto& hack = gui.getWindow("Level").findHackByName("Frame Stepper");
         
-        hack.addHookPtr(self.getHook("PlayLayer::updateAttempts").unwrap());
-        hack.addHookPtr(self.getHook("PlayLayer::resetLevel").unwrap());
+        hack.addHookPtr(self.getHook("PlayLayer::updateAttempts"));
+        hack.addHookPtr(self.getHook("PlayLayer::resetLevel"));
     }
 
-    bool init(GJGameLevel* level, bool useReplay, bool dontCreateObjects) {
-        if (!PlayLayer::init(level, useReplay, dontCreateObjects)) return false;
+    bool init(GJGameLevel* level, bool dontCreateObjects) {
+        if (!PlayLayer::init(level, dontCreateObjects)) return false;
         m_fields.self();
         return true;
     }

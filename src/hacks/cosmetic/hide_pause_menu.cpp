@@ -9,7 +9,7 @@ class $modify(HidePauseMenuPauseLayer, PauseLayer) {
         auto& gui = GDH::Gui::get();
         auto& hack = gui.getWindow("Cosmetic").findHackByName("Hide Pause Menu");  
         
-        hack.addHookPtr(self.getHook("PauseLayer::customSetup").unwrap());
+        hack.addHookPtr(self.getHook("PauseLayer::customSetup"));
         hack.setHandler([](bool enabled) {
             if (auto scene = cocos2d::CCScene::get()) {
                 auto pauseLayer = scene->getChildByType<PauseLayer*>(0);

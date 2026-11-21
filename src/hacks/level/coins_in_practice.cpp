@@ -9,10 +9,10 @@ class $modify(CoinsInPracticeGJBaseGameLayer, GJBaseGameLayer) {
         auto& gui = GDH::Gui::get();
         auto& hack = gui.getWindow("Level").findHackByName("Coins In Practice");        
         
-        hack.addHookPtr(self.getHook("GJBaseGameLayer::collisionCheckObjects").unwrap());
+        hack.addHookPtr(self.getHook("GJBaseGameLayer::collisionCheckObjects"));
     }
 
-    void collisionCheckObjects(PlayerObject* player, gd::vector<GameObject*>* sectionObjects, int objectCount, float dt) {
+    void collisionCheckObjects(PlayerObject* player, std::vector<GameObject*>* sectionObjects, int objectCount, float dt) {
         if (!m_isPracticeMode)
             return GJBaseGameLayer::collisionCheckObjects(player, sectionObjects, objectCount, dt);
         

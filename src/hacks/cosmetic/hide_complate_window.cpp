@@ -12,7 +12,7 @@ class $modify(HideCompleteWindowEndLevelLayer, EndLevelLayer) {
         auto& gui = GDH::Gui::get();
         auto& hack = gui.getWindow("Cosmetic").findHackByName("Hide Complete Window");        
         
-        hack.addHookPtr(self.getHook("EndLevelLayer::showLayer").unwrap());
+        hack.addHookPtr(self.getHook("EndLevelLayer::showLayer"));
     }
 
     void showLayer(bool instant) {
@@ -35,7 +35,7 @@ class $modify(HideCompleteWindowCurrencyRewardLayer, CurrencyRewardLayer) {
         auto& gui = GDH::Gui::get();
         auto& hack = gui.getWindow("Cosmetic").findHackByName("Hide Complete Window");    
         
-        hack.addHookPtr(self.getHook("CurrencyRewardLayer::init").unwrap());
+        hack.addHookPtr(self.getHook("CurrencyRewardLayer::init"));
     }
 
     bool init(int p0, int p1, int p2, int p3, CurrencySpriteType p4, int p5, CurrencySpriteType p6, int p7, cocos2d::CCPoint p8, CurrencyRewardType p9, float p10, float p11) {

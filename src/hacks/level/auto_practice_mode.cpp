@@ -9,7 +9,7 @@ class $modify(AutoPracticeModePlayLayer, PlayLayer) {
         auto& gui = GDH::Gui::get();
         auto& hack = gui.getWindow("Level").findHackByName("Auto Practice Mode");        
         
-        hack.addHookPtr(self.getHook("PlayLayer::setupHasCompleted").unwrap());
+        hack.addHookPtr(self.getHook("PlayLayer::setupHasCompleted"));
     }
 
     void setupHasCompleted() {

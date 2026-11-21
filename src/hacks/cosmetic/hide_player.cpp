@@ -9,7 +9,7 @@ class $modify(HidePlayerPlayerObject, PlayerObject) {
         auto& gui = GDH::Gui::get();
         auto& hack = gui.getWindow("Cosmetic").findHackByName("Hide Player");        
         
-        hack.addHookPtr(self.getHook("PlayerObject::toggleVisibility").unwrap());
+        hack.addHookPtr(self.getHook("PlayerObject::toggleVisibility"));
     }
 
     void toggleVisibility(bool visible) {

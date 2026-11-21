@@ -12,9 +12,9 @@ class $modify(FrameExtrapolationGJBaseGameLayer, GJBaseGameLayer) {
     static void onModify(auto& self) {
         auto& gui = GDH::Gui::get();
         auto& hack = gui.getWindow("Level").findHackByName("Frame Extrapolation");
-        hack.addHookPtr(self.getHook("GJBaseGameLayer::getModifiedDelta").unwrap());
-        hack.addHookPtr(self.getHook("GJBaseGameLayer::update").unwrap());
-        hack.addHookPtr(self.getHook("GJBaseGameLayer::updateCamera").unwrap());
+        hack.addHookPtr(self.getHook("GJBaseGameLayer::getModifiedDelta"));
+        hack.addHookPtr(self.getHook("GJBaseGameLayer::update"));
+        hack.addHookPtr(self.getHook("GJBaseGameLayer::updateCamera"));
     }
 
     struct Fields {

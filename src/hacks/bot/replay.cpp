@@ -28,7 +28,7 @@ static uintptr_t deltaOffset = 0;
 
 #ifdef GEODE_IS_WINDOWS 
 $execute {
-    offset = GDH::Utils::PatternScan(geode::base::get(), 0x250000, "F3 0F 10 86 ? ? ? ? F3 44 0F 10 1D");
+    offset = GDH::Utils::PatternScan(geode::base::get(), 0x600000, "F3 0F 10 86 ? ? ? ? F3 44 0F 10 15 ? ? ? ? F3 41 0F 5D C2");
 }
 #endif
 
@@ -63,25 +63,19 @@ class $modify(ReplayCCScheduler, cocos2d::CCScheduler) {
                 return;
             }
 
-            #ifdef GEODE_IS_WINDOWS 
-            auto expectedTicksAddr = (uintptr_t)&expectedTicks;
-            std::vector<uint8_t> patchBytes;
-            
-            // mov rax, expectedTicks (48 B8 + 8 byte address)
-            patchBytes.push_back(0x48);
-            patchBytes.push_back(0xB8);
-            for (int i = 0; i < 8; i ++) {
-                patchBytes.push_back((expectedTicksAddr >> (i * 8)) & 0xFF);
-            }
+            #ifdef GEODE_IS_WINDOWS
+            auto addr = reinterpret_cast<uintptr_t>(&expectedTicks);
 
-            // mov r11d, [rax] (44 8B 18)
-            patchBytes.push_back(0x44);
-            patchBytes.push_back(0x8B);
-            patchBytes.push_back(0x18);
+            std::vector<uint8_t> patchBytes(0x42, 0x90); // already nopping all array
 
-            for (int i = 0; i < 54; i++) {
-                patchBytes.push_back(0x90); // NOP
-            }
+            // mov rax, &expectedTicks
+            patchBytes[0] = 0x48;
+            patchBytes[1] = 0xB8;
+            std::memcpy(&patchBytes[2], &addr, sizeof(addr));
+
+            // mov edi, [rax]
+            patchBytes[10] = 0x8B;
+            patchBytes[11] = 0x38;
             #endif
 
             #ifdef GEODE_IS_ANDROID64
@@ -195,7 +189,7 @@ class $modify(ReplayCCScheduler, cocos2d::CCScheduler) {
         auto& gui = GDH::Gui::get();
         auto& hack = gui.getWindow("Invisible").findHackByName("TPS");   
         hack.setCheating(true);
-        hack.addHookPtr(self.getHook("cocos2d::CCScheduler::update").unwrap());
+        hack.addHookPtr(self.getHook("cocos2d::CCScheduler::update"));
     }
 
     void update(float dt) {
@@ -241,9 +235,9 @@ class $modify(ReplayGJBaseGameLayer, GJBaseGameLayer) {
         auto& gui = GDH::Gui::get();
         auto& tps = gui.getWindow("Invisible").findHackByName("TPS");       
         tps.setCheating(true); 
-        tps.addHookPtr(self.getHook("GJBaseGameLayer::getModifiedDelta").unwrap());
+        tps.addHookPtr(self.getHook("GJBaseGameLayer::getModifiedDelta"));
         #if defined(GEODE_IS_INTEL_MAC)
-        tps.addHookPtr(self.getHook("GJBaseGameLayer::update").unwrap());
+        tps.addHookPtr(self.getHook("GJBaseGameLayer::update"));
         #endif
     }
 
@@ -395,13 +389,13 @@ class $modify(ReplayPlayLayer, PlayLayer) {
     static void onModify(auto& self) {
         auto& gui = GDH::Gui::get();
         auto& tps = gui.getWindow("Invisible").findHackByName("TPS");       
-        tps.addHookPtr(self.getHook("PlayLayer::updateProgressbar").unwrap());
-        tps.addHookPtr(self.getHook("PlayLayer::destroyPlayer").unwrap());
-        tps.addHookPtr(self.getHook("PlayLayer::levelComplete").unwrap());
+        tps.addHookPtr(self.getHook("PlayLayer::updateProgressbar"));
+        tps.addHookPtr(self.getHook("PlayLayer::destroyPlayer"));
+        tps.addHookPtr(self.getHook("PlayLayer::levelComplete"));
     }
 
-    bool init(GJGameLevel* level, bool useReplay, bool dontCreateObjects) {
-        if (!PlayLayer::init(level, useReplay, dontCreateObjects)) return false;
+    bool init(GJGameLevel* level, bool dontCreateObjects) {
+        if (!PlayLayer::init(level, dontCreateObjects)) return false;
         
         auto& engine = GDH::ReplayEngine::get();
         if (engine.get_actions_size() == 0) {

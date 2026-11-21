@@ -9,7 +9,7 @@ class $modify(NoTransitionCCTransitionFade, cocos2d::CCTransitionFade) {
         auto& gui = GDH::Gui::get();
         auto& hack = gui.getWindow("Core").findHackByName("No Transition Old");        
         
-        hack.addHookPtr(self.getHook("cocos2d::CCTransitionFade::create").unwrap());
+        hack.addHookPtr(self.getHook("cocos2d::CCTransitionFade::create"));
     }
 
     static cocos2d::CCTransitionFade* create(float t, cocos2d::CCScene *scene) {

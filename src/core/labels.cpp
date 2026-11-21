@@ -286,14 +286,14 @@ void Manager::save() {
             obj[cornerIndice].push_back(labelObj);
         }
     }
-    std::ofstream outFile(getLabelsDataPath());
+    std::ofstream outFile(getLabelsDataPath().string());
     if (outFile.is_open()) {
         outFile << obj.dump(4);
     }
 }
 
 void Manager::load() {
-    std::ifstream inFile(getLabelsDataPath());
+    std::ifstream inFile(getLabelsDataPath().string());
     if (!inFile.is_open()) return;
 
     labels.clear();
@@ -364,8 +364,8 @@ class $modify(LabelsPlayLayer, PlayLayer) {
         (void) self.setHookPriority("PlayLayer::destroyPlayer", -35);
     }
 
-    bool init(GJGameLevel *level, bool useReplay, bool dontCreateObjects) {
-        if (!PlayLayer::init(level, useReplay, dontCreateObjects)) return false;
+    bool init(GJGameLevel *level, bool dontCreateObjects) {
+        if (!PlayLayer::init(level, dontCreateObjects)) return false;
 
         auto fields = m_fields.self();
 

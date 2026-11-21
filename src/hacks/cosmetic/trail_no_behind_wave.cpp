@@ -9,7 +9,7 @@ class $modify(TrailNoBehindWavePlayerObject, PlayerObject) {
         auto& gui = GDH::Gui::get();
         auto& hack = gui.getWindow("Cosmetic").findHackByName("Trail No Behind Wave");        
         
-        hack.addHookPtr(self.getHook("PlayerObject::activateStreak").unwrap());
+        hack.addHookPtr(self.getHook("PlayerObject::activateStreak"));
     }
 
     void activateStreak() {

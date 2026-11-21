@@ -10,7 +10,7 @@ class $modify(IgnoreESCPauseLayer, PauseLayer) {
         auto& hack = gui.getWindow("Level").findHackByName("Ignore ESC");  
         
         (void) self.setHookPriority("PauseLayer::onQuit", Priority::VeryLate); 
-        hack.addHookPtr(self.getHook("PauseLayer::onQuit").unwrap());
+        hack.addHookPtr(self.getHook("PauseLayer::onQuit"));
     }
     
     void onQuit(cocos2d::CCObject* sender) {}

@@ -86,7 +86,7 @@ class $modify(ShowTouchesCCEGLView, cocos2d::CCEGLView) {
     static void onModify(auto& self) {
         auto& gui = GDH::Gui::get();
         auto& hack = gui.getWindow("Cosmetic").findHackByName("Show Touches");
-        hack.addHookPtr(self.getHook("cocos2d::CCEGLView::swapBuffers").unwrap());
+        hack.addHookPtr(self.getHook("cocos2d::CCEGLView::swapBuffers"));
     }
 
     void swapBuffers() override {
@@ -101,7 +101,7 @@ class $modify(ShowTouchesCCDirector, cocos2d::CCDirector) {
     static void onModify(auto& self) {
         auto& gui = GDH::Gui::get();
         auto& hack = gui.getWindow("Cosmetic").findHackByName("Show Touches");
-        hack.addHookPtr(self.getHook("cocos2d::CCDirector::drawScene").unwrap());
+        hack.addHookPtr(self.getHook("cocos2d::CCDirector::drawScene"));
     }
 
     void drawScene() {
@@ -115,7 +115,7 @@ class $modify(ShowTouchesCCTouchDispatcher, cocos2d::CCTouchDispatcher) {
     static void onModify(auto& self) {
         auto& gui = GDH::Gui::get();
         auto& hack = gui.getWindow("Cosmetic").findHackByName("Show Touches");
-        hack.addHookPtr(self.getHook("cocos2d::CCTouchDispatcher::touches").unwrap());
+        hack.addHookPtr(self.getHook("cocos2d::CCTouchDispatcher::touches"));
     }
 
     void touches(cocos2d::CCSet* pTouches, cocos2d::CCEvent* pEvent, unsigned int uIndex) {

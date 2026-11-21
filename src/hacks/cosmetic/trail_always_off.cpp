@@ -9,7 +9,7 @@ class $modify(TrailAlwaysOffPlayerObject, PlayerObject) {
         auto& gui = GDH::Gui::get();
         auto& hack = gui.getWindow("Cosmetic").findHackByName("Trail Always Off");        
         
-        hack.addHookPtr(self.getHook("PlayerObject::activateStreak").unwrap());
+        hack.addHookPtr(self.getHook("PlayerObject::activateStreak"));
     }
 
     void activateStreak() {

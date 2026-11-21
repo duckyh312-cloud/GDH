@@ -41,25 +41,18 @@ void Keybinds::init() {
             }
             
             geode::Keybind pressedBind(event.key, event.modifiers);
-            bool handled = false;
 
             for (auto& [id, customPair] : m_customBinds) {
                 if (customPair.first == pressedBind && customPair.second) {
                     bool isRepeat = (event.action == geode::KeyboardInputData::Action::Repeat);
                     customPair.second(isRepeat);
-                    handled = true;
                 }
             }
 
             if (event.action == geode::KeyboardInputData::Action::Press && m_bindsMap.contains(pressedBind)) {
                 for (const auto& [windowName, hackName] : m_bindsMap[pressedBind]) {
                     Gui::get().getWindow(windowName).findHackByName(hackName).toggle();
-                    handled = true;
                 }
-            }
-
-            if (handled) {
-                return ListenerResult::Stop;
             }
         }
         else if (event.action == geode::KeyboardInputData::Action::Release) {
@@ -97,7 +90,7 @@ void Keybinds::rebuildCache() {
 }
 
 void Keybinds::load() {
-    std::ifstream file(getKeybindsDataPath());
+    std::ifstream file(getKeybindsDataPath().string());
     if (!file.is_open()) return;
 
     nlohmann::json jsonObject = nlohmann::json::parse(file, nullptr, false);
@@ -130,7 +123,7 @@ void Keybinds::load() {
 }
 
 void Keybinds::save() const {
-    std::ofstream file(getKeybindsDataPath());
+    std::ofstream file(getKeybindsDataPath().string());
     if (!file.is_open()) return;
 
     nlohmann::json jsonObject = nlohmann::json::object();
@@ -405,17 +398,17 @@ int Keybinds::convertToWinAPI(cocos2d::enumKeyCodes cocosKey) {
         case KEY_PA1:             return VK_PA1;
         case KEY_OEMClear:        return VK_OEM_CLEAR;
 
-        case KEY_GraveAccent:     return VK_OEM_3;
-        case KEY_OEMEqual:        return VK_OEM_PLUS;
-        case KEY_LeftBracket:     return VK_OEM_4;
-        case KEY_RightBracket:    return VK_OEM_6;
-        case KEY_Backslash:       return VK_OEM_5;
-        case KEY_Semicolon:       return VK_OEM_1;
-        case KEY_Apostrophe:      return VK_OEM_7;
-        case KEY_Slash:           return VK_OEM_2;
+        // case KEY_GraveAccent:     return VK_OEM_3;
+        // case KEY_OEMEqual:        return VK_OEM_PLUS;
+        // case KEY_LeftBracket:     return VK_OEM_4;
+        // case KEY_RightBracket:    return VK_OEM_6;
+        // case KEY_Backslash:       return VK_OEM_5;
+        // case KEY_Semicolon:       return VK_OEM_1;
+        // case KEY_Apostrophe:      return VK_OEM_7;
+        // case KEY_Slash:           return VK_OEM_2;
         case KEY_Equal:           return VK_OEM_PLUS;
         case KEY_NumEnter:        return VK_RETURN;
-        case KEY_World1:          return 0;
+        // case KEY_World1:          return 0;
         case KEY_World2:          return 0;
 
         case MOUSE_4:             return VK_XBUTTON1;

@@ -9,7 +9,7 @@ class $modify(NoPortalLightingGJBaseGameLayer, GJBaseGameLayer) {
         auto& gui = GDH::Gui::get();
         auto& hack = gui.getWindow("Cosmetic").findHackByName("No Portal Lighting");        
         
-        hack.addHookPtr(self.getHook("GJBaseGameLayer::lightningFlash").unwrap());
+        hack.addHookPtr(self.getHook("GJBaseGameLayer::lightningFlash"));
     }
 
     void lightningFlash(cocos2d::CCPoint from, cocos2d::CCPoint to, cocos2d::ccColor3B color, float lineWidth, float duration, int displacement, bool flash, float opacity) {

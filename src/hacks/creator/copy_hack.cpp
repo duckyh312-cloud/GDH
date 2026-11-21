@@ -9,8 +9,8 @@ class $modify(CopyHackLevelInfoLayer, LevelInfoLayer) {
         auto& gui = GDH::Gui::get();
         auto& hack = gui.getWindow("Creator").findHackByName("Copy Hack");        
         
-        hack.addHookPtr(self.getHook("LevelInfoLayer::init").unwrap());
-        hack.addHookPtr(self.getHook("LevelInfoLayer::levelDownloadFinished").unwrap());
+        hack.addHookPtr(self.getHook("LevelInfoLayer::init"));
+        hack.addHookPtr(self.getHook("LevelInfoLayer::levelDownloadFinished"));
     }
 
     bool init(GJGameLevel* level, bool challenge) {

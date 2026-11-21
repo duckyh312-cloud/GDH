@@ -9,7 +9,7 @@ class $modify(NoShadersShaderLayer, ShaderLayer) {
         auto& gui = GDH::Gui::get();
         auto& hack = gui.getWindow("Cosmetic").findHackByName("No Shaders");        
         
-        hack.addHookPtr(self.getHook("ShaderLayer::performCalculations").unwrap());
+        hack.addHookPtr(self.getHook("ShaderLayer::performCalculations"));
     }
 
     void performCalculations() {

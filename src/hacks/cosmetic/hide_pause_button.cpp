@@ -9,7 +9,7 @@ class $modify(HidePauseButtonUILayer, UILayer) {
         auto& gui = GDH::Gui::get();
         auto& hack = gui.getWindow("Cosmetic").findHackByName("Hide Pause Button");        
         
-        hack.addHookPtr(self.getHook("UILayer::init").unwrap());
+        hack.addHookPtr(self.getHook("UILayer::init"));
     }
 
     bool init(GJBaseGameLayer *layer) {

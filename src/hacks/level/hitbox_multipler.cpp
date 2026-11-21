@@ -35,8 +35,8 @@ class $modify(HitboxMultiplierGameObject, GameObject) {
         auto& gui = GDH::Gui::get();
         auto& hack = gui.getWindow("Level").findHackByName("Hitbox Multiplier");
         
-        hack.addHookPtr(self.getHook("GameObject::getObjectRect").unwrap());
-        hack.addHookPtr(self.getHook("GameObject::updateOrientedBox").unwrap());
+        hack.addHookPtr(self.getHook("GameObject::getObjectRect"));
+        hack.addHookPtr(self.getHook("GameObject::updateOrientedBox"));
 
         hack.setCustomWindowImGui([
             pKey = hack.formatAdditionalSetting("player"),

@@ -9,7 +9,7 @@ class $modify(FreeScrollEditorUI, EditorUI) {
         auto& gui = GDH::Gui::get();
         auto& hack = gui.getWindow("Creator").findHackByName("Free Scroll");        
         
-        hack.addHookPtr(self.getHook("EditorUI::constrainGameLayerPosition").unwrap());
+        hack.addHookPtr(self.getHook("EditorUI::constrainGameLayerPosition"));
     }
 
     void constrainGameLayerPosition(float width, float height) {}

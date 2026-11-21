@@ -34,7 +34,7 @@ std::string getFFmpegPath() {
     GDH::Recorder::get().console = consoleEnabled;
 
     auto geodePath = geode::dirs::getGameDir() / "ffmpeg.exe";
-    if (std::filesystem::exists(geodePath)) {
+    if (asp::fs::exists(geodePath)) {
         cachedPath = geodePath.string();
         return cachedPath;
     }
@@ -90,7 +90,7 @@ void loadPreset(const std::filesystem::path& path, GDH::Recorder& recorder) {
 }
 
 void drawRecorderInterface() {
-    std::filesystem::path folder = Config::get().get<std::string>("recorder::path", (getFolderPath() / "Showcases").string());
+    asp::fs::Path folder = Config::get().get<std::string>("recorder::path", (getFolderPath() / "Showcases").string());
 
     #ifdef GEODE_IS_WINDOWS
     std::string ffmpegPath = getFFmpegPath();
@@ -114,7 +114,7 @@ void drawRecorderInterface() {
     auto& recorder = GDH::Recorder::get();
     if (ImGuiH::Checkbox("Record##Recorder", &recorder.enabled)) {
         if (recorder.enabled) {
-            if (GDH::Utils::isOnlyAsciiPath(folder)) {
+            if (GDH::Utils::isOnlyAsciiPath(folder.string())) {
                 recorder.compile_command();
                 recorder.start();
             }
@@ -270,8 +270,8 @@ void drawRecorderInterface() {
 
     if (presetsNeedRefresh) {
         presetFiles.clear();
-        if (std::filesystem::exists(getFolderPresetsPath())) {
-            for (const auto& entry : std::filesystem::directory_iterator(getFolderPresetsPath())) {
+        if (asp::fs::exists(getFolderPresetsPath())) {
+            for (const auto& entry : std::filesystem::directory_iterator(getFolderPresetsPath().string())) {
                 if (entry.is_regular_file() && entry.path().extension() == ".preset") {
                     presetFiles.push_back(entry.path());
                 }
@@ -286,9 +286,9 @@ void drawRecorderInterface() {
     ImGui::SameLine();
     
     if (ImGuiH::Button("Save Preset") && !customPresetName.empty()) {
-        std::filesystem::create_directories(getFolderPresetsPath());
+        (void)asp::fs::createDir(getFolderPresetsPath());
         auto path = getFolderPresetsPath() / (customPresetName + ".preset");
-        savePreset(path, recorder);
+        savePreset(path.string(), recorder);
         presetsNeedRefresh = true;
     }
 
@@ -296,8 +296,8 @@ void drawRecorderInterface() {
 
     if (ImGuiH::Button("Load Preset") && !customPresetName.empty()) {
         auto path = getFolderPresetsPath() / (customPresetName + ".preset");
-        if (std::filesystem::exists(path)) {
-            loadPreset(path, recorder);
+        if (asp::fs::exists(path)) {
+            loadPreset(path.string(), recorder);
         }
     }
 
@@ -305,8 +305,8 @@ void drawRecorderInterface() {
 
     if (ImGuiH::Button("Delete Preset") && !customPresetName.empty()) {
         auto path = getFolderPresetsPath() / (customPresetName + ".preset");
-        if (std::filesystem::exists(path)) {
-            std::filesystem::remove(path);
+        if (asp::fs::exists(path)) {
+            (void)asp::fs::removeFile(path);
             presetsNeedRefresh = true;
         }
     }
@@ -746,12 +746,12 @@ void GDH::UI::drawMacroEditor() {
                         if (!pathOpt) return;
 
                         auto selectedPath = *pathOpt;
-                        if (!GDH::Utils::isOnlyAsciiPath(selectedPath)) {
+                        if (!GDH::Utils::isOnlyAsciiPath(selectedPath.string())) {
                             ImGuiH::AddPopup("Invalid path. Please remove non-ASCII characters");
                             return;
                         }
 
-                        std::ifstream file(selectedPath);
+                        std::ifstream file(selectedPath.string());
                         if (!file.is_open()) {
                             ImGuiH::AddPopup("Failed to open file for reading");
                             return;
@@ -805,12 +805,12 @@ void GDH::UI::drawMacroEditor() {
                         if (!pathOpt) return;
 
                         auto selectedPath = *pathOpt;
-                        if (!GDH::Utils::isOnlyAsciiPath(selectedPath)) {
+                        if (!GDH::Utils::isOnlyAsciiPath(selectedPath.string())) {
                             ImGuiH::AddPopup("Invalid path. Please remove non-ASCII characters");
                             return;
                         }
 
-                        std::ofstream file(selectedPath);
+                        std::ofstream file(selectedPath.string());
                         if (!file.is_open()) {
                             ImGuiH::AddPopup("Failed to open file for writing");
                             return;
@@ -899,7 +899,7 @@ $execute {
 
         if (ImGuiH::ArrowButton("##replay_select", ImGuiDir_Down)) {
             replay_list.clear();
-            for (const auto& entry : std::filesystem::directory_iterator(getFolderMacroPath())) {
+            for (const auto& entry : std::filesystem::directory_iterator(getFolderMacroPath().string())) {
                 if (entry.is_regular_file()) {
                     if (entry.path().extension() == ".re4") {
                         if (GDH::Utils::isOnlyAsciiPath(entry)) 
@@ -911,8 +911,8 @@ $execute {
         }
         
         if (ImGuiH::Button("Save", {ImGui::GetContentRegionAvail().x / 3, 0.f})) {
-            std::filesystem::path savePath = getFolderMacroPath() / (engine.replay_name + ".re4");
-            if (std::filesystem::exists(savePath)) {
+            asp::fs::Path savePath = getFolderMacroPath() / (engine.replay_name + ".re4");
+            if (asp::fs::exists(savePath)) {
                 ImGui::OpenPopup("Save Overwrite Warning");
             } else {
                 ImGuiH::AddPopup(engine.save(engine.replay_name));

@@ -11,8 +11,8 @@ class $modify(UnlockIconsGameManager, GameManager) {
         auto& gui = GDH::Gui::get();
         auto& hack = gui.getWindow("Core").findHackByName("Unlock Icons");       
 
-        hack.addHookPtr(self.getHook("GameManager::isColorUnlocked").unwrap());
-        hack.addHookPtr(self.getHook("GameManager::isIconUnlocked").unwrap());
+        hack.addHookPtr(self.getHook("GameManager::isColorUnlocked"));
+        hack.addHookPtr(self.getHook("GameManager::isIconUnlocked"));
     }
 
     bool isColorUnlocked(int key, UnlockType type) {
@@ -29,7 +29,7 @@ class $modify(UnlockIconsGameStatsManager, GameStatsManager) {
         auto& gui = GDH::Gui::get();
         auto& hack = gui.getWindow("Core").findHackByName("Unlock Icons");        
      
-        hack.addHookPtr(self.getHook("GameStatsManager::isStoreItemUnlocked").unwrap());
+        hack.addHookPtr(self.getHook("GameStatsManager::isStoreItemUnlocked"));
     }
     
     bool isStoreItemUnlocked(int index) {

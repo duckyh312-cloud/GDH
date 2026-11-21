@@ -9,7 +9,7 @@ class $modify(ShowTotalAttemptsPlayLayer, PlayLayer) {
         auto& gui = GDH::Gui::get();
         auto& hack = gui.getWindow("Cosmetic").findHackByName("Show Total Attempts");        
         
-        hack.addHookPtr(self.getHook("PlayLayer::resetLevel").unwrap());
+        hack.addHookPtr(self.getHook("PlayLayer::resetLevel"));
     }
 
     void resetLevel() {

@@ -10,8 +10,8 @@ class $modify(NoDashFirelayerObject, PlayerObject) {
         auto& gui = GDH::Gui::get();
         auto& hack = gui.getWindow("Cosmetic").findHackByName("No Dash Fire");        
         
-        hack.addHookPtr(self.getHook("PlayerObject::startDashing").unwrap());
-        hack.addHookPtr(self.getHook("PlayerObject::stopDashing").unwrap());
+        hack.addHookPtr(self.getHook("PlayerObject::startDashing"));
+        hack.addHookPtr(self.getHook("PlayerObject::stopDashing"));
     }
 
     void startDashing(DashRingObject *object) {

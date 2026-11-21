@@ -38,7 +38,7 @@ class $modify(NoParticlesCCParticleSystemQuad, CCParticleSystemQuad) {
         auto& gui = GDH::Gui::get();
         auto& hack = gui.getWindow("Cosmetic").findHackByName("No Particles");
 
-        hack.addHookPtr(self.getHook("cocos2d::CCParticleSystemQuad::create").unwrap());
+        hack.addHookPtr(self.getHook("cocos2d::CCParticleSystemQuad::create"));
 
         hack.setCustomWindowImGui([] {
             auto& hackRef = GDH::Gui::get().getWindow("Cosmetic").findHackByName("No Particles");

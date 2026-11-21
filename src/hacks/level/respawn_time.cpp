@@ -25,7 +25,7 @@ class $modify(RespawnTimePlayLayer, PlayLayer) {
             popup->addConfigFloatInput("Delay (seconds)", delayKey, 0.01f, FLT_MAX, 1.f);
         });
 
-        hack.addHookPtr(self.getHook("PlayLayer::destroyPlayer").unwrap());
+        hack.addHookPtr(self.getHook("PlayLayer::destroyPlayer"));
     }
 
     void destroyPlayer(PlayerObject* player, GameObject* obj) {

@@ -11,7 +11,7 @@ class $modify(MacroBuffGJBaseGameLayer, GJBaseGameLayer) {
         auto& gui = GDH::Gui::get();
         auto& hack = gui.getWindow("Creator").findHackByName("Macro Buff");        
         
-        hack.addHookPtr(self.getHook("GJBaseGameLayer::processCommands").unwrap());
+        hack.addHookPtr(self.getHook("GJBaseGameLayer::processCommands"));
     }
 
     struct Fields {
@@ -129,7 +129,7 @@ class $modify(MacroBuffEditorLayer, LevelEditorLayer) {
         auto& gui = GDH::Gui::get();
         auto& hack = gui.getWindow("Creator").findHackByName("Macro Buff");        
         
-        hack.addHookPtr(self.getHook("LevelEditorLayer::onPlaytest").unwrap());
+        hack.addHookPtr(self.getHook("LevelEditorLayer::onPlaytest"));
     }
 
     void onPlaytest() {

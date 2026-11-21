@@ -31,12 +31,14 @@ set(HAS_IMGUI ON)
 add_subdirectory(libs/imgui)
 CPMAddPackage("gh:prevter/gd-imgui-cocos#6383c75")
 
+CPMAddPackage("gh:prevter/rock#main")
+
 if (WIN32)
     add_subdirectory(libs/discord-rpc)
     target_link_libraries(${PROJECT_NAME} discord-rpc)
 endif()
 
-target_link_libraries(${PROJECT_NAME} imgui-cocos imgui)
+target_link_libraries(${PROJECT_NAME} imgui-cocos imgui rock)
 
 if (ANDROID AND ANDROID_ABI STREQUAL "arm64-v8a") 
     target_link_options(${PROJECT_NAME} PRIVATE "-Wl,-Bsymbolic")

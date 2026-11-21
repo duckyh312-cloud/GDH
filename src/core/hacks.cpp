@@ -92,6 +92,15 @@ void Hack::addHookPtr(geode::Hook* ptr) {
     (void)ptr->setAutoEnable(config.get(m_ID, false));
 }
 
+void Hack::addHookPtr(geode::Result<geode::Hook*> const& hookRes) {
+    if (!hookRes) {
+        geode::log::error("Failed to initialize hook for {}: {}", m_ID, hookRes.unwrapErr());
+        return;
+    }
+    
+    this->addHookPtr(hookRes.unwrap());
+}
+
 void Hack::enableHooks(bool state) {
     for (geode::Hook* hookPtr : m_hooksPtr) {
         (void)hookPtr->toggle(state);

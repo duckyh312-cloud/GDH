@@ -9,7 +9,7 @@ class $modify(FastCheckOpenRewardUnlockLayer, RewardUnlockLayer) {
         auto& gui = GDH::Gui::get();
         auto& hack = gui.getWindow("Cosmetic").findHackByName("Fast Chest Open");        
         
-        hack.addHookPtr(self.getHook("RewardUnlockLayer::init").unwrap());
+        hack.addHookPtr(self.getHook("RewardUnlockLayer::init"));
     }
 
     bool init(int p0, RewardsPage *p1)

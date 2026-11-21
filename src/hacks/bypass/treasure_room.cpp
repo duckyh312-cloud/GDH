@@ -9,7 +9,7 @@ class $modify(TreasureRoomGameManager, GameManager) {
         auto& gui = GDH::Gui::get();
         auto& hack = gui.getWindow("Bypass").findHackByName("Treasure Room");        
         
-        hack.addHookPtr(self.getHook("GameManager::getUGV").unwrap());
+        hack.addHookPtr(self.getHook("GameManager::getUGV"));
     }
 
     bool getUGV(char const* p0) {

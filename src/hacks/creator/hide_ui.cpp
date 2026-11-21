@@ -9,7 +9,7 @@ class $modify(HideUIEditorUI, EditorUI) {
         auto& gui = GDH::Gui::get();
         auto& hack = gui.getWindow("Creator").findHackByName("Hide UI");  
         
-        hack.addHookPtr(self.getHook("EditorUI::init").unwrap());
+        hack.addHookPtr(self.getHook("EditorUI::init"));
         hack.setHandler([](bool enabled) {
             if (auto LevelEditorLayer = LevelEditorLayer::get()) {
                 auto EditorUILayer = LevelEditorLayer->m_editorUI;

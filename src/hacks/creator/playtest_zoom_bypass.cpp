@@ -11,7 +11,7 @@ class $modify(PlaytestZoomBypassLevelEditorLayer, LevelEditorLayer) {
     static void onModify(auto& self) {
         auto& gui = GDH::Gui::get();
         auto& hack = gui.getWindow("Creator").findHackByName("Playtest Zoom Bypass");        
-        hack.addHookPtr(self.getHook("LevelEditorLayer::onPlaytest").unwrap());
+        hack.addHookPtr(self.getHook("LevelEditorLayer::onPlaytest"));
     }
 
     void onPlaytest() {
@@ -25,7 +25,7 @@ class $modify(PlaytestZoomBypassGJBaseGameLayer, GJBaseGameLayer) {
     static void onModify(auto& self) {
         auto& gui = GDH::Gui::get();
         auto& hack = gui.getWindow("Creator").findHackByName("Playtest Zoom Bypass");        
-        hack.addHookPtr(self.getHook("GJBaseGameLayer::updateZoom").unwrap());
+        hack.addHookPtr(self.getHook("GJBaseGameLayer::updateZoom"));
     }
 
     void updateZoom(float zoom, float duration, int easing, float rate, int uniqueID, int controlID) {

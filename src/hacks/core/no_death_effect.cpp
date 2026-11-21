@@ -9,7 +9,7 @@ class $modify(NoDeathEffectPlayerObject, PlayerObject) {
         auto& gui = GDH::Gui::get();
         auto& hack = gui.getWindow("Core").findHackByName("No Death Effect");        
         
-        hack.addHookPtr(self.getHook("PlayerObject::playDeathEffect").unwrap());
+        hack.addHookPtr(self.getHook("PlayerObject::playDeathEffect"));
     }
 
     void playDeathEffect() {}

@@ -10,11 +10,11 @@ class $modify(ForcePlatformerPlayLayer, PlayLayer) {
         auto& gui = GDH::Gui::get();
         auto& hack = gui.getWindow("Level").findHackByName("Force Platformer");        
         
-        hack.addHookPtr(self.getHook("PlayLayer::init").unwrap());
+        hack.addHookPtr(self.getHook("PlayLayer::init"));
     }
 
-    bool init(GJGameLevel* level, bool useReplay, bool dontCreateObjects) {
-        if (!PlayLayer::init(level, useReplay, dontCreateObjects)) return false;
+    bool init(GJGameLevel* level, bool dontCreateObjects) {
+        if (!PlayLayer::init(level, dontCreateObjects)) return false;
 
         if (m_player1) m_player1->togglePlatformerMode(true);
         if (m_player2) m_player2->togglePlatformerMode(true);

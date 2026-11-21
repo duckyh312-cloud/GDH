@@ -69,7 +69,7 @@ class $modify(LayoutModePlayLayer, PlayLayer) {
         auto& gui = GDH::Gui::get();
         auto& hack = gui.getWindow("Level").findHackByName("Layout Mode");        
         
-        hack.addHookPtr(self.getHook("PlayLayer::addObject").unwrap());
+        hack.addHookPtr(self.getHook("PlayLayer::addObject"));
     }
 
     void addObject(GameObject* obj) {
@@ -96,10 +96,10 @@ class $modify(LayoutModeGameObject, GameObject) {
         auto& gui = GDH::Gui::get();
         auto& hack = gui.getWindow("Level").findHackByName("Layout Mode");        
         
-        hack.addHookPtr(self.getHook("GameObject::addGlow").unwrap());
+        hack.addHookPtr(self.getHook("GameObject::addGlow"));
     }
 
-    void addGlow(gd::string p0) {
+    void addGlow(std::string p0) {
         GameObject::addGlow(p0);
 
         auto pl = PlayLayer::get();
@@ -120,7 +120,7 @@ class $modify(LayoutModeGJBaseGameLayer, GJBaseGameLayer) {
         auto& gui = GDH::Gui::get();
         auto& hack = gui.getWindow("Level").findHackByName("Layout Mode");        
         
-        hack.addHookPtr(self.getHook("GJBaseGameLayer::updateColor").unwrap());
+        hack.addHookPtr(self.getHook("GJBaseGameLayer::updateColor"));
     }
 
     void updateColor(cocos2d::ccColor3B& color, float fadeTime, int colorID, bool blending, float opacity, cocos2d::ccHSVValue& copyHSV, int colorIDToCopy, bool copyOpacity, EffectGameObject* callerObject, int unk1, int unk2)

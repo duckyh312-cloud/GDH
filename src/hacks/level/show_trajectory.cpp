@@ -200,12 +200,12 @@ class $modify(ShowTrajectoryPlayLayer, PlayLayer) {
         auto& hack = gui.getWindow("Level").findHackByName("Show Trajectory");       
 
         (void) self.setHookPriority("PlayLayer::destroyPlayer", -50); 
-        hack.addHookPtr(self.getHook("PlayLayer::destroyPlayer").unwrap());
-        hack.addHookPtr(self.getHook("PlayLayer::playEndAnimationToPos").unwrap());
+        hack.addHookPtr(self.getHook("PlayLayer::destroyPlayer"));
+        hack.addHookPtr(self.getHook("PlayLayer::playEndAnimationToPos"));
     }
 
-    bool init(GJGameLevel* level, bool useReplay, bool dontCreateObjects) {
-        if (!PlayLayer::init(level, useReplay, dontCreateObjects)) return false;
+    bool init(GJGameLevel* level, bool dontCreateObjects) {
+        if (!PlayLayer::init(level, dontCreateObjects)) return false;
 
         m_fields.self();
         TrajectoryManager::dummy_jump = TrajectoryManager::createVirtualPlayer(this);
@@ -236,10 +236,10 @@ class $modify(ShowTrajectoryBaseGameLayer, GJBaseGameLayer) {
         auto& gui = GDH::Gui::get();
         auto& hack = gui.getWindow("Level").findHackByName("Show Trajectory");       
 
-        hack.addHookPtr(self.getHook("GJBaseGameLayer::canBeActivatedByPlayer").unwrap());
-        hack.addHookPtr(self.getHook("GJBaseGameLayer::collisionCheckObjects").unwrap());
-        hack.addHookPtr(self.getHook("GJBaseGameLayer::flipGravity").unwrap());
-        hack.addHookPtr(self.getHook("GJBaseGameLayer::playerTouchedRing").unwrap());
+        hack.addHookPtr(self.getHook("GJBaseGameLayer::canBeActivatedByPlayer"));
+        hack.addHookPtr(self.getHook("GJBaseGameLayer::collisionCheckObjects"));
+        hack.addHookPtr(self.getHook("GJBaseGameLayer::flipGravity"));
+        hack.addHookPtr(self.getHook("GJBaseGameLayer::playerTouchedRing"));
     }
 
     void updateCamera(float dt) {
@@ -254,7 +254,7 @@ class $modify(ShowTrajectoryBaseGameLayer, GJBaseGameLayer) {
         return GJBaseGameLayer::canBeActivatedByPlayer(player, object);
     }
 
-    void collisionCheckObjects(PlayerObject* player, gd::vector<GameObject*>* objects, int objectCount, float dt) {
+    void collisionCheckObjects(PlayerObject* player, std::vector<GameObject*>* objects, int objectCount, float dt) {
         if (!TrajectoryManager::is_simulating) {
             GJBaseGameLayer::collisionCheckObjects(player, objects, objectCount, dt);
             return;
@@ -266,7 +266,7 @@ class $modify(ShowTrajectoryBaseGameLayer, GJBaseGameLayer) {
 
         if (!player || !objects || objectCount <= 0) return;
 
-        auto addCollisionObject = [](GameObject* obj, gd::vector<GameObject*>& vec, int& count, int& index) {
+        auto addCollisionObject = [](GameObject* obj, std::vector<GameObject*>& vec, int& count, int& index) {
             if (count < index) {
                 vec.at(count) = obj;
             } else {
@@ -342,11 +342,11 @@ class $modify(ShowTrajectoryPlayerObject, PlayerObject) {
         auto& gui = GDH::Gui::get();
         auto& hack = gui.getWindow("Level").findHackByName("Show Trajectory");       
 
-        hack.addHookPtr(self.getHook("PlayerObject::update").unwrap());
-        hack.addHookPtr(self.getHook("PlayerObject::stopDashing").unwrap());
-        hack.addHookPtr(self.getHook("PlayerObject::playSpiderDashEffect").unwrap());
-        hack.addHookPtr(self.getHook("PlayerObject::ringJump").unwrap());
-        hack.addHookPtr(self.getHook("PlayerObject::incrementJumps").unwrap());
+        hack.addHookPtr(self.getHook("PlayerObject::update"));
+        hack.addHookPtr(self.getHook("PlayerObject::stopDashing"));
+        hack.addHookPtr(self.getHook("PlayerObject::playSpiderDashEffect"));
+        hack.addHookPtr(self.getHook("PlayerObject::ringJump"));
+        hack.addHookPtr(self.getHook("PlayerObject::incrementJumps"));
     }
 
     void update(float dt) {
@@ -391,10 +391,10 @@ class $modify(ShowTrajectoryEffectGameObject, EffectGameObject) {
         auto& gui = GDH::Gui::get();
         auto& hack = gui.getWindow("Level").findHackByName("Show Trajectory");       
 
-        hack.addHookPtr(self.getHook("EffectGameObject::triggerObject").unwrap());
+        hack.addHookPtr(self.getHook("EffectGameObject::triggerObject"));
     }
 
-    void triggerObject(GJBaseGameLayer* layer, int uniqueID, const gd::vector<int>* remapKeys) {
+    void triggerObject(GJBaseGameLayer* layer, int uniqueID, const std::vector<int>* remapKeys) {
         if (TrajectoryManager::is_simulating) return;
         EffectGameObject::triggerObject(layer, uniqueID, remapKeys);
     }
@@ -405,7 +405,7 @@ class $modify(ShowTrajectoryGameObject, GameObject) {
         auto& gui = GDH::Gui::get();
         auto& hack = gui.getWindow("Level").findHackByName("Show Trajectory");       
 
-        hack.addHookPtr(self.getHook("GameObject::playShineEffect").unwrap());
+        hack.addHookPtr(self.getHook("GameObject::playShineEffect"));
     }
 
     void playShineEffect() {
@@ -419,7 +419,7 @@ class $modify(ShowTrajectoryHardStreak, HardStreak) {
         auto& gui = GDH::Gui::get();
         auto& hack = gui.getWindow("Level").findHackByName("Show Trajectory");       
 
-        hack.addHookPtr(self.getHook("HardStreak::addPoint").unwrap());
+        hack.addHookPtr(self.getHook("HardStreak::addPoint"));
     }
 
     void addPoint(cocos2d::CCPoint point) {

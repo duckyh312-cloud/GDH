@@ -11,7 +11,7 @@ class $modify(InstantCompletePlayLayer, PlayLayer) {
         auto& hack = gui.getWindow("Level").findHackByName("Instant Complete");        
         
         (void) self.setHookPriority("PlayLayer::resetLevel", Priority::Late); 
-        hack.addHookPtr(self.getHook("PlayLayer::resetLevel").unwrap());
+        hack.addHookPtr(self.getHook("PlayLayer::resetLevel"));
     }
 
     void resetLevel() {

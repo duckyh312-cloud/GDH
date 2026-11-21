@@ -9,8 +9,8 @@ class $modify(NoCameraMoveCameraTriggerGameObject, CameraTriggerGameObject) {
         auto& gui = GDH::Gui::get();
         auto& hack = gui.getWindow("Cosmetic").findHackByName("No Camera Move");        
         
-        hack.addHookPtr(self.getHook("CameraTriggerGameObject::triggerObject").unwrap());
+        hack.addHookPtr(self.getHook("CameraTriggerGameObject::triggerObject"));
     }
 
-    void triggerObject(GJBaseGameLayer *p0, int p1, const gd::vector<int> *p2) {}
+    void triggerObject(GJBaseGameLayer *p0, int p1, const std::vector<int> *p2) {}
 };

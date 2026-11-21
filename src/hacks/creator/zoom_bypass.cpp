@@ -14,12 +14,12 @@ class $modify(ZoomBypassEditorUI, EditorUI) {
         (void) self.setHookPriority("EditorUI::zoomOut", geode::Priority::Early); 
         (void) self.setHookPriority("EditorUI::scrollWheel", geode::Priority::Early); 
         
-        hack.addHookPtr(self.getHook("EditorUI::zoomIn").unwrap());
-        hack.addHookPtr(self.getHook("EditorUI::zoomOut").unwrap());
-        hack.addHookPtr(self.getHook("EditorUI::scrollWheel").unwrap());
+        hack.addHookPtr(self.getHook("EditorUI::zoomIn"));
+        hack.addHookPtr(self.getHook("EditorUI::zoomOut"));
+        hack.addHookPtr(self.getHook("EditorUI::scrollWheel"));
         #elif defined(GEODE_IS_ANDROID)
         (void) self.setHookPriority("EditorUI::zoomGameLayer", geode::Priority::Early); 
-        hack.addHookPtr(self.getHook("EditorUI::zoomGameLayer").unwrap());
+        hack.addHookPtr(self.getHook("EditorUI::zoomGameLayer"));
         #endif
     }
 
@@ -41,10 +41,10 @@ class $modify(ZoomBypassEditorUI, EditorUI) {
         zoomBypass(false);
     }
 
-    void scrollWheel(float y, float x) {
+    bool scrollWheel(float y, float x) {
         auto scale = m_editorLayer->m_groundLayer->getScale();
 
-        EditorUI::scrollWheel(y, x);
+        bool result = EditorUI::scrollWheel(y, x);
 
         if (this->m_editorLayer->m_playbackMode != PlaybackMode::Playing && CCKeyboardDispatcher::get()->getControlKeyPressed()) {
             m_editorLayer->m_groundLayer->setScale(scale);
@@ -54,6 +54,8 @@ class $modify(ZoomBypassEditorUI, EditorUI) {
             else
                 zoomBypass(false);
         }
+
+        return result;
     }
 
     #elif defined(GEODE_IS_ANDROID)

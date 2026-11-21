@@ -9,10 +9,10 @@ class $modify(TextLengthCCTextInputNode, CCTextInputNode) {
         auto& gui = GDH::Gui::get();
         auto& hack = gui.getWindow("Bypass").findHackByName("Text Length");        
         
-        hack.addHookPtr(self.getHook("CCTextInputNode::updateLabel").unwrap());
+        hack.addHookPtr(self.getHook("CCTextInputNode::updateLabel"));
     }
 
-    void updateLabel(gd::string str) {
+    void updateLabel(std::string str) {
         this->setMaxLabelLength(9999);
         CCTextInputNode::updateLabel(str);
     }

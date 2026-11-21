@@ -10,7 +10,7 @@ class $modify(SliderLimitSliderTouchLogic, SliderTouchLogic) {
     static void onModify(auto& self) {
         auto& gui = GDH::Gui::get();
         auto& hack = gui.getWindow("Bypass").findHackByName("Slider Limit");        
-        hack.addHookPtr(self.getHook("SliderTouchLogic::ccTouchMoved").unwrap());
+        hack.addHookPtr(self.getHook("SliderTouchLogic::ccTouchMoved"));
     }
 
     void ccTouchMoved(cocos2d::CCTouch* touch, cocos2d::CCEvent* event) {
@@ -32,7 +32,7 @@ class $modify(SliderLimitGJScaleControl, GJScaleControl) {
     static void onModify(auto& self) {
         auto& gui = GDH::Gui::get();
         auto& hack = gui.getWindow("Bypass").findHackByName("Slider Limit");        
-        hack.addHookPtr(self.getHook("GJScaleControl::ccTouchMoved").unwrap());
+        hack.addHookPtr(self.getHook("GJScaleControl::ccTouchMoved"));
     }
 
     void ccTouchMoved(cocos2d::CCTouch* touch, cocos2d::CCEvent* event) {
@@ -90,7 +90,7 @@ class $modify(SliderLimitEditorUI, EditorUI) {
     static void onModify(auto& self) {
         auto& gui = GDH::Gui::get();
         auto& hack = gui.getWindow("Bypass").findHackByName("Slider Limit");        
-        hack.addHookPtr(self.getHook("EditorUI::scaleObjects").unwrap());
+        hack.addHookPtr(self.getHook("EditorUI::scaleObjects"));
     }
 
     void scaleObjects(cocos2d::CCArray* objects, float scaleX, float scaleY, cocos2d::CCPoint pivotPoint, ObjectScaleType type, bool lockMove) {

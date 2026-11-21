@@ -10,8 +10,8 @@ class $modify(AllowLowVolumePauseLayer, PauseLayer) {
         auto& gui = GDH::Gui::get();
         auto& hack = gui.getWindow("Bypass").findHackByName("Allow Low Volume");        
         
-        hack.addHookPtr(self.getHook("PauseLayer::musicSliderChanged").unwrap());
-        hack.addHookPtr(self.getHook("PauseLayer::sfxSliderChanged").unwrap());
+        hack.addHookPtr(self.getHook("PauseLayer::musicSliderChanged"));
+        hack.addHookPtr(self.getHook("PauseLayer::sfxSliderChanged"));
     }
 
     void musicSliderChanged(cocos2d::CCObject* sender) {
@@ -38,8 +38,8 @@ class $modify(AllowLowVolumeOptionsLayer, OptionsLayer) {
         auto& gui = GDH::Gui::get();
         auto& hack = gui.getWindow("Bypass").findHackByName("Allow Low Volume");        
         
-        hack.addHookPtr(self.getHook("OptionsLayer::musicSliderChanged").unwrap());
-        hack.addHookPtr(self.getHook("OptionsLayer::sfxSliderChanged").unwrap());
+        hack.addHookPtr(self.getHook("OptionsLayer::musicSliderChanged"));
+        hack.addHookPtr(self.getHook("OptionsLayer::sfxSliderChanged"));
     }
 
     void musicSliderChanged(cocos2d::CCObject* sender) {

@@ -9,8 +9,8 @@ class $modify(SolidWaveTrailPlayerObject, PlayerObject) {
         auto& gui = GDH::Gui::get();
         auto& hack = gui.getWindow("Cosmetic").findHackByName("Solid Wave Trail");        
         
-        hack.addHookPtr(self.getHook("PlayerObject::setupStreak").unwrap());
-        hack.addHookPtr(self.getHook("PlayerObject::updateStreakBlend").unwrap());
+        hack.addHookPtr(self.getHook("PlayerObject::setupStreak"));
+        hack.addHookPtr(self.getHook("PlayerObject::updateStreakBlend"));
     }
 
     void setupStreak() {

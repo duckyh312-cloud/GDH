@@ -25,7 +25,7 @@ class $modify(FastLevelCompletePlayLayer, PlayLayer) {
             popup->addConfigToggle("Very Fast", veryFastKey, false);
         });
         
-        hack.addHookPtr(self.getHook("PlayLayer::showCompleteEffect").unwrap());
+        hack.addHookPtr(self.getHook("PlayLayer::showCompleteEffect"));
     }
 
     void showCompleteEffect() {

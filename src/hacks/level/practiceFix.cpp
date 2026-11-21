@@ -24,10 +24,10 @@ class $modify(PracticeFixPlayLayer, PlayLayer) {
         auto& gui = GDH::Gui::get();
         auto& hack = gui.getWindow("Level").findHackByName("Practice Fix");        
         
-        hack.addHookPtr(self.getHook("PlayLayer::createCheckpoint").unwrap());
-        // hack.addHookPtr(self.getHook("PlayLayer::removeCheckpoint").unwrap());
-        hack.addHookPtr(self.getHook("PlayLayer::loadFromCheckpoint").unwrap());
-        hack.addHookPtr(self.getHook("PlayLayer::resetLevel").unwrap());
+        hack.addHookPtr(self.getHook("PlayLayer::createCheckpoint"));
+        // hack.addHookPtr(self.getHook("PlayLayer::removeCheckpoint"));
+        hack.addHookPtr(self.getHook("PlayLayer::loadFromCheckpoint"));
+        hack.addHookPtr(self.getHook("PlayLayer::resetLevel"));
     }
 
     CheckpointObject* createCheckpoint() {
@@ -152,7 +152,7 @@ class $modify(PracticeFixGJBaseGameLayer, GJBaseGameLayer) {
         auto& gui = GDH::Gui::get();
         auto& hack = gui.getWindow("Level").findHackByName("Practice Fix");        
         
-        hack.addHookPtr(self.getHook("GJBaseGameLayer::handleButton").unwrap());
+        hack.addHookPtr(self.getHook("GJBaseGameLayer::handleButton"));
         (void) self.setHookPriority("GJBaseGameLayer::handleButton", geode::Priority::Late); 
     }
 

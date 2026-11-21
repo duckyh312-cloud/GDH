@@ -9,8 +9,8 @@ class $modify(NoBackgroundFlashGJBaseGameLayer, GJBaseGameLayer) {
         auto& gui = GDH::Gui::get();
         auto& hack = gui.getWindow("Cosmetic").findHackByName("No Background Flash");        
         
-        hack.addHookPtr(self.getHook("GJBaseGameLayer::lightningFlash").unwrap());
-        hack.addHookPtr(self.getHook("GJBaseGameLayer::teleportPlayer").unwrap());
+        hack.addHookPtr(self.getHook("GJBaseGameLayer::lightningFlash"));
+        hack.addHookPtr(self.getHook("GJBaseGameLayer::teleportPlayer"));
     }
 
     void teleportPlayer(TeleportPortalObject *p0, PlayerObject *p1) {

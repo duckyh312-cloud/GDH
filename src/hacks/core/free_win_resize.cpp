@@ -19,9 +19,9 @@ $execute {
             auto base = geode::base::getCocos();
             
             return std::array{
-                mod->patch((void*)(base + 0xD93CA), {0x90, 0x90, 0x90, 0x90, 0x90}).unwrapOr(nullptr),
-                mod->patch((void*)(base + 0xD7589), {0x90, 0x90, 0x90, 0x90, 0x90, 0x90}).unwrapOr(nullptr),
-                mod->patch((void*)(base + 0xD8A67), {0x48, 0xe9}).unwrapOr(nullptr)
+                mod->patch((void*)(base + 0xdad5a), {0x90, 0x90, 0x90, 0x90, 0x90}).unwrapOr(nullptr),
+                mod->patch((void*)(base + 0xd8f19), {0x90, 0x90, 0x90, 0x90, 0x90, 0x90}).unwrapOr(nullptr),
+                mod->patch((void*)(base + 0xda3f7), {0x48, 0xe9}).unwrapOr(nullptr)
             };
         }();
 

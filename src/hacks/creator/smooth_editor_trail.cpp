@@ -9,7 +9,7 @@ class $modify(SmoothEditorTrailLevelEditorLayer, LevelEditorLayer) {
         auto& gui = GDH::Gui::get();
         auto& hack = gui.getWindow("Creator").findHackByName("Smooth Editor Trail");        
         
-        hack.addHookPtr(self.getHook("LevelEditorLayer::postUpdate").unwrap());
+        hack.addHookPtr(self.getHook("LevelEditorLayer::postUpdate"));
     }
 
     void postUpdate(float dt) {

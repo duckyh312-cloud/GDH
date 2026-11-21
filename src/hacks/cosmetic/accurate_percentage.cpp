@@ -14,7 +14,7 @@ class $modify(AccuratePercentagePlayLayer, PlayLayer) {
         auto& gui = GDH::Gui::get();
         auto& hack = gui.getWindow("Cosmetic").findHackByName("Accurate Percentage");
 
-        hack.addHookPtr(self.getHook("PlayLayer::updateProgressbar").unwrap());
+        hack.addHookPtr(self.getHook("PlayLayer::updateProgressbar"));
 
         hack.setCustomWindowImGui([
             decimalsKey = hack.formatAdditionalSetting("demicals"),

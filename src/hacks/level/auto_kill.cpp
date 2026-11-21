@@ -15,7 +15,7 @@ class $modify(AutoKillGJBaseGameLayer, GJBaseGameLayer) {
         auto& hack = gui.getWindow("Level").findHackByName("Auto Kill");    
         auto& config = Config::get();    
         
-        hack.addHookPtr(self.getHook("GJBaseGameLayer::update").unwrap());
+        hack.addHookPtr(self.getHook("GJBaseGameLayer::update"));
 
         hack.setCustomWindowImGui([&config]() {
             ImGui::SetNextItemWidth(160.f);
