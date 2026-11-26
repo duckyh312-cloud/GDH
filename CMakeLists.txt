@@ -96,6 +96,6 @@ if(DEFINED ENV{CI})
     )
 
     set_target_properties(GeodeBindings PROPERTIES
-        UNITY_BUILD_BATCH_SIZE 300
+        UNITY_BUILD_BATCH_SIZE 128
     )
 endif()
