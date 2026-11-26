@@ -1,5 +1,6 @@
 #include <unordered_map>
 #include <Geode/Geode.hpp>
+#include <Geode/utils/cocos.hpp>
 #include <Geode/modify/CCEGLView.hpp>
 #include <Geode/modify/CCDirector.hpp>
 #include <Geode/modify/CCTouchDispatcher.hpp>
@@ -15,12 +16,13 @@ using namespace geode::prelude;
 GUI_HACK_CREATE("Cosmetic", "Show Touches", "Displays visual indicators on screen touches", false);
 
 struct TouchInfo {
+    geode::WeakRef<cocos2d::CCTouch> touch;
     cocos2d::CCPoint lastPos;
     float currentOpacity = 0.f;
     bool released = false;
 };
 
-static std::unordered_map<cocos2d::CCTouch*, TouchInfo> g_touches;
+static std::vector<TouchInfo> g_touches;
 
 static void renderTouches() {
     auto& config = Config::get();
@@ -45,20 +47,21 @@ static void renderTouches() {
 
     cocos2d::ccGLBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-    std::erase_if(g_touches, [dt, fadeSpeed, maxOpacity](auto& item) {
-        auto* touch = item.first;
-        auto& info = item.second;
+    std::erase_if(g_touches, [dt, fadeSpeed, maxOpacity](TouchInfo& info) {
+        auto touch = info.touch.lock();
 
-        if (!info.released) {
+        if (!info.released && touch) {
             info.lastPos = touch->getLocation();
             info.currentOpacity = std::min(maxOpacity, info.currentOpacity + fadeSpeed * dt);
         } else {
+            info.released = true;
             info.currentOpacity -= fadeSpeed * dt;
         }
+
         return info.currentOpacity <= 0.f;
     });
 
-    for (const auto& [touch, info] : g_touches) {
+    for (const auto& info : g_touches) {
         if (info.currentOpacity <= 0.f) continue;
 
         cocos2d::ccDrawColor4B(
@@ -74,14 +77,14 @@ static void renderTouches() {
         }
 
         cocos2d::ccDrawCircle(info.lastPos, radius, 360, segments, false);
-        
+
         for (int i = 0; i < stroke * 5; i++) {
             cocos2d::ccDrawCircle(info.lastPos, radius + (i * 0.1f), 360, segments, false);
         }
     }
 }
 
-#if defined(GEODE_IS_WINDOWS) 
+#if defined(GEODE_IS_WINDOWS) || defined(GEODE_IS_IOS)
 class $modify(ShowTouchesCCEGLView, cocos2d::CCEGLView) {
     static void onModify(auto& self) {
         auto& gui = GDH::Gui::get();
@@ -120,16 +123,19 @@ class $modify(ShowTouchesCCTouchDispatcher, cocos2d::CCTouchDispatcher) {
 
     void touches(cocos2d::CCSet* pTouches, cocos2d::CCEvent* pEvent, unsigned int uIndex) {
         auto& config = Config::get();
-        if (config.get<bool>("cosmetic.show_touches", false)) {
+        if (config.get<bool>("cosmetic.show_touches", false) && pTouches) {
             if (auto* touch = static_cast<cocos2d::CCTouch*>(pTouches->anyObject())) {
                 switch (uIndex) {
                     case cocos2d::CCTOUCHBEGAN: {
-                        g_touches[touch] = { touch->getLocation(), 0.f, false };
+                        g_touches.push_back({ geode::WeakRef<cocos2d::CCTouch>(touch), touch->getLocation(), 0.f, false });
                     } break;
                     case cocos2d::CCTOUCHENDED:
                     case cocos2d::CCTOUCHCANCELLED: {
-                        if (g_touches.contains(touch)) {
-                            g_touches[touch].released = true;
+                        for (auto& info : g_touches) {
+                            if (info.touch == touch) {
+                                info.lastPos = touch->getLocation();
+                                info.released = true;
+                            }
                         }
                     } break;
                     default: break;
