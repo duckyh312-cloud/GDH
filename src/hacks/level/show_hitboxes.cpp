@@ -53,6 +53,7 @@ static void drawOrientedOrRect(GJBaseGameLayer* layer, cocos2d::CCDrawNode* draw
     int rotation = static_cast<int>(obj->getRotation());
     bool isRotated = (rotation % 90) != 0;
 
+#ifndef GEODE_IS_IOS
     if (isRotated && (layer->m_isEditor || obj->m_shouldUseOuterOb)) {
         obj->calculateOrientedBox();
         
@@ -64,6 +65,9 @@ static void drawOrientedOrRect(GJBaseGameLayer* layer, cocos2d::CCDrawNode* draw
     } else {
         drawRect(drawNode, rect, fill, bw, border);
     }
+#else
+    drawRect(drawNode, rect, fill, bw, border);
+#endif
 
     obj->m_isObjectRectDirty = dirty;
     obj->m_boxOffsetCalculated = boxOff;

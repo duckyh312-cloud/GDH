@@ -121,9 +121,10 @@ void GDH::Utils::UncompleteLevel() {
     }  
 
     // removing orbs
-    auto currencyKey = gsm->getCurrencyKey(level);
     int awardedCurrency = gsm->getAwardedCurrencyForLevel(level);
     gsm->setStat("14", gsm->getStat("14") - awardedCurrency);
+    #ifndef GEODE_IS_IOS
+    auto currencyKey = gsm->getCurrencyKey(level);
 
     cocos2d::CCDictionary* dict = nullptr;
     if (level->m_dailyID > 0) {
@@ -139,6 +140,7 @@ void GDH::Utils::UncompleteLevel() {
         dict = gsm->m_onlineCurrencyScores;
     }
     dict->removeObjectForKey(currencyKey);
+    #endif
 
 
     // removing coins

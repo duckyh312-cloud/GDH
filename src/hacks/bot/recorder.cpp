@@ -99,11 +99,13 @@ class $modify(UILayer) {
         if (GDH::Recorder::get().isRecording()) {
             this->m_pauseBtn->getNormalImage()->setVisible(false);
 
+#ifndef GEODE_IS_IOS
             for (auto child : this->getChildrenExt()) {                    
                 if (geode::cast::typeinfo_cast<GJUINode*>(child)) {
                     static_cast<cocos2d::CCNode*>(child)->setVisible(false);
                 }
             }
+#endif
         }
     }
 };

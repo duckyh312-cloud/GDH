@@ -397,6 +397,7 @@ namespace GDH { namespace PracticeFix {
         // state.m_shipStreak = player->m_shipStreak;
         
         // state.m_waveTrail = player->m_waveTrail;
+#ifndef GEODE_IS_IOS
         if (player && player->m_waveTrail && player->m_waveTrail->m_pointArray) {
             auto points = player->m_waveTrail->m_pointArray;
             
@@ -406,6 +407,7 @@ namespace GDH { namespace PracticeFix {
                 }
             }
         }
+#endif
         
         state.m_speedMultiplier = player->m_speedMultiplier;
         state.m_yStart = player->m_yStart;
@@ -722,6 +724,7 @@ namespace GDH { namespace PracticeFix {
         // player->m_shipStreak = state.m_shipStreak;
 
         // player->m_waveTrail = state.m_waveTrail;
+#ifndef GEODE_IS_IOS
         if (player && player->m_waveTrail && player->m_waveTrail->m_pointArray) {
             auto points = player->m_waveTrail->m_pointArray;
             points->removeAllObjects();
@@ -734,6 +737,7 @@ namespace GDH { namespace PracticeFix {
                 }
             }
         }
+#endif
 
         player->m_speedMultiplier = state.m_speedMultiplier;
         player->m_yStart = state.m_yStart;

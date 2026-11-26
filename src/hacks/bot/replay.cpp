@@ -447,7 +447,11 @@ class $modify(ReplayPlayLayer, PlayLayer) {
     }
 
     void pauseGame(bool unfocused) {
+#ifndef GEODE_IS_IOS
         if (!this->canPauseGame() || AppDelegate::get()->m_gamePaused) {
+#else
+        if (AppDelegate::get()->m_gamePaused) {
+#endif
             return PlayLayer::pauseGame(unfocused);
         }
 
