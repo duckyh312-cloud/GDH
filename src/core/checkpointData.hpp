@@ -558,9 +558,6 @@ namespace GDH { namespace PracticeFix {
         state.m_unk838 = player->m_unk838;
         state.m_stateOnGround = player->m_stateOnGround;
         state.m_stateUnk = player->m_stateUnk;
-        state.m_stateNoStickX = player->m_stateNoStickX;
-        state.m_stateNoStickY = player->m_stateNoStickY;
-        state.m_stateUnk2 = player->m_stateUnk2;
         state.m_stateBoostX = player->m_stateBoostX;
         state.m_stateBoostY = player->m_stateBoostY;
         state.m_maybeStateForce2 = player->m_maybeStateForce2;
@@ -888,9 +885,6 @@ namespace GDH { namespace PracticeFix {
         player->m_unk838 = state.m_unk838;
         player->m_stateOnGround = state.m_stateOnGround;
         player->m_stateUnk = state.m_stateUnk;
-        player->m_stateNoStickX = state.m_stateNoStickX;
-        player->m_stateNoStickY = state.m_stateNoStickY;
-        player->m_stateUnk2 = state.m_stateUnk2;
         player->m_stateBoostX = state.m_stateBoostX;
         player->m_stateBoostY = state.m_stateBoostY;
         player->m_maybeStateForce2 = state.m_maybeStateForce2;
@@ -1164,9 +1158,6 @@ namespace GDH { namespace PracticeFix {
 
         to->m_stateOnGround = from->m_stateOnGround;
         to->m_stateUnk = from->m_stateUnk;
-        to->m_stateNoStickX = from->m_stateNoStickX;
-        to->m_stateNoStickY = from->m_stateNoStickY;
-        to->m_stateUnk2 = from->m_stateUnk2;
         to->m_stateBoostX = from->m_stateBoostX;
         to->m_stateBoostY = from->m_stateBoostY;
         to->m_maybeStateForce2 = from->m_maybeStateForce2;

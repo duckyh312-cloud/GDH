@@ -34,7 +34,7 @@ $execute {
 
 #ifdef GEODE_IS_ANDROID64
 $execute {
-    offset = GDH::Utils::PatternScan(geode::base::get(), 0x900000, "AB 19 60 1E 0A 10 62 1E 6A 09 6A 1E");
+    offset = GDH::Utils::PatternScan(geode::base::get(), 0xC00000, "? ? ? 1E ? 10 62 1E ? 10 2E 1E ? ? ? 1E ? ? 62 1E ? ? 26 1E ? ? ? 1E ? ? ? 54 ? ? 38 1E 00 00 62 1E");
 }
 #endif
 

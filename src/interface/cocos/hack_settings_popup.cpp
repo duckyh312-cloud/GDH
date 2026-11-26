@@ -35,7 +35,7 @@ bool HackSettingsPopup::init(GDH::Hack& hack) {
     this->setCloseButtonSpr(closeBtn);
 
     m_scrollLayer = geode::prelude::ScrollLayer::create({240.f, 190.f});
-    m_scrollLayer->setPosition({winSize.width / 2.f - 120.f, 10.f});
+    m_scrollLayer->setPosition({winSize.width / 2.f, winSize.height / 2.f - 12.f});
     m_scrollLayer->m_contentLayer->setLayout(
         geode::ColumnLayout::create()
             ->setAutoScale(false)

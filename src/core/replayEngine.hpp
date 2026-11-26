@@ -34,7 +34,8 @@ namespace GDH {
         state mode = state::disable;
         std::string replay_name;
 
-        uint64_t get_frame() { return m_currentFrame; }
+        // uint64_t get_frame() { return m_currentFrame; } // not ready, planned for re 4.1
+        uint64_t get_frame() { return get_frame_legacy(); }
         uint64_t get_frame_legacy();
 
         void set_frame(uint64_t frame) { m_currentFrame = frame; }

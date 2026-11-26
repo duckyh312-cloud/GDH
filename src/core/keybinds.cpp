@@ -39,17 +39,27 @@ void Keybinds::init() {
                 rebuildCache(); 
                 return ListenerResult::Stop;
             }
+
+            bool isBlockedScene = false;
+            if (auto scene = cocos2d::CCScene::get()) {
+                if (scene->getChildByType<EditLevelLayer>(0) || scene->getChildByType<LevelSearchLayer>(0) ||
+                    (Config::get().get("keybinds::disable_editor", true) && scene->getChildByType<LevelEditorLayer>(0))) {
+                    isBlockedScene = true;
+                }
+            }
             
             geode::Keybind pressedBind(event.key, event.modifiers);
 
-            for (auto& [id, customPair] : m_customBinds) {
-                if (customPair.first == pressedBind && customPair.second) {
+            for (auto& [id, customBind] : m_customBinds) {
+                if (isBlockedScene && !customBind.ignoreScenes) continue;
+
+                if (customBind.bind == pressedBind && customBind.callback) {
                     bool isRepeat = (event.action == geode::KeyboardInputData::Action::Repeat);
-                    customPair.second(isRepeat);
+                    customBind.callback(isRepeat);
                 }
             }
 
-            if (event.action == geode::KeyboardInputData::Action::Press && m_bindsMap.contains(pressedBind)) {
+            if (!isBlockedScene && event.action == geode::KeyboardInputData::Action::Press && m_bindsMap.contains(pressedBind)) {
                 for (const auto& [windowName, hackName] : m_bindsMap[pressedBind]) {
                     Gui::get().getWindow(windowName).findHackByName(hackName).toggle();
                 }
@@ -57,10 +67,6 @@ void Keybinds::init() {
         }
         else if (event.action == geode::KeyboardInputData::Action::Release) {
             m_pressedKeys.erase(event.key);
-            
-            if (!m_recordingWindow.empty() || !m_recordingCustomId.empty()) {
-                return ListenerResult::Stop;
-            }
         }
 
         return ListenerResult::Propagate;
@@ -101,7 +107,7 @@ void Keybinds::load() {
             if (bindValue.is_object() && bindValue.contains("key") && bindValue.contains("modifiers")) {
                 auto key = static_cast<cocos2d::enumKeyCodes>(bindValue["key"].get<int>());
                 auto modifiers = static_cast<geode::KeyboardModifier>(bindValue["modifiers"].get<int>());
-                m_customBinds[id].first = geode::Keybind(key, modifiers);
+                m_customBinds[id].bind = geode::Keybind(key, modifiers);
             }
         }
     }
@@ -141,8 +147,8 @@ void Keybinds::save() const {
     }
 
     nlohmann::json customJson = nlohmann::json::object();
-    for (const auto& [id, customPair] : m_customBinds) {
-        auto bind = customPair.first;
+    for (const auto& [id, customBind] : m_customBinds) {
+        auto bind = customBind.bind;
         if (bind.key != cocos2d::KEY_None) {
             nlohmann::json bindJson;
             bindJson["key"] = static_cast<int>(bind.key);
@@ -188,27 +194,28 @@ bool Keybinds::isMouseButtonDown(geode::MouseInputData::Button button) const {
     return m_pressedMouseButtons.contains(button);
 }
 
-void Keybinds::addCallback(const std::string& id, geode::Keybind defaultBind, geode::Function<void(bool)> callback) {
+void Keybinds::addCallback(const std::string& id, geode::Keybind defaultBind, geode::Function<void(bool)> callback, bool ignoreScenes) {
     if (m_customBinds.contains(id)) {
-        m_customBinds[id].second = std::move(callback);
+        m_customBinds[id].callback = std::move(callback);
+        m_customBinds[id].ignoreScenes = ignoreScenes;
     } else {
-        m_customBinds[id] = {defaultBind, std::move(callback)};
+        m_customBinds[id] = {defaultBind, std::move(callback), ignoreScenes};
     }
 }
 
 void Keybinds::clearCallback(const std::string& id) {
     if (m_customBinds.contains(id)) {
-        m_customBinds[id].second = nullptr;
+        m_customBinds[id].callback = nullptr;
     }
 }
 
 void Keybinds::changeBind(const std::string& id, geode::Keybind newBind) {
-    m_customBinds[id].first = newBind;
+    m_customBinds[id].bind = newBind;
 }
 
 geode::Keybind Keybinds::getBind(const std::string& id) const {
     if (m_customBinds.contains(id)) {
-        return m_customBinds.at(id).first;
+        return m_customBinds.at(id).bind;
     }
     return geode::Keybind();
 }

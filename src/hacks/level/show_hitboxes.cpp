@@ -128,7 +128,7 @@ static void drawSingleObject(GJBaseGameLayer* layer, cocos2d::CCDrawNode* drawNo
         case GameObjectType::AnimatedHazard:
         case GameObjectType::Hazard: {
             if (obj == layer->m_anticheatSpike) break;
-            float const radius = std::max(obj->m_scaleX, obj->m_scaleY) * obj->m_objectRadius;
+            float const radius = std::max(std::abs(obj->m_scaleX), std::abs(obj->m_scaleY)) * obj->m_objectRadius;
 
             if (radius > 0)
                 drawNode->drawCircle(obj->getPosition(), radius, getFillColor(dangerColor), size, dangerColor, 16);

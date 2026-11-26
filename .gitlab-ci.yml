@@ -43,18 +43,18 @@ stages:
     paths:
       - artifacts/$GEODE_PLATFORM
 
-.geode-apple-build:
-  stage: build
-  script:
-    - geode sdk update && geode sdk install-binaries -p "$GEODE_PLATFORM"
-    - cmake -G Ninja -B build-apple -DCMAKE_BUILD_TYPE=Release
-    - cmake --build build-apple --parallel
-    - mkdir -p artifacts/$GEODE_PLATFORM
-    - find build-apple -type f -name "*.geode" -exec mv {} artifacts/$GEODE_PLATFORM/ \; || true
-  artifacts:
-    when: always
-    paths:
-      - artifacts/$GEODE_PLATFORM
+# .geode-apple-build:
+#   stage: build
+#   script:
+#     - geode sdk update && geode sdk install-binaries -p "$GEODE_PLATFORM"
+#     - cmake -G Ninja -B build-apple -DCMAKE_BUILD_TYPE=Release
+#     - cmake --build build-apple --parallel
+#     - mkdir -p artifacts/$GEODE_PLATFORM
+#     - find build-apple -type f -name "*.geode" -exec mv {} artifacts/$GEODE_PLATFORM/ \; || true
+#   artifacts:
+#     when: always
+#     paths:
+#       - artifacts/$GEODE_PLATFORM
 
 build-windows:
   extends: .geode-cli-build
@@ -75,11 +75,11 @@ build-android64:
   variables:
     GEODE_PLATFORM: "android64"
 
-build-macos:
-  extends: .geode-apple-build
-  image: prevter/geode-sdk:macos
-  variables:
-    GEODE_PLATFORM: "macos"
+# build-macos:
+#   extends: .geode-apple-build
+#   image: prevter/geode-sdk:macos
+#   variables:
+#     GEODE_PLATFORM: "macos"
 
 combine-artifacts:
   stage: combine
@@ -88,7 +88,7 @@ combine-artifacts:
     - build-windows
     - build-android32
     - build-android64
-    - build-macos
+    # - build-macos
   script:
     - mkdir -p final_artifacts
     - FIRST_PACKAGE=$(find artifacts -name "*.geode" | head -n 1)

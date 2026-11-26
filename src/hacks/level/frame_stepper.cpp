@@ -6,6 +6,7 @@
 #include "../../core/gui.hpp"
 #include "../../core/config.hpp"
 #include "../../core/keybinds.hpp"
+#include "../../core/replayEngine.hpp"
 #include "../../interface/imgui/widget_helper.hpp"
 #include "../../core/ringBuffer.hpp"
 #include <imgui-cocos.hpp>
@@ -21,6 +22,7 @@ static int g_framesToAdvance = 0;
 
 // for android
 static bool g_isHolding = false;
+static bool g_isFirstHold = true;
 static float g_holdTimer = 0.0f;
 //
 
@@ -61,15 +63,18 @@ class $modify(FrameStepperCCScheduler, cocos2d::CCScheduler) {
 
             ImGuiWidgetConfig::DragInt("##AdvanceFramesCount", "frame_stepper::advance_frames_count", 1, 1, 100, 5, "Multi-Step Frames Count: %d");
             ImGuiWidgetConfig::Checkbox("Backward Stepping", "frame_stepper::backward", false);
+            ImGuiWidgetConfig::Checkbox("Backward only when Replay Engine", "frame_stepper::backward_on_record_only", true);
             ImGuiWidgetConfig::DragInt("##BackFrameLength", "frame_stepper::back_frames_length", 1, 1, 1000, 240, "Back Frames Length: %d");
         });
 
         hack.setCustomWindowCocos([](cocos2d::CCNode* popupNode) {
             auto* popup = static_cast<HackSettingsPopup*>(popupNode);
             popup->addConfigIntInput("Multi-Step Frames Count", "frame_stepper::advance_frames_count", 1, 100, 5);
-            popup->addConfigFloatInput("Hold Timer (s)", "frame_stepper::hold_timer", 0.01f, 1.f, 0.15f);
+            popup->addConfigFloatInput("Initial Hold Delay (s)", "frame_stepper::initial_hold_timer", 0.05f, 2.f, 0.4f);
+            popup->addConfigFloatInput("Hold Repeat Speed (s)", "frame_stepper::hold_timer", 0.01f, 1.f, 0.05f);
             popup->addSeparator();
             popup->addConfigToggle("Backward Stepping", "frame_stepper::backward", false);
+            popup->addConfigToggle("Backward only when Replay Engine", "frame_stepper::backward_on_record_only", true);
             popup->addConfigIntInput("Back Frames Length", "frame_stepper::back_frames_length", 1, 1000, 240);
         });
     }
@@ -108,8 +113,13 @@ class $modify(FrameStepperCCScheduler, cocos2d::CCScheduler) {
 
         if (g_isHolding) {
             g_holdTimer += dt;
-            if (g_holdTimer > config.get<float>("frame_stepper::hold_timer", 0.15f)) {
-                g_holdTimer = 0;
+            float targetDelay = g_isFirstHold 
+                ? config.get<float>("frame_stepper::initial_hold_timer", 0.4f) 
+                : config.get<float>("frame_stepper::hold_timer", 0.05f);
+
+            if (g_holdTimer > targetDelay) {
+                g_holdTimer = 0.0f;
+                g_isFirstHold = false;
                 CCScheduler::update(dt);
                 return;
             }
@@ -135,12 +145,17 @@ class $modify(FrameStepperGJBaseGameLayer, GJBaseGameLayer) {
     void processCommands(float dt, bool isHalfTick, bool isLastTick) {
         GJBaseGameLayer::processCommands(dt, isHalfTick, isLastTick);
 
-        if (!Config::get().get<bool>("frame_stepper::backward", false)) return;
+        auto& config = Config::get();
+        auto& engine = GDH::ReplayEngine::get();
+
+        bool backward_on_record_only = config.get("frame_stepper::backward_on_record_only", true);
+        bool backward_enabled = config.get<bool>("frame_stepper::backward", false);
+
+        if (!backward_enabled || (backward_on_record_only && engine.mode != state::record)) return;
 
         auto pl = PlayLayer::get();
         if (!pl || !pl->m_started || pl->m_playerDied) return;
 
-        auto& config = Config::get();
         auto framesLength = static_cast<size_t>(config.get<int>("frame_stepper::back_frames_length", 240));
 
         if (g_lastFramesLength != framesLength) {
@@ -172,6 +187,7 @@ public:
         g_pause = true;
         g_nextFrame = true;
         g_isHolding = true;
+        g_isFirstHold = true;
         g_holdTimer = 0.0f;
     }
     

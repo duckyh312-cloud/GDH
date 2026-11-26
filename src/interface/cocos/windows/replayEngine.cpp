@@ -268,7 +268,7 @@ protected:
         this->setCloseButtonSpr(closeBtn);
 
         auto scroll = ScrollLayer::create({600.f, 180.f});
-        scroll->setPosition({winSize.width / 2 - 300.f, 10.f});
+        scroll->setPosition({winSize.width / 2, winSize.height / 2 - 12.f});
         scroll->m_contentLayer->setLayout(
             ColumnLayout::create()
                 ->setAutoScale(false)
@@ -892,7 +892,7 @@ $execute {
                         return;
                     }
 
-                    if (selectedPath.extension() != ".re4") {
+                    if (selectedPath.extension() != "re4") {
                         GDH::MaterialLayer(FLAlertLayer::create("Import", "Invalid file format. Only .re4 files are allowed", "OK"))->show();
                         return;
                     }

@@ -59,7 +59,7 @@ static std::vector<GDH::Layout::WindowInfo> g_fixedWindowSizes = {
     {"Level", 0.f, 1100.f},
     // {"Labels", 240.f, 380.f},
     {"Replay Engine", 300.f, 225.f},
-    {"Keybinds", 0.f, 180.f},
+    {"Keybinds", 0.f, 205.f},
     {"Level", 0.f, 1080.f},
     {"Shortcuts", 180.f, 0.f},
     {"GDH Settings", 225.f, 0.f},
@@ -321,6 +321,8 @@ void KeybindsRender() {
         ImGuiWidgetConfig::DrawCustomKeybindButton("re::load_macro_by_name", "Load Macro by Current Level Name");
         ImGui::EndPopup();
     }
+
+    ImGuiWidgetConfig::Checkbox("Disable in Editor", "keybinds::disable_editor", true);
 
     ImGuiWidgetConfig::DrawCustomKeybindButton("gui::toggle_ui", "Toggle UI");
 
@@ -590,7 +592,7 @@ class $modify(ImGuiInitMenuLayer, MenuLayer) {
             GDH::Keybinds::get().addCallback("gui::toggle_ui", geode::Keybind(cocos2d::KEY_Tab, geode::KeyboardModifier::None),
                 [](bool repeat) {
                     ToggleUI();
-                }
+                }, true
             );
 
             auto mod = geode::Mod::get();

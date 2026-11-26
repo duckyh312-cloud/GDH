@@ -18,14 +18,14 @@ uint64_t ReplayEngine::get_frame_legacy() {
 void ReplayEngine::remove_actions(uint64_t currentFrame, bool pause) {
     // clearing physic frames
     std::erase_if(m_physicFrames, [currentFrame](const physic_data &action) {
-        // return action.frame >= currentFrame;
-        return action.frame > currentFrame;
+        return action.frame >= currentFrame;
+        // return action.frame > currentFrame;  // not ready, planned for re 4.1
     });
 
     // clearing inputs and auto-releasing it
     std::erase_if(m_inputFrames, [currentFrame](const input_data &action) {
-        // return action.frame >= currentFrame;
-        return action.frame > currentFrame;
+        return action.frame >= currentFrame;
+        // return action.frame > currentFrame; // not ready, planned for re 4.1
     });
 
     std::array<bool, 6> released = {true, true, true, true, true, true};
@@ -152,11 +152,7 @@ void ReplayEngine::handle_commands(GJBaseGameLayer* self) {
         if (swapControls) {
             isPlayer1 = !isPlayer1;
         }
-
-        #ifdef GEODE_IS_ANDROID
-        self->m_allowedButtons.clear();
-        #endif
-
+        
         cps.click(m_inputFrames[m_inputIndex].down, !m_inputFrames[m_inputIndex].isPlayer2);
         
         customHandleButton(self, m_inputFrames[m_inputIndex].down, static_cast<PlayerButton>(m_inputFrames[m_inputIndex].button), isPlayer1);
@@ -356,7 +352,8 @@ void ReplayEngine::setupHacks(state newMode) {
         {"Level", "Practice Fix",  true, false},
         {"Level", "Respawn Lag Fix", true, false},
         {"Level", "Frame Extrapolation", false, false},
-        {"Cosmetic", "No Mirror", true, false}
+        {"Cosmetic", "No Mirror", true, false},
+        {"Cosmetic", "No Death Markers", false, false},
     };
 
     if (newMode == state::disable) {

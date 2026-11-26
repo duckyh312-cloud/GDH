@@ -114,7 +114,8 @@ bool HacksTab::init() {
             ->setAutoGrowAxis(false)
             ->setGap(0.f)
     );
-    m_scrollLayer->setPosition({107.f, 5.f});
+    
+    m_scrollLayer->setPosition({360.f, 130.f});
     m_scrollLayer->m_peekLimitTop = 15;
     m_scrollLayer->m_peekLimitBottom = 15;
     

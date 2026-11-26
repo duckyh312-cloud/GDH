@@ -226,7 +226,10 @@ void Recorder::capture_frame() {
 }
 
 void Recorder::handle_recording(float dt) {
+    if (!is_recording) return;
+    
     auto playLayer = PlayLayer::get();
+    if (!playLayer) return;
     
     if (!force_stop && (!playLayer->m_hasCompletedLevel || after_end_extra_time < after_end_duration)) {
         if (playLayer->m_hasCompletedLevel) {

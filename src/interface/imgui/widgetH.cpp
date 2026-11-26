@@ -481,7 +481,7 @@ namespace ImGuiH {
                             return;
                         }
 
-                        if (selectedPath.extension() != ".json") {
+                        if (selectedPath.extension() != "json") {
                             AddPopup("Invalid file format. Only .json files are allowed");
                             return;
                         }
