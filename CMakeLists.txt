@@ -67,9 +67,10 @@ if (ANDROID AND ANDROID_ABI STREQUAL "armeabi-v7a")
 endif()
 
 if (APPLE)
-    target_include_directories(${PROJECT_NAME} PRIVATE libs/ffmpeg/mac/include)
-
-    target_link_libraries(${PROJECT_NAME} ${CMAKE_SOURCE_DIR}/libs/ffmpeg/mac/libffmpeg_all.a)
+    if (NOT CMAKE_SYSTEM_NAME STREQUAL "iOS")
+        target_include_directories(${PROJECT_NAME} PRIVATE libs/ffmpeg/mac/include)
+        target_link_libraries(${PROJECT_NAME} ${CMAKE_SOURCE_DIR}/libs/ffmpeg/mac/libffmpeg_all.a)
+    endif()
 
     target_link_libraries(${PROJECT_NAME}
         "-framework CoreVideo"

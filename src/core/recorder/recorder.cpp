@@ -15,6 +15,9 @@
 using namespace GDH;
 
 void Recorder::start() {
+    #ifdef GEODE_IS_IOS
+    return;
+    #endif
     if (is_recording) return;
     
     is_recording = true;
@@ -198,6 +201,11 @@ void Recorder::startAndroidEncoder() {
 #endif
 
 void Recorder::stop() {
+    #ifdef GEODE_IS_IOS
+    is_recording = false;
+    enabled = false;
+    return;
+    #endif
     if (!is_recording) return;
 
     texture.cleanup();
@@ -226,6 +234,10 @@ void Recorder::capture_frame() {
 }
 
 void Recorder::handle_recording(float dt) {
+    #ifdef GEODE_IS_IOS
+    (void)dt;
+    return;
+    #endif
     if (!is_recording) return;
     
     auto playLayer = PlayLayer::get();
