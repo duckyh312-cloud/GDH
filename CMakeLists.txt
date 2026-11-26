@@ -87,12 +87,6 @@ endif()
 
 setup_geode_mod(${PROJECT_NAME})
 
-if(DEFINED ENV{CI} AND TARGET GeodeBindings AND NOT GEODE_DISABLE_PRECOMPILED_HEADERS)
-    target_precompile_headers(GeodeBindings PRIVATE
-        Geode/Bindings.hpp
-    )
-endif()
-
 if(DEFINED ENV{CI})
     set_target_properties(
         ${PROJECT_NAME} PROPERTIES
