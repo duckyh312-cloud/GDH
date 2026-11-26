@@ -90,7 +90,9 @@ class $modify(UnlockVaultsSecretLayer2, SecretLayer2) {
         auto& hack = gui.getWindow("Bypass").findHackByName("Unlock Vaults");        
         
         hack.addHookPtr(self.getHook("SecretLayer2::init"));
+        #ifndef GEODE_IS_IOS
         hack.addHookPtr(self.getHook("SecretLayer2::onSecretLevel"));
+        #endif
     }
 
     bool init() {
@@ -100,12 +102,14 @@ class $modify(UnlockVaultsSecretLayer2, SecretLayer2) {
         return SecretLayer2::init();
     }
 
+    #ifndef GEODE_IS_IOS
     void onSecretLevel(cocos2d::CCObject* sender) {
         bypassStat = true;
         statValue = 200;
 
         SecretLayer2::onSecretLevel(sender);
     }
+    #endif
 };
 
 class $modify(UnlockVaultsCreatorLayer, CreatorLayer) {

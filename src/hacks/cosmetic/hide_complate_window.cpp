@@ -2,7 +2,9 @@
 #include <Geode/Geode.hpp>
 #include <Geode/binding/GameManager.hpp>
 #include <Geode/modify/EndLevelLayer.hpp>
+#ifndef GEODE_IS_IOS
 #include <Geode/modify/CurrencyRewardLayer.hpp>
+#endif
 #include "../../core/gui.hpp"
 
 GUI_HACK_CREATE("Cosmetic", "Hide Complete Window", "", false);
@@ -30,6 +32,7 @@ class $modify(HideCompleteWindowEndLevelLayer, EndLevelLayer) {
     }
 };
 
+#ifndef GEODE_IS_IOS
 class $modify(HideCompleteWindowCurrencyRewardLayer, CurrencyRewardLayer) {
     static void onModify(auto& self) {
         auto& gui = GDH::Gui::get();
@@ -46,3 +49,4 @@ class $modify(HideCompleteWindowCurrencyRewardLayer, CurrencyRewardLayer) {
         return true;
     }
 };
+#endif

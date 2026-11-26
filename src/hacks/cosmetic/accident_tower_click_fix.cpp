@@ -25,6 +25,7 @@ class $modify(AccidentTowerClickFixLevelPage, LevelPage) {
     }
 };
 
+#ifndef GEODE_IS_IOS
 class $modify(AccidentTowerClickFixLevelSelectLayer, LevelSelectLayer) {
     static void onModify(auto& self) {
         auto& gui = GDH::Gui::get();
@@ -43,3 +44,4 @@ class $modify(AccidentTowerClickFixLevelSelectLayer, LevelSelectLayer) {
         LevelSelectLayer::onPrev(sender);
     }
 };
+#endif
