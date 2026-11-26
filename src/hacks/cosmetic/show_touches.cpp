@@ -119,6 +119,7 @@ class $modify(ShowTouchesCCTouchDispatcher, cocos2d::CCTouchDispatcher) {
     }
 
     void touches(cocos2d::CCSet* pTouches, cocos2d::CCEvent* pEvent, unsigned int uIndex) {
+        log::debug("Show Touches: received touch event {}", uIndex);
         auto& config = Config::get();
         if (config.get<bool>("cosmetic.show_touches", false)) {
             if (auto* touch = static_cast<cocos2d::CCTouch*>(pTouches->anyObject())) {
